@@ -1,7 +1,7 @@
 import "./globals.css";
 
 export const metadata = {
-  title: "Reputation Manager",
+  title: "Inteleye",
   description: "تقارير أسبوعية لسمعتك على Google Maps",
 };
 
