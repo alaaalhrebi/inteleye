@@ -51,7 +51,7 @@ function CheckoutForm() {
       element: ".mysr-form",
       amount: price,
       currency: "SAR",
-      description: `اشتراك Reputation Manager — باقة ${PLAN_LABELS[plan] ?? plan}`,
+      description: `اشتراك Inteleye — باقة ${PLAN_LABELS[plan] ?? plan}`,
 
       // هذا الحقل الأهم: يصل ضمن webhook payload عند نجاح الدفع
       metadata: {
