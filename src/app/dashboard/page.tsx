@@ -47,7 +47,7 @@ export default async function DashboardPage() {
       <div className="max-w-3xl mx-auto">
         <div className="flex items-center justify-between mb-8">
           <div>
-            <p className="text-xs text-gray-400">Reputation Manager</p>
+            <p className="text-xs text-gray-400">Inteleye</p>
             <h1 className="text-2xl font-bold text-[#1a1a2e]">{client.name}</h1>
           </div>
           <span className="text-xs bg-[#eaf3de] text-[#27500a] px-3 py-1 rounded-full">
