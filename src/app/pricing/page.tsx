@@ -1,6 +1,8 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { createSupabaseBrowserClient } from "@/lib/supabase-browser";
 
 const PLANS = [
   { id: "basic", name: "Basic", price: 199, features: ["فرع واحد", "تقرير أسبوعي بالبريد"] },
@@ -21,11 +23,24 @@ const PLANS = [
 
 export default function PricingPage() {
   const router = useRouter();
+  const supabase = createSupabaseBrowserClient();
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
 
-  // الترتيب الجديد: الباقة تُختار أولاً، قبل أي تسجيل
-  // تنتقل كـ query param إلى صفحة التسجيل، ثم تتبعه إلى الدفع
+  useEffect(() => {
+    // نتحقق هل فيه جلسة نشطة، حتى نعرف وين نوجّه الزر بعد اختيار الباقة
+    supabase.auth.getUser().then(({ data }) => {
+      setIsLoggedIn(!!data.user);
+    });
+  }, []);
+
+  // لو عنده حساب من قبل (سجّل لكن لم يدفع)، نختصر له المسار ونوديه للدفع مباشرة.
+  // لو زائر جديد، نوديه أولاً لإنشاء حساب.
   function handleSelectPlan(planId: string) {
-    router.push(`/signup?plan=${planId}`);
+    if (isLoggedIn) {
+      router.push(`/checkout?plan=${planId}`);
+    } else {
+      router.push(`/signup?plan=${planId}`);
+    }
   }
 
   return (
@@ -66,12 +81,14 @@ export default function PricingPage() {
           ))}
         </div>
 
-        <p className="text-center text-sm text-gray-400 mt-8">
-          لديك حساب بالفعل؟{" "}
-          <a href="/login" className="text-[#1a1a2e] font-bold">
-            سجّل دخولك
-          </a>
-        </p>
+        {!isLoggedIn && (
+          <p className="text-center text-sm text-gray-400 mt-8">
+            لديك حساب بالفعل؟{" "}
+            <a href="/login" className="text-[#1a1a2e] font-bold">
+              سجّل دخولك
+            </a>
+          </p>
+        )}
       </div>
     </div>
   );
