@@ -27,9 +27,10 @@ export async function middleware(request: NextRequest) {
 
   const { data: { user } } = await supabase.auth.getUser();
 
-  // حماية مسار /dashboard — لو ما فيه مستخدم مسجّل دخول، يوجَّه لصفحة الدخول
+  // حماية مسار /dashboard — لو ما فيه مستخدم مسجّل دخول، يوجَّه لصفحة الباقات
+  // (نقطة الدخول الجديدة للمستخدمين الجدد، بدل /login مباشرة)
   if (!user && request.nextUrl.pathname.startsWith("/dashboard")) {
-    return NextResponse.redirect(new URL("/login", request.url));
+    return NextResponse.redirect(new URL("/pricing", request.url));
   }
 
   return response;
