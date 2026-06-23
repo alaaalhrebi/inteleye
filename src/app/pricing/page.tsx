@@ -22,6 +22,12 @@ const PLANS = [
 export default function PricingPage() {
   const router = useRouter();
 
+  // الترتيب الجديد: الباقة تُختار أولاً، قبل أي تسجيل
+  // تنتقل كـ query param إلى صفحة التسجيل، ثم تتبعه إلى الدفع
+  function handleSelectPlan(planId: string) {
+    router.push(`/signup?plan=${planId}`);
+  }
+
   return (
     <div dir="rtl" className="min-h-screen bg-[#f5f4f0] py-12 px-4">
       <div className="max-w-4xl mx-auto">
@@ -49,7 +55,7 @@ export default function PricingPage() {
                 ))}
               </ul>
               <button
-                onClick={() => router.push(`/checkout?plan=${plan.id}`)}
+                onClick={() => handleSelectPlan(plan.id)}
                 className={`rounded-lg py-2.5 text-sm font-bold ${
                   plan.featured ? "bg-[#1a1a2e] text-white" : "bg-[#f1efe8] text-[#1a1a2e]"
                 }`}
@@ -59,6 +65,13 @@ export default function PricingPage() {
             </div>
           ))}
         </div>
+
+        <p className="text-center text-sm text-gray-400 mt-8">
+          لديك حساب بالفعل؟{" "}
+          <a href="/login" className="text-[#1a1a2e] font-bold">
+            سجّل دخولك
+          </a>
+        </p>
       </div>
     </div>
   );
