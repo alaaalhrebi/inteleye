@@ -1,7 +1,7 @@
 "use client";
 
 import { Suspense, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { createSupabaseBrowserClient } from "@/lib/supabase-browser";
 
 const PLAN_NAMES: Record<string, string> = {
@@ -27,8 +27,8 @@ function SignupForm() {
   const [name, setName] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [emailSent, setEmailSent] = useState(false);
 
-  const router = useRouter();
   const supabase = createSupabaseBrowserClient();
 
   async function handleSubmit(e: React.FormEvent) {
@@ -39,7 +39,12 @@ function SignupForm() {
     const { error } = await supabase.auth.signUp({
       email,
       password,
-      options: { data: { name } },
+      options: {
+        data: { name },
+        // بعد ضغط رابط التأكيد بالإيميل، Supabase يرجّع المستخدم لهذا الرابط
+        // بجلسة فعّالة — نحمّل الباقة هنا حتى /auth/callback يعرف يوجّهه لها
+        emailRedirectTo: `${window.location.origin}/auth/callback?plan=${plan}`,
+      },
     });
 
     if (error) {
@@ -49,9 +54,24 @@ function SignupForm() {
     }
 
     // الـ trigger في قاعدة البيانات ينشئ صف clients تلقائياً بحالة pending.
-    // الفرق هنا عن /login: ننتقل مباشرة للدفع بنفس الباقة المختارة،
-    // بدل المرور بصفحة /pricing مرة ثانية.
-    router.push(`/checkout?plan=${plan}`);
+    // لكن لا توجد جلسة فعّالة بعد — Confirm email مفعّل، فلا بد من
+    // الانتظار لحين تأكيد البريد قبل أي توجيه لصفحة الدفع.
+    setEmailSent(true);
+    setLoading(false);
+  }
+
+  if (emailSent) {
+    return (
+      <div dir="rtl" className="min-h-screen flex items-center justify-center bg-[#f5f4f0] px-4">
+        <div className="w-full max-w-sm bg-white rounded-2xl border border-[#eeede8] p-8 text-center">
+          <p className="text-lg font-bold text-[#1a1a2e] mb-2">تحقق من بريدك الإلكتروني ✓</p>
+          <p className="text-sm text-gray-500 leading-relaxed">
+            أرسلنا رابط تأكيد إلى <span className="font-bold">{email}</span>. اضغط الرابط
+            لتأكيد حسابك، وستنتقل تلقائياً لصفحة الدفع لإتمام اشتراكك.
+          </p>
+        </div>
+      </div>
+    );
   }
 
   return (
