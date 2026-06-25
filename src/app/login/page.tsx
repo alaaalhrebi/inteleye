@@ -1,10 +1,21 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { createSupabaseBrowserClient } from "@/lib/supabase-browser";
 
 export default function LoginPage() {
+  return (
+    <Suspense fallback={null}>
+      <LoginForm />
+    </Suspense>
+  );
+}
+
+function LoginForm() {
+  const searchParams = useSearchParams();
+  const selectedPlan = searchParams.get("plan") ?? "basic";
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -18,7 +29,10 @@ export default function LoginPage() {
     setLoading(true);
     setError(null);
 
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
 
     if (error) {
       setError(error.message);
@@ -26,27 +40,27 @@ export default function LoginPage() {
       return;
     }
 
-    // نتحقق من حالة الاشتراك لنعرف وين نوجّهه:
-    // - active → عنده اشتراك فعّال، يذهب للوحة التحكم
-    // - pending → سجّل قبل لكن لم يكمل الدفع، يذهب للباقات ليكمل المسار
     const { data: client } = await supabase
       .from("clients")
-      .select("subscription_status")
+      .select("subscription_status, plan")
       .eq("user_id", data.user.id)
       .single();
 
     if (client?.subscription_status === "active") {
       router.push("/dashboard");
-    } else {
-      router.push("/pricing");
+      return;
     }
+
+    const plan = client?.plan || selectedPlan || "basic";
+
+    router.push(`/checkout?plan=${plan}`);
   }
 
   return (
     <div dir="rtl" className="min-h-screen flex items-center justify-center bg-[#f5f4f0] px-4">
       <div className="w-full max-w-sm bg-white rounded-2xl border border-[#eeede8] p-8">
         <h1 className="text-xl font-bold text-[#1a1a2e] mb-1">تسجيل الدخول</h1>
-        <p className="text-sm text-gray-500 mb-6">أدخل بياناتك لمتابعة تقاريرك</p>
+        <p className="text-sm text-gray-500 mb-6">أدخل بياناتك لمتابعة اشتراكك</p>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
@@ -75,7 +89,9 @@ export default function LoginPage() {
           </div>
 
           {error && (
-            <p className="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">{error}</p>
+            <p className="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">
+              {error}
+            </p>
           )}
 
           <button
@@ -83,7 +99,7 @@ export default function LoginPage() {
             disabled={loading}
             className="w-full bg-[#1a1a2e] text-white rounded-lg py-2.5 text-sm font-bold disabled:opacity-60"
           >
-            {loading ? "جاري التحميل..." : "دخول"}
+            {loading ? "جاري الدخول..." : "دخول والمتابعة للدفع"}
           </button>
         </form>
 
