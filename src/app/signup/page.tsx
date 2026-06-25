@@ -136,8 +136,8 @@ function SignupForm() {
           </button>
         </form>
 
-        <a href="/login" className="block text-center text-sm text-gray-500 mt-5">
-          لديك حساب بالفعل؟ سجّل دخولك
+        <a href={`/login?plan=${plan}`} className="block text-center text-sm text-gray-500 mt-5">
+  لديك حساب بالفعل؟ سجّل دخولك
         </a>
       </div>
     </div>
