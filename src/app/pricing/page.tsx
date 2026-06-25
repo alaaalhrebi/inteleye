@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createSupabaseBrowserClient } from "@/lib/supabase-browser";
+import AppHeader from "@/components/AppHeader";
 
 const PLANS = [
   { id: "basic", name: "Basic", price: 199, features: ["فرع واحد", "تقرير أسبوعي بالبريد"] },
@@ -44,7 +45,9 @@ export default function PricingPage() {
   }
 
   return (
-    <div dir="rtl" className="min-h-screen bg-[#f5f4f0] py-12 px-4">
+     <div dir="rtl" className="min-h-screen bg-[#f5f4f0]">
+    {isLoggedIn && <AppHeader rightLabel="حسابك مسجل" />}
+    <div className="py-12 px-4">
       <div className="max-w-4xl mx-auto">
         <h1 className="text-2xl font-bold text-[#1a1a2e] text-center mb-2">اختر باقتك</h1>
         <p className="text-sm text-gray-500 text-center mb-10">
@@ -91,5 +94,6 @@ export default function PricingPage() {
         )}
       </div>
     </div>
+   </div>
   );
 }
