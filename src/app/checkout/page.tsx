@@ -31,16 +31,33 @@ function CheckoutForm() {
 
   const [userId, setUserId] = useState<string | null>(null);
   const [formReady, setFormReady] = useState(false);
+  const [checkingSession, setCheckingSession] = useState(true);
 
   const supabase = createSupabaseBrowserClient();
   const price = PLAN_PRICES_HALALAS[plan] ?? PLAN_PRICES_HALALAS.basic;
 
   useEffect(() => {
-    // نحتاج هوية المستخدم الحالي لتمريرها ضمن metadata الدفع
-    // حتى تستطيع الدالة (webhook) معرفة لأي عميل تنتمي هذه الدفعة
-    supabase.auth.getUser().then(({ data }) => {
+    async function resolveSession() {
+      // حالة معروفة بـ Supabase: قد يتجاوز رابط تأكيد البريد صفحة
+      // /auth/callback المخصصة ويوصل مباشرة هنا مع ?code= بالرابط
+      // (خصوصاً لو القالب الافتراضي للإيميل يستخدم Site URL).
+      // نتعامل مع الحالتين: بوجود code نحتاج نستبدله بجلسة فعلية،
+      // وبدونه نفحص الجلسة الحالية مباشرة كما كان الكود يفعل سابقاً.
+      const code = searchParams.get("code");
+
+      if (code) {
+        const { error } = await supabase.auth.exchangeCodeForSession(code);
+        if (error) {
+          console.error("Failed to exchange code for session:", error);
+        }
+      }
+
+      const { data } = await supabase.auth.getUser();
       if (data.user) setUserId(data.user.id);
-    });
+      setCheckingSession(false);
+    }
+
+    resolveSession();
   }, []);
 
   function initMoyasarForm() {
@@ -91,7 +108,9 @@ function CheckoutForm() {
           <p className="text-lg font-bold text-[#1a1a2e]">{price / 100} ريال</p>
         </div>
 
-        {!userId ? (
+        {checkingSession ? (
+          <p className="text-sm text-gray-400 text-center py-6">جاري التحقق من حسابك...</p>
+        ) : !userId ? (
           <p className="text-sm text-gray-500 text-center py-6">
             يجب تسجيل الدخول أولاً لإتمام الدفع.{" "}
             <a href={`/signup?plan=${plan}`} className="text-[#1a1a2e] font-bold">
