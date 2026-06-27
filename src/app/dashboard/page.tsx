@@ -1,6 +1,7 @@
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 import { redirect } from "next/navigation";
 import AppHeader from "@/components/AppHeader";
+import AddBranchForm from "@/components/AddBranchForm";
 
 export default async function DashboardPage() {
   const supabase = createSupabaseServerClient();
@@ -18,12 +19,13 @@ export default async function DashboardPage() {
   // لو الحساب لسة pending (لم يدفع)، نوجّهه لصفحة الباقات
   if (!client || client.subscription_status !== "active") {
     redirect("/pricing");
+    const canUseX = client.plan === "pro" || client.plan === "enterprise";
   }
 
   // جلب فروع العميل
   const { data: branches } = await supabase
     .from("branches")
-    .select("id, name")
+    .select("id, name, google_maps_url, x_handle")
     .eq("client_id", client.id);
 
   const branchIds = (branches ?? []).map((b) => b.id);
@@ -52,7 +54,9 @@ export default async function DashboardPage() {
           <p className="text-xs text-gray-400">لوحة التحكم</p>
           <h1 className="text-2xl font-bold text-[#1a1a2e]">{client.name}</h1>
         </div>
-
+        
+        <AddBranchForm clientId={client.id} canUseX={canUseX} />
+        
         {(!branches || branches.length === 0) && (
           <div className="bg-white rounded-2xl border border-[#eeede8] p-8 text-center">
             <p className="text-gray-600">لا توجد فروع مضافة بعد.</p>
