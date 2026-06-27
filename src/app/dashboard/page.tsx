@@ -17,10 +17,15 @@ export default async function DashboardPage() {
     .single();
 
   // لو الحساب لسة pending (لم يدفع)، نوجّهه لصفحة الباقات
-  if (!client || client.subscription_status !== "active") {
-    redirect("/pricing");
-    const canUseX = client.plan === "pro" || client.plan === "enterprise";
+  if (!client) {
+  redirect("/pricing");
   }
+
+  if (client.subscription_status !== "active") {
+  redirect("/pricing");
+  }
+
+  const canUseX = client.plan === "pro" || client.plan === "enterprise";
 
   // جلب فروع العميل
   const { data: branches } = await supabase
