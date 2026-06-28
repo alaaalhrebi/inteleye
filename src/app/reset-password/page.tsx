@@ -44,7 +44,7 @@ export default function ResetPasswordPage() {
         </h1>
 
         <p className="text-sm text-gray-500 mb-6">
-          أدخلي بريدك الإلكتروني وسنرسل لك رابطًا لتعيين كلمة مرور جديدة.
+          أدخل بريدك الإلكتروني وسنرسل لك رابطًا لتعيين كلمة مرور جديدة.
         </p>
 
         <form onSubmit={handleReset} className="space-y-4">
