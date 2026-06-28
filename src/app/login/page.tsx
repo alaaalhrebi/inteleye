@@ -61,12 +61,7 @@ function LoginForm() {
       <div className="w-full max-w-sm bg-white rounded-2xl border border-[#eeede8] p-8">
         <h1 className="text-xl font-bold text-[#1a1a2e] mb-1">تسجيل الدخول</h1>
         <p className="text-sm text-gray-500 mb-6">أدخل بياناتك لمتابعة اشتراكك</p>
-        <a
-        href="/reset-password"
-        className="block text-right text-sm text-[#1a1a2e] font-semibold hover:underline"
-        >
-          نسيت كلمة المرور؟
-        </a>
+        
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm text-gray-700 mb-1">البريد الإلكتروني</label>
@@ -92,7 +87,12 @@ function LoginForm() {
               placeholder="••••••••"
             />
           </div>
-
+        <a
+        href="/reset-password"
+        className="block text-right text-sm text-[#1a1a2e] font-semibold hover:underline"
+        >
+          نسيت كلمة المرور؟
+        </a>
           {error && (
             <p className="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">
               {error}
