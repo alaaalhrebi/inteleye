@@ -104,7 +104,7 @@ function LoginForm() {
             disabled={loading}
             className="w-full bg-[#1a1a2e] text-white rounded-lg py-2.5 text-sm font-bold disabled:opacity-60"
           >
-            {loading ? "جاري الدخول..." : "دخول والمتابعة للدفع"}
+            {loading ? "جاري الدخول..." : "دخول "}
           </button>
         </form>
 
