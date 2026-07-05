@@ -7,6 +7,7 @@ import Pricing from "@/components/Pricing/Pricing";
 import Testimonials from "@/components/Testimonials";
 import Footer from "@/components/Footer";
 import AnimatedText from "@/components/AnimatedText";
+import Pricing from "@/components/Pricing/Pricing";
 
 export default function Home() {
   return (
