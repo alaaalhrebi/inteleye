@@ -33,7 +33,6 @@ export default function Navbar() {
         <div className="flex flex-row-reverse items-center gap-3">
   <img
     src="/logo.png"
-    alt="INTELEYE"
     className="w-30 h-30 object-contain"
   />
 
