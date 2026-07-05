@@ -33,7 +33,7 @@ export default function Navbar() {
         <div className="flex flex-row-reverse items-center gap-3">
   <img
     src="/logo.png"
-    className="w-7 h-7 object-contain"
+    className="w-14 h-14 object-contain"
   />
 
   
