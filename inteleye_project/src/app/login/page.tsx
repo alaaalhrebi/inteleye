@@ -26,27 +26,78 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
 
-  async function handleLogin(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
+ async function handleLogin(e: React.FormEvent<HTMLFormElement>) {
+  e.preventDefault();
 
-    setLoading(true);
-    setMessage("");
+  setLoading(true);
+  setMessage("");
 
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email,
+    password,
+  });
 
+  if (error) {
     setLoading(false);
-
-    if (error) {
-      setMessage("البريد الإلكتروني أو كلمة المرور غير صحيحة");
-      return;
-    }
-
-    router.push("/dashboard");
+    setMessage("البريد الإلكتروني أو كلمة المرور غير صحيحة");
+    return;
   }
 
+  const userId = data.user?.id;
+
+  if (!userId) {
+    setLoading(false);
+    setMessage("لم يتم العثور على بيانات المستخدم");
+    return;
+  }
+
+  const { data: client, error: clientError } = await supabase
+    .from("clients")
+    .select("id, subscription_status, plan")
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (clientError) {
+    setLoading(false);
+    setMessage("حدث خطأ أثناء التحقق من بيانات العميل");
+    return;
+  }
+
+  if (!client) {
+    setLoading(false);
+    router.push("/signup");
+    return;
+  }
+
+  const status = client.subscription_status?.toLowerCase();
+
+  if (status !== "active" && status !== "paid" && status !== "completed") {
+  setLoading(false);
+  router.push(`/checkout?plan=${client.plan || "basic"}`);
+  return;
+  }
+
+  const { data: platforms, error: platformsError } = await supabase
+    .from("client_platforms")
+    .select("id")
+    .eq("client_id", client.id)
+    .limit(1);
+
+  setLoading(false);
+
+  if (platformsError) {
+    setMessage("حدث خطأ أثناء التحقق من المنصات");
+    return;
+  }
+
+  if (!platforms || platforms.length === 0) {
+    router.push("/onboarding/platforms");
+    return;
+    }
+
+  router.push("/dashboard");
+  }
+  
   return (
     <main
       dir="rtl"
