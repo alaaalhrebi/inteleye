@@ -30,17 +30,17 @@ export default function Navbar() {
           "
         >
           {/* Logo */}
-          <div className="flex items-center gap-3">
-            <img
-              src="/logo.png"
-              alt="INTELEYE"
-              className="w-14 h-14 object-contain"
-            />
+        <div className="flex flex-row-reverse items-center gap-3">
+  <img
+    src="/logo.png"
+    alt="INTELEYE"
+    className="w-36 h-36 object-contain"
+  />
 
-            <h2 className="text-2xl font-extrabold tracking-[0.15em] text-[#D4AF37]">
-              INTELEYE
-            </h2>
-          </div>
+  <h2 className="text-2xl font-extrabold tracking-[0.15em] text-[#D4AF37]">
+    INTELEYE
+  </h2>
+</div>
 
           {/* Desktop Menu */}
           <nav className="hidden lg:flex items-center gap-10">
