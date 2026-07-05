@@ -4,6 +4,20 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --color-navy: #374375;
+  --color-cloud: #FFFCF5;
+  --color-periwinkle: #BABDE2;
+  --color-maroon: #895159;
+  --color-peach: #DFAEA1;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
 body {
   font-family: 'Tajawal', system-ui, sans-serif;
+  background: var(--color-cloud);
+  color: var(--color-navy);
 }
