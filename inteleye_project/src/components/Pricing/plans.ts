@@ -12,9 +12,9 @@ export type Plan = {
 
 export const plans: Plan[] = [
   {
-    name: "Starter",
+    name: "Basic",
 
-    price: "299",
+    price: "199",
 
     description:
       "مثالية للمنشآت الصغيرة التي ترغب في متابعة تقييمات العملاء وتحليلها بالذكاء الاصطناعي.",
@@ -30,9 +30,9 @@ export const plans: Plan[] = [
   },
 
   {
-    name: "Professional",
+    name: "Pro",
 
-    price: "799",
+    price: "499",
 
     featured: true,
 
@@ -54,7 +54,7 @@ export const plans: Plan[] = [
   {
     name: "Enterprise",
 
-    price: "حسب الطلب",
+    price: "999",
 
     description:
       "حلول مخصصة للمؤسسات الكبيرة مع تكاملات API ولوحات معلومات مخصصة ودعم كامل.",
