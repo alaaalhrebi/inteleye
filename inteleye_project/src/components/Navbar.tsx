@@ -34,12 +34,10 @@ export default function Navbar() {
   <img
     src="/logo.png"
     alt="INTELEYE"
-    className="w-36 h-36 object-contain"
+    className="w-14 h-14 object-contain"
   />
 
-  <h2 className="text-2xl font-extrabold tracking-[0.15em] text-[#D4AF37]">
-    INTELEYE
-  </h2>
+  
 </div>
 
           {/* Desktop Menu */}
