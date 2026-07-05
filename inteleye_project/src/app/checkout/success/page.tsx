@@ -51,7 +51,7 @@ export default function CheckoutSuccessPage() {
           </>
         ) : (
           <>
-            <p className="text-lg font-bold text-green-600 mb-2">تم تفعيل حسابك ✓</p>
+            <p className="text-lg font-bold text-[#895159] mb-2">تم تفعيل حسابك ✓</p>
             <p className="text-sm text-gray-500">جاري تحويلك إلى لوحة التحكم...</p>
           </>
         )}

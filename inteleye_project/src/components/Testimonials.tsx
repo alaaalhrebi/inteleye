@@ -38,7 +38,7 @@ export default function Testimonials() {
           className="text-center max-w-3xl mx-auto"
         >
 
-          <span className="inline-block rounded-full bg-green-100 text-green-700 px-5 py-2 text-sm font-medium">
+          <span className="inline-block rounded-full bg-[#BABDE2]/40 text-[#374375] px-5 py-2 text-sm font-medium">
 
             آراء العملاء
 

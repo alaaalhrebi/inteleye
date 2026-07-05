@@ -81,7 +81,7 @@ export default function PricingCard({ plan }: Props) {
           <span
             className={`mb-2 ${
               plan.featured
-                ? "text-green-100"
+                ? "text-[#FFFCF5]/90"
                 : "text-gray-500"
             }`}
           >
@@ -95,7 +95,7 @@ export default function PricingCard({ plan }: Props) {
         <p
           className={`mt-6 leading-8 ${
             plan.featured
-              ? "text-green-50"
+              ? "text-[#FFFCF5]"
               : "text-gray-600"
           }`}
         >

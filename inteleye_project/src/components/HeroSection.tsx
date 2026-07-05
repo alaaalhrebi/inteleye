@@ -13,7 +13,7 @@ export default function HeroSection() {
 
       <div className="absolute inset-0 -z-10">
 
-        <div className="absolute top-0 left-0 w-[500px] h-[500px] bg-green-100 rounded-full blur-[180px] opacity-60" />
+        <div className="absolute top-0 left-0 w-[500px] h-[500px] bg-[#BABDE2]/40 rounded-full blur-[180px] opacity-60" />
 
         <div className="absolute bottom-0 right-0 w-[450px] h-[450px] bg-yellow-100 rounded-full blur-[170px] opacity-60" />
 
@@ -29,7 +29,7 @@ export default function HeroSection() {
           transition={{ duration: .7 }}
         >
 
-          <div className="inline-flex items-center gap-2 rounded-full bg-green-100 text-green-700 px-4 py-2 mb-8">
+          <div className="inline-flex items-center gap-2 rounded-full bg-[#BABDE2]/40 text-[#374375] px-4 py-2 mb-8">
 
             <Sparkles size={16} />
 

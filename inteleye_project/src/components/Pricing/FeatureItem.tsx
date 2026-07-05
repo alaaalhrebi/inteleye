@@ -30,7 +30,7 @@ export default function FeatureItem({
 
       <p
         className={`leading-7 ${
-          featured ? "text-green-50" : "text-gray-600"
+          featured ? "text-[#FFFCF5]" : "text-gray-600"
         }`}
       >
         {text}

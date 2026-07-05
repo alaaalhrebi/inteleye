@@ -35,7 +35,7 @@ export default function Footer() {
 
                 </h2>
 
-                <p className="text-green-200 text-sm">
+                <p className="text-[#BABDE2] text-sm">
 
                   AI Reputation Platform
 
@@ -45,7 +45,7 @@ export default function Footer() {
 
             </div>
 
-            <p className="mt-8 leading-8 text-green-100">
+            <p className="mt-8 leading-8 text-[#FFFCF5]/90">
 
               منصة ذكاء اصطناعي تساعد الشركات على تحليل تقييمات العملاء،
               اكتشاف المشكلات المتكررة، إصدار تقارير ذكية،
@@ -65,7 +65,7 @@ export default function Footer() {
 
             </h3>
 
-            <ul className="space-y-4 text-green-100">
+            <ul className="space-y-4 text-[#FFFCF5]/90">
 
               <li>
                 <a href="#">الرئيسية</a>
@@ -97,7 +97,7 @@ export default function Footer() {
 
             </h3>
 
-            <div className="space-y-5 text-green-100">
+            <div className="space-y-5 text-[#FFFCF5]/90">
 
               <div className="flex items-center gap-3">
 
@@ -173,7 +173,7 @@ export default function Footer() {
                   px-4
                   py-3
                   outline-none
-                  placeholder:text-green-200
+                  placeholder:text-[#BABDE2]
                 "
               />
 
@@ -201,7 +201,7 @@ export default function Footer() {
 
         </div>
 
-        <div className="mt-16 border-t border-white/10 pt-8 flex flex-col md:flex-row items-center justify-between gap-4 text-green-200 text-sm">
+        <div className="mt-16 border-t border-white/10 pt-8 flex flex-col md:flex-row items-center justify-between gap-4 text-[#BABDE2] text-sm">
 
           <p>
 

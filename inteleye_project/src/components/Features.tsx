@@ -16,7 +16,7 @@ const features = [
     title: "تحليل ذكي للتقييمات",
     description:
       "يحلل Intel Eye آلاف التعليقات باستخدام الذكاء الاصطناعي ويستخرج أهم الأفكار خلال ثوانٍ.",
-    color: "bg-green-100 text-green-700",
+    color: "bg-[#BABDE2]/40 text-[#374375]",
   },
   {
     icon: MessageSquare,
@@ -51,7 +51,7 @@ const features = [
     title: "توصيات AI",
     description:
       "يقترح خطوات عملية لتحسين تجربة العملاء ورفع متوسط التقييم.",
-    color: "bg-emerald-100 text-emerald-700",
+    color: "bg-[#DFAEA1]/40 text-[#374375]",
   },
 ];
 
@@ -73,7 +73,7 @@ export default function Features() {
           className="text-center max-w-3xl mx-auto"
         >
 
-          <span className="inline-block rounded-full bg-green-100 text-green-700 px-5 py-2 text-sm font-medium">
+          <span className="inline-block rounded-full bg-[#BABDE2]/40 text-[#374375] px-5 py-2 text-sm font-medium">
 
             لماذا Intel Eye؟
 

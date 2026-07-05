@@ -40,7 +40,7 @@ export default function CTA() {
 
             </h2>
 
-            <p className="mx-auto mt-8 max-w-3xl text-xl leading-9 text-green-50">
+            <p className="mx-auto mt-8 max-w-3xl text-xl leading-9 text-[#FFFCF5]">
 
               دع الذكاء الاصطناعي يتولى تحليل التعليقات،
               اكتشاف المشكلات، واقتراح أفضل الحلول
@@ -76,7 +76,7 @@ export default function CTA() {
 
             </div>
 
-            <div className="mt-12 flex flex-wrap justify-center gap-10 text-sm text-green-100">
+            <div className="mt-12 flex flex-wrap justify-center gap-10 text-sm text-[#FFFCF5]/90">
 
               <div>✔ لا تحتاج بطاقة ائتمانية</div>
 

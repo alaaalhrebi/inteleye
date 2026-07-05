@@ -64,7 +64,7 @@ export default function ResetPasswordPage() {
           </div>
 
           {message && (
-            <p className="text-sm text-green-700 bg-green-50 rounded-lg px-3 py-2">
+            <p className="text-sm text-[#374375] bg-[#FFFCF5] rounded-lg px-3 py-2">
               {message}
             </p>
           )}

@@ -27,15 +27,15 @@ const stats = [
     icon: MessageSquareText,
     value: "850K+",
     label: "تعليق تم تحليله",
-    color: "text-green-600",
-    bg: "bg-green-50",
+    color: "text-[#895159]",
+    bg: "bg-[#FFFCF5]",
   },
   {
     icon: TrendingUp,
     value: "98%",
     label: "دقة تحليل الذكاء الاصطناعي",
-    color: "text-emerald-600",
-    bg: "bg-emerald-50",
+    color: "text-[#895159]",
+    bg: "bg-[#BABDE2]/30",
   },
 ];
 
@@ -53,7 +53,7 @@ export default function Stats() {
           className="text-center mb-16"
         >
 
-          <span className="inline-block rounded-full bg-green-100 text-green-700 px-5 py-2 mb-6">
+          <span className="inline-block rounded-full bg-[#BABDE2]/40 text-[#374375] px-5 py-2 mb-6">
 
             أرقام تتحدث
 

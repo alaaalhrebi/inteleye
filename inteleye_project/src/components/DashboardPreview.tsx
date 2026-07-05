@@ -36,7 +36,7 @@ export default function DashboardPreview() {
 
           </div>
 
-          <div className="w-3 h-3 rounded-full bg-green-300 animate-pulse" />
+          <div className="w-3 h-3 rounded-full bg-[#DFAEA1] animate-pulse" />
 
         </div>
 
@@ -54,10 +54,10 @@ export default function DashboardPreview() {
         />
 
         <Card
-          icon={<TrendingUp className="text-green-600" />}
+          icon={<TrendingUp className="text-[#895159]" />}
           value="+23%"
           title="نمو السمعة"
-          bg="bg-green-50"
+          bg="bg-[#FFFCF5]"
         />
 
         <Card
@@ -95,13 +95,13 @@ export default function DashboardPreview() {
           <Insight
             icon={<CheckCircle2 size={18} />}
             text="العملاء يشيدون بسرعة الرد على الاستفسارات."
-            color="text-green-600"
+            color="text-[#895159]"
           />
 
           <Insight
             icon={<TrendingUp size={18} />}
             text="تحسن التقييم العام بنسبة 23% خلال آخر شهر."
-            color="text-emerald-600"
+            color="text-[#895159]"
           />
 
         </div>

@@ -101,7 +101,7 @@ export default async function DashboardPage() {
                             ? "bg-red-50 text-red-800"
                             : report.alert_level === "warn"
                             ? "bg-amber-50 text-amber-800"
-                            : "bg-green-50 text-green-800"
+                            : "bg-[#FFFCF5] text-[#374375]"
                         }`}
                       >
                         {report.alert_text}
@@ -149,7 +149,7 @@ export default async function DashboardPage() {
 }
 
 function Metric({ label, value, tone }: { label: string; value: any; tone?: "good" | "bad" }) {
-  const color = tone === "bad" ? "text-red-600" : tone === "good" ? "text-green-600" : "text-[#1a1a2e]";
+  const color = tone === "bad" ? "text-red-600" : tone === "good" ? "text-[#895159]" : "text-[#1a1a2e]";
   return (
     <div className="bg-[#f9f8f5] rounded-lg p-3 text-center">
       <p className={`text-xl font-bold ${color}`}>{value}</p>
