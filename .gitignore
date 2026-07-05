@@ -1,0 +1,9 @@
+node_modules/
+inteleye_project/node_modules/
+.next/
+inteleye_project/.next/
+.env
+.env.local
+.vercel
+dist/
+build/
