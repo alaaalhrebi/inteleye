@@ -34,7 +34,7 @@ export default function Navbar() {
   <img
     src="/logo.png"
     alt="INTELEYE"
-    className="w-14 h-14 object-contain"
+    className="w-30 h-30 object-contain"
   />
 
   
