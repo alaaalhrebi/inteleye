@@ -34,22 +34,14 @@ export default function Navbar() {
           <div className="flex items-center gap-4">
 
             <img
-              src="/logo.png"
-              alt="Intel Eye"
-              className="w-12 h-12 object-contain"
-            />
+  src="/logo.png"
+  alt="INTELEYE"
+  className="w-9 h-9 object-contain"
+/>
 
-            <div>
-
-              <h2 className="text-[#16352B] font-bold text-xl">
-                Intel Eye
-              </h2>
-
-              <p className="text-xs text-gray-500">
-                AI Reputation Platform
-              </p>
-
-            </div>
+<h2 className="text-xl font-extrabold tracking-[0.2em] text-[#D4AF37]">
+  INTELEYE
+</h2>
 
           </div>
 
