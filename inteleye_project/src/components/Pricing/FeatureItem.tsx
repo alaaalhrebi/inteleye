@@ -21,8 +21,8 @@ export default function FeatureItem({
       <div
         className={`mt-1 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full ${
           featured
-            ? "bg-white text-[#176B52]"
-            : "bg-[#176B52] text-white"
+            ? "bg-white text-[#374375]"
+            : "bg-[#374375] text-white"
         }`}
       >
         <Check size={16} strokeWidth={3} />

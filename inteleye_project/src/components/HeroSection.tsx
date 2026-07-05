@@ -41,7 +41,7 @@ export default function HeroSection() {
 
             افهم تقييمات عملائك
 
-            <span className="text-[#176B52] block">
+            <span className="text-[#374375] block">
 
               واتخذ قرارات أذكى
 
@@ -129,7 +129,7 @@ function Stat({ number, title }: StatProps) {
   return (
     <div className="rounded-3xl bg-white border border-gray-100 shadow-lg p-6 text-center">
 
-      <h2 className="text-4xl font-bold text-[#176B52]">
+      <h2 className="text-4xl font-bold text-[#374375]">
 
         {number}
 

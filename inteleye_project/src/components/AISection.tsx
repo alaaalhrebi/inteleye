@@ -111,7 +111,7 @@ export default function AISection() {
 
               >
 
-                <div className="w-16 h-16 rounded-2xl bg-[#176B52] flex items-center justify-center text-white">
+                <div className="w-16 h-16 rounded-2xl bg-[#374375] flex items-center justify-center text-white">
 
                   <Icon size={30}/>
 
@@ -129,7 +129,7 @@ export default function AISection() {
 
                 </p>
 
-                <div className="mt-8 flex items-center gap-2 text-[#176B52] font-semibold">
+                <div className="mt-8 flex items-center gap-2 text-[#374375] font-semibold">
 
                   معرفة المزيد
 

@@ -242,7 +242,7 @@ function SocialIcon({ children }: SocialProps) {
         flex
         items-center
         justify-center
-        hover:bg-[#176B52]
+        hover:bg-[#374375]
         transition
       "
     >

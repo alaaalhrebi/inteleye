@@ -59,28 +59,28 @@ export default function Navbar() {
 
             <a
               href="#"
-              className="text-gray-700 hover:text-[#176B52] transition"
+              className="text-gray-700 hover:text-[#374375] transition"
             >
               الرئيسية
             </a>
 
             <a
               href="#features"
-              className="text-gray-700 hover:text-[#176B52] transition"
+              className="text-gray-700 hover:text-[#374375] transition"
             >
               المميزات
             </a>
 
             <a
               href="#pricing"
-              className="text-gray-700 hover:text-[#176B52] transition"
+              className="text-gray-700 hover:text-[#374375] transition"
             >
               الأسعار
             </a>
 
             <a
               href="#contact"
-              className="text-gray-700 hover:text-[#176B52] transition"
+              className="text-gray-700 hover:text-[#374375] transition"
             >
               تواصل
             </a>

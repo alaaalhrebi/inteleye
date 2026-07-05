@@ -20,7 +20,7 @@ export default function DashboardPreview() {
     >
       {/* Header */}
 
-      <div className="px-8 py-6 border-b bg-gradient-to-r from-[#176B52] to-[#1E8A68] text-white">
+      <div className="px-8 py-6 border-b bg-gradient-to-r from-[#374375] to-[#1E8A68] text-white">
 
         <div className="flex justify-between items-center">
 
@@ -126,7 +126,7 @@ export default function DashboardPreview() {
               transition={{
                 delay: i * 0.08,
               }}
-              className="flex-1 rounded-t-xl bg-gradient-to-t from-[#176B52] to-[#34D399]"
+              className="flex-1 rounded-t-xl bg-gradient-to-t from-[#374375] to-[#34D399]"
             />
           ))}
 

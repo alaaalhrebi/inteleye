@@ -15,7 +15,7 @@ export default function CTA() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
-          className="relative overflow-hidden rounded-[40px] bg-gradient-to-r from-[#176B52] via-[#1D7A5D] to-[#14523F] p-16 text-center text-white shadow-2xl"
+          className="relative overflow-hidden rounded-[40px] bg-gradient-to-r from-[#374375] via-[#1D7A5D] to-[#14523F] p-16 text-center text-white shadow-2xl"
         >
 
           {/* Glow */}

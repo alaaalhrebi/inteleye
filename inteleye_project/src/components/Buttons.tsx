@@ -24,7 +24,7 @@ export function PrimaryButton({
       items-center
       gap-3
       rounded-full
-      bg-[#176B52]
+      bg-[#374375]
       px-7
       py-3.5
       text-white
@@ -32,7 +32,7 @@ export function PrimaryButton({
       shadow-lg
       transition-all
       duration-300
-      hover:bg-[#125540]
+      hover:bg-[#895159]
       hover:shadow-2xl
       "
     >
@@ -61,15 +61,15 @@ export function SecondaryButton({
       justify-center
       rounded-full
       border
-      border-[#176B52]
+      border-[#374375]
       bg-white
       px-7
       py-3.5
       font-semibold
-      text-[#176B52]
+      text-[#374375]
       transition-all
       duration-300
-      hover:bg-[#176B52]
+      hover:bg-[#374375]
       hover:text-white
       "
     >

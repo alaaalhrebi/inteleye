@@ -43,7 +43,7 @@ export default function PricingCard({ plan }: Props) {
           transition-all
           ${
             plan.featured
-              ? "border-[#176B52] bg-[#176B52] text-white"
+              ? "border-[#374375] bg-[#374375] text-white"
               : "border-gray-200 bg-white"
           }
         `}
@@ -119,8 +119,8 @@ export default function PricingCard({ plan }: Props) {
             duration-300
             ${
               plan.featured
-                ? "bg-white text-[#176B52] hover:scale-[1.02]"
-                : "bg-[#176B52] text-white hover:bg-[#14523F]"
+                ? "bg-white text-[#374375] hover:scale-[1.02]"
+                : "bg-[#374375] text-white hover:bg-[#14523F]"
             }
           `}
         >
@@ -165,7 +165,7 @@ export default function PricingCard({ plan }: Props) {
             ${
               plan.featured
                 ? "bg-[#D4AF37]"
-                : "bg-[#176B52]"
+                : "bg-[#374375]"
             }
           `}
         />
