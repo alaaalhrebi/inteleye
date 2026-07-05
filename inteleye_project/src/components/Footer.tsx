@@ -32,12 +32,10 @@ export default function Footer() {
             <img
               src="/logo.png"
               alt="INTELEYE"
-              className="w-36 h-36 object-contain"
+              className="w-18 h-18 object-contain"
             />
 
-            <h2 className="mt-4 text-3xl font-extrabold tracking-[0.18em] text-[#D4AF37]">
-              INTELEYE
-            </h2>
+            
 
             <p className="mt-6 max-w-sm leading-8 text-[#FFFCF5]/90">
               منصة ذكاء اصطناعي تساعد الشركات على تحليل تقييمات العملاء،
