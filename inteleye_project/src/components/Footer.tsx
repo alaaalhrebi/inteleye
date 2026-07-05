@@ -31,8 +31,7 @@ export default function Footer() {
 
             <img
               src="/logo.png"
-              alt="INTELEYE"
-              className="w-18 h-18 object-contain"
+              className="w-30 h-30 object-contain"
             />
 
             
