@@ -3,6 +3,7 @@
 import { Menu, ArrowRight } from "lucide-react";
 import { motion } from "framer-motion";
 import { PrimaryButton } from "./Buttons";
+import Link from "next/link";
 
 export default function Navbar() {
   return (
@@ -91,9 +92,14 @@ export default function Navbar() {
           <div className="flex items-center gap-4">
 
             <div className="hidden md:block">
-              <PrimaryButton>
+              <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
+              <Link
+                href="/login"
+                className="inline-flex items-center gap-2 rounded-full bg-emerald-800 px-8 py-4 text-white font-bold shadow-lg hover:bg-emerald-900 transition"
+              >
                 ابدأ التجربة
-              </PrimaryButton>
+              </Link>
+              </motion.div>
             </div>
 
             <button
