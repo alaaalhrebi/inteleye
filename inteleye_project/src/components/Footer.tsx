@@ -21,27 +21,15 @@ export default function Footer() {
 
             <div className="flex items-center gap-4">
 
-              <img
-                src="/logo.png"
-                alt="Intel Eye"
-                className="w-14 h-14 object-contain"
-              />
+            <img
+  src="/logo.png"
+  alt="INTELEYE"
+  className="w-10 h-10 object-contain"
+/>
 
-              <div>
-
-                <h2 className="text-2xl font-bold">
-
-                  Intel Eye
-
-                </h2>
-
-                <p className="text-[#BABDE2] text-sm">
-
-                  AI Reputation Platform
-
-                </p>
-
-              </div>
+<h2 className="text-2xl font-extrabold tracking-[0.2em] text-[#D4AF37]">
+  INTELEYE
+</h2>
 
             </div>
 
