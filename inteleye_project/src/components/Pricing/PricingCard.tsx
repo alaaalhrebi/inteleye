@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { motion } from "framer-motion";
 import SpotlightBorder from "../SpotlightBorder";
 import FeatureItem from "./FeatureItem";
@@ -21,10 +22,21 @@ type Props = {
   plan: Plan;
 };
 
+function getPlanSlug(planName: string) {
+  const name = planName.toLowerCase();
+
+  if (name.includes("basic")) return "basic";
+  if (name.includes("pro")) return "pro";
+  if (name.includes("enterprise")) return "enterprise";
+
+  return "basic";
+}
+
 export default function PricingCard({ plan }: Props) {
+  const planSlug = getPlanSlug(plan.name);
+
   return (
     <SpotlightBorder className="group h-full">
-
       <motion.div
         whileHover={{
           y: -8,
@@ -48,15 +60,11 @@ export default function PricingCard({ plan }: Props) {
           }
         `}
       >
-        {/* Badge */}
-
         {plan.featured && (
           <div className="absolute right-8 top-8 rounded-full bg-[#D4AF37] px-4 py-1 text-sm font-semibold text-black">
             الأكثر طلبًا
           </div>
         )}
-
-        {/* Title */}
 
         <h3
           className={`text-2xl font-bold ${
@@ -66,10 +74,7 @@ export default function PricingCard({ plan }: Props) {
           {plan.name}
         </h3>
 
-        {/* Price */}
-
         <div className="mt-8 flex items-end gap-2">
-
           <span
             className={`text-6xl font-bold ${
               plan.featured ? "text-white" : "text-[#16352B]"
@@ -80,31 +85,23 @@ export default function PricingCard({ plan }: Props) {
 
           <span
             className={`mb-2 ${
-              plan.featured
-                ? "text-[#FFFCF5]/90"
-                : "text-gray-500"
+              plan.featured ? "text-[#FFFCF5]/90" : "text-gray-500"
             }`}
           >
             ريال / شهر
           </span>
-
         </div>
-
-        {/* Description */}
 
         <p
           className={`mt-6 leading-8 ${
-            plan.featured
-              ? "text-[#FFFCF5]"
-              : "text-gray-600"
+            plan.featured ? "text-[#FFFCF5]" : "text-gray-600"
           }`}
         >
           {plan.description}
         </p>
 
-        {/* Button */}
-
-        <button
+        <Link
+          href={`/signup?plan=${planSlug}`}
           className={`
             mt-10
             flex
@@ -120,16 +117,12 @@ export default function PricingCard({ plan }: Props) {
             ${
               plan.featured
                 ? "bg-white text-[#374375] hover:scale-[1.02]"
-                : "bg-[#374375] text-white hover:bg-[#14523F]"
+                : "bg-[#374375] text-white hover:bg-[#895159]"
             }
           `}
         >
-          <AnimatedText>
-            ابدأ الآن
-          </AnimatedText>
-        </button>
-
-        {/* Divider */}
+          <AnimatedText>ابدأ الآن</AnimatedText>
+        </Link>
 
         <div
           className={`my-10 ${
@@ -139,10 +132,7 @@ export default function PricingCard({ plan }: Props) {
           }`}
         />
 
-        {/* Features */}
-
         <div className="space-y-5">
-
           {plan.features.map((feature, index) => (
             <FeatureItem
               key={index}
@@ -150,10 +140,7 @@ export default function PricingCard({ plan }: Props) {
               featured={plan.featured}
             />
           ))}
-
         </div>
-
-        {/* Bottom Glow */}
 
         <div
           className={`
@@ -162,16 +149,10 @@ export default function PricingCard({ plan }: Props) {
             bottom-0
             h-1
             rounded-b-[32px]
-            ${
-              plan.featured
-                ? "bg-[#D4AF37]"
-                : "bg-[#374375]"
-            }
+            ${plan.featured ? "bg-[#D4AF37]" : "bg-[#374375]"}
           `}
         />
-
       </motion.div>
-
     </SpotlightBorder>
   );
 }
