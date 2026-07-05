@@ -1,8 +1,7 @@
 "use client";
 
-import { Menu, ArrowRight } from "lucide-react";
+import { Menu } from "lucide-react";
 import { motion } from "framer-motion";
-import { PrimaryButton } from "./Buttons";
 import Link from "next/link";
 
 export default function Navbar() {
@@ -14,41 +13,37 @@ export default function Navbar() {
       className="fixed top-0 left-0 w-full z-50"
     >
       <div className="mx-auto max-w-7xl px-6 pt-5">
-
-        <div className="
-          flex
-          items-center
-          justify-between
-          rounded-2xl
-          border
-          border-white/60
-          bg-white/80
-          backdrop-blur-xl
-          shadow-lg
-          px-7
-          py-4
-        ">
-
+        <div
+          className="
+            flex
+            flex-row-reverse
+            items-center
+            justify-between
+            rounded-2xl
+            border
+            border-white/60
+            bg-white/80
+            backdrop-blur-xl
+            shadow-lg
+            px-7
+            py-4
+          "
+        >
           {/* Logo */}
-
-          <div className="flex items-center gap-4">
-
+          <div className="flex items-center gap-3">
             <img
-  src="/logo.png"
-  alt="INTELEYE"
-  className="w-9 h-9 object-contain"
-/>
+              src="/logo.png"
+              alt="INTELEYE"
+              className="w-14 h-14 object-contain"
+            />
 
-<h2 className="text-xl font-extrabold tracking-[0.2em] text-[#D4AF37]">
-  INTELEYE
-</h2>
-
+            <h2 className="text-2xl font-extrabold tracking-[0.15em] text-[#D4AF37]">
+              INTELEYE
+            </h2>
           </div>
 
           {/* Desktop Menu */}
-
           <nav className="hidden lg:flex items-center gap-10">
-
             <a
               href="#"
               className="text-gray-700 hover:text-[#374375] transition"
@@ -76,21 +71,21 @@ export default function Navbar() {
             >
               تواصل
             </a>
-
           </nav>
 
-          {/* Right Side */}
-
+          {/* Login */}
           <div className="flex items-center gap-4">
-
             <div className="hidden md:block">
-              <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
-              <Link
-                href="/login"
-                className="inline-flex items-center gap-2 rounded-full bg-[#374375] px-8 py-4 text-white font-bold shadow-lg hover:bg-[#895159] transition"
+              <motion.div
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.97 }}
               >
-                تسجيل الدخول
-              </Link>
+                <Link
+                  href="/login"
+                  className="inline-flex items-center rounded-full bg-[#374375] px-8 py-4 text-white font-bold shadow-lg hover:bg-[#895159] transition"
+                >
+                  تسجيل الدخول
+                </Link>
               </motion.div>
             </div>
 
@@ -106,11 +101,8 @@ export default function Navbar() {
             >
               <Menu size={22} />
             </button>
-
           </div>
-
         </div>
-
       </div>
     </motion.header>
   );
