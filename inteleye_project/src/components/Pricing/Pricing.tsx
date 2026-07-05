@@ -1,3 +1,5 @@
+"use client";
+
 import { motion } from "framer-motion";
 import PricingCard from "./PricingCard";
 import { plans } from "./plans";

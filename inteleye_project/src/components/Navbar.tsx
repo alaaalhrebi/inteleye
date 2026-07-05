@@ -1,3 +1,5 @@
+"use client";
+
 import { Menu, ArrowRight } from "lucide-react";
 import { motion } from "framer-motion";
 import { PrimaryButton } from "./Buttons";

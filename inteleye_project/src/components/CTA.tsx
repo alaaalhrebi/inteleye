@@ -1,3 +1,5 @@
+"use client";
+
 import { motion } from "framer-motion";
 import { ArrowRight, PlayCircle } from "lucide-react";
 import { PrimaryButton, SecondaryButton } from "./Buttons";
