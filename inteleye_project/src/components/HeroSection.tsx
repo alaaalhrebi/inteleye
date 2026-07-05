@@ -59,11 +59,9 @@ export default function HeroSection() {
 
           <div className="mt-10 flex flex-wrap gap-5">
 
-            <PrimaryButton>
-
-              ابدأ التجربة
-
-            </PrimaryButton>
+           <PrimaryButton href="/login">
+            ابدأ التجربة
+           </PrimaryButton>
 
             <SecondaryButton>
 
