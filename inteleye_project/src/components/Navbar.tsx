@@ -30,13 +30,12 @@ export default function Navbar() {
           "
         >
           {/* Logo */}
-        <div className="flex flex-row-reverse items-center gap-3">
+        <<div className="flex flex-row-reverse items-center gap-3">
   <img
     src="/logo.png"
-    className="w-30 h-30 object-contain"
+    alt="Intel Eye"
+    className="h-16 w-auto object-contain"
   />
-
-  
 </div>
 
           {/* Desktop Menu */}
