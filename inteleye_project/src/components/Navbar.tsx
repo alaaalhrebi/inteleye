@@ -18,7 +18,7 @@ export default function Navbar() {
             <img
               src="/logo.png"
               alt="Intel Eye"
-              className="h-26 w-auto object-contain"
+              className="h-24 w-auto object-contain"
             />
           </div>
 
