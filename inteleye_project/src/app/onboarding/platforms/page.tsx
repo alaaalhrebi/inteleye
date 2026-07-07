@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import type { FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import {
   CheckCircle2,
@@ -32,11 +33,23 @@ const platforms = [
   },
 ];
 
+function getPlatformLimit(plan: string) {
+  const normalizedPlan = plan?.toLowerCase();
+
+  if (normalizedPlan === "enterprise") return 99;
+  if (normalizedPlan === "pro") return 2;
+
+  return 1;
+}
+
 export default function PlatformsOnboardingPage() {
   const router = useRouter();
-  const supabase = createSupabaseBrowserClient();
+  const supabase = useMemo(() => createSupabaseBrowserClient(), []);
 
   const [clientId, setClientId] = useState<number | null>(null);
+  const [clientPlan, setClientPlan] = useState("basic");
+  const [existingPlatformsCount, setExistingPlatformsCount] = useState(0);
+
   const [selectedPlatform, setSelectedPlatform] = useState("google_maps");
   const [platformUrl, setPlatformUrl] = useState("");
   const [username, setUsername] = useState("");
@@ -56,13 +69,13 @@ export default function PlatformsOnboardingPage() {
         return;
       }
 
-      const { data: client, error } = await supabase
+      const { data: client, error: clientError } = await supabase
         .from("clients")
         .select("id, subscription_status, plan")
         .eq("user_id", user.id)
         .maybeSingle();
 
-      if (error || !client) {
+      if (clientError || !client) {
         router.push("/signup");
         return;
       }
@@ -74,14 +87,38 @@ export default function PlatformsOnboardingPage() {
         return;
       }
 
+      const { data: currentPlatforms, error: platformsError } = await supabase
+        .from("client_platforms")
+        .select("id, platform_name")
+        .eq("client_id", client.id)
+        .eq("is_active", true);
+
+      if (platformsError) {
+        setMessage("حدث خطأ أثناء التحقق من المنصات الحالية");
+        setLoading(false);
+        return;
+      }
+
+      const plan = client.plan || "basic";
+      const limit = getPlatformLimit(plan);
+      const count = currentPlatforms?.length ?? 0;
+
       setClientId(client.id);
+      setClientPlan(plan);
+      setExistingPlatformsCount(count);
+
+      if (count >= limit) {
+        router.push("/dashboard");
+        return;
+      }
+
       setLoading(false);
     }
 
     loadClient();
   }, [router, supabase]);
 
-  async function handleSave(e: React.FormEvent<HTMLFormElement>) {
+  async function handleSave(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
 
     if (!clientId) {
@@ -94,52 +131,58 @@ export default function PlatformsOnboardingPage() {
       return;
     }
 
+    const limit = getPlatformLimit(clientPlan);
+
+    if (existingPlatformsCount >= limit) {
+      setMessage("وصلت للحد الأعلى من المنصات في باقتك الحالية");
+      return;
+    }
+
     setSaving(true);
     setMessage("");
 
-    const { data: existingPlatform } = await supabase
-  .from("client_platforms")
-  .select("id")
-  .eq("client_id", clientId)
-  .eq("platform_name", selectedPlatform)
-  .eq("is_active", true)
-  .maybeSingle();
+    const { data: existingPlatform, error: existingError } = await supabase
+      .from("client_platforms")
+      .select("id")
+      .eq("client_id", clientId)
+      .eq("platform_name", selectedPlatform)
+      .eq("is_active", true)
+      .maybeSingle();
 
-if (existingPlatform) {
-  setLoading(false);
-  setMessage("هذه المنصة مضافة مسبقًا لهذا الحساب");
-  return;
-}
+    if (existingError) {
+      console.error("Check existing platform error:", existingError);
+      setMessage("حدث خطأ أثناء التحقق من المنصة");
+      setSaving(false);
+      return;
+    }
 
-const { error } = await supabase.from("client_platforms").insert({
-  client_id: clientId,
-  platform_name: selectedPlatform,
-  platform_url: platformUrl,
-  username: username || null,
-  business_activity: businessActivity || null,
-  is_active: true,
-});
+    if (existingPlatform) {
+      setMessage("هذه المنصة مضافة مسبقًا لهذا الحساب");
+      setSaving(false);
+      return;
+    }
 
-if (error) {
-  setLoading(false);
+    const { error: insertError } = await supabase.from("client_platforms").insert({
+      client_id: clientId,
+      platform_name: selectedPlatform,
+      platform_url: platformUrl.trim(),
+      username: username.trim() || null,
+      business_activity: businessActivity.trim() || null,
+      is_active: true,
+    });
 
-  if (error.code === "23505") {
-    setMessage("هذه المنصة مضافة مسبقًا لهذا الحساب");
-    return;
-  }
+    if (insertError) {
+      console.error("Save platform error:", insertError);
 
-  setMessage("حدث خطأ أثناء حفظ المنصة");
-  return;
-}
+      if (insertError.code === "23505") {
+        setMessage("هذه المنصة مضافة مسبقًا لهذا الحساب");
+        setSaving(false);
+        return;
+      }
 
-router.push("/dashboard");
-
-    setSaving(false);
-
-    if (error) {
-  console.error("Save platform error:", error);
-  setMessage(error.message);
-  return;
+      setMessage("حدث خطأ أثناء حفظ المنصة");
+      setSaving(false);
+      return;
     }
 
     router.push("/dashboard");
@@ -175,6 +218,10 @@ router.push("/dashboard");
           <p className="mt-4 text-lg text-gray-500">
             اختر المنصة الأولى التي تريد ربطها، ويمكنك إضافة منصات أخرى لاحقًا حسب باقتك.
           </p>
+
+          <p className="mt-3 text-sm font-bold text-[#895159]">
+            باقتك الحالية: {clientPlan} · المنصات المستخدمة: {existingPlatformsCount} / {getPlatformLimit(clientPlan)}
+          </p>
         </div>
 
         <form
@@ -206,6 +253,7 @@ router.push("/dashboard");
                   </div>
 
                   <h2 className="text-xl font-extrabold">{platform.name}</h2>
+
                   <p
                     className={`mt-3 leading-7 ${
                       active ? "text-white/80" : "text-gray-500"
