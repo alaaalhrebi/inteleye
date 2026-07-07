@@ -1,41 +1,60 @@
-// Middleware يشتغل على كل طلب — يحافظ على جلسة Supabase محدّثة
-// بدون هذا، جلسة المستخدم قد تنتهي بشكل غير متوقع بين الصفحات
-
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
 export async function middleware(request: NextRequest) {
-  let response = NextResponse.next({ request: { headers: request.headers } });
+  let response = NextResponse.next({
+    request,
+  });
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
-        get(name: string) {
-          return request.cookies.get(name)?.value;
+        getAll() {
+          return request.cookies.getAll();
         },
-        set(name: string, value: string, options: any) {
-          response.cookies.set(name, value, options);
-        },
-        remove(name: string, options: any) {
-          response.cookies.set(name, "", { ...options, maxAge: 0 });
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value }) =>
+            request.cookies.set(name, value)
+          );
+
+          response = NextResponse.next({
+            request,
+          });
+
+          cookiesToSet.forEach(({ name, value, options }) =>
+            response.cookies.set(name, value, options)
+          );
         },
       },
-    },
+    }
   );
 
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
-  // حماية مسار /dashboard — لو ما فيه مستخدم مسجّل دخول، يوجَّه لصفحة الباقات
-  // (نقطة الدخول الجديدة للمستخدمين الجدد، بدل /login مباشرة)
-  if (!user && request.nextUrl.pathname.startsWith("/dashboard")) {
-    return NextResponse.redirect(new URL("/pricing", request.url));
+  const path = request.nextUrl.pathname;
+
+  const protectedPaths = ["/dashboard", "/onboarding", "/checkout"];
+  const isProtectedPath = protectedPaths.some((protectedPath) =>
+    path.startsWith(protectedPath)
+  );
+
+  if (isProtectedPath && !user) {
+    return NextResponse.redirect(new URL("/login", request.url));
+  }
+
+  if ((path === "/login" || path === "/signup") && user) {
+    return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 
   return response;
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*"],
+  matcher: [
+    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+  ],
 };
