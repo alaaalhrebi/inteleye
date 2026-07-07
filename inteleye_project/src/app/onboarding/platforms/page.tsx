@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
@@ -42,6 +43,42 @@ function getPlatformLimit(plan: string) {
   return 1;
 }
 
+function getPlatformInputConfig(selectedPlatform: string) {
+  if (selectedPlatform === "google_maps") {
+    return {
+      fieldName: "platformUrl",
+      label: "رابط الموقع في Google Maps",
+      placeholder: "مثال: https://maps.app.goo.gl/xxxx",
+      helpText: "ضعي رابط موقع المنشأة أو الفرع من Google Maps.",
+    };
+  }
+
+  if (selectedPlatform === "x") {
+    return {
+      fieldName: "username",
+      label: "اسم المستخدم في X",
+      placeholder: "مثال: @username",
+      helpText: "ضعي اسم الحساب في منصة X بدون رابط.",
+    };
+  }
+
+  if (selectedPlatform === "tiktok") {
+    return {
+      fieldName: "platformUrl",
+      label: "رابط حساب TikTok",
+      placeholder: "مثال: https://www.tiktok.com/@username",
+      helpText: "ضعي رابط حساب TikTok الخاص بالمنشأة.",
+    };
+  }
+
+  return {
+    fieldName: "platformUrl",
+    label: "رابط المنصة",
+    placeholder: "ضع رابط المنصة",
+    helpText: "",
+  };
+}
+
 export default function PlatformsOnboardingPage() {
   const router = useRouter();
   const supabase = useMemo(() => createSupabaseBrowserClient(), []);
@@ -58,6 +95,8 @@ export default function PlatformsOnboardingPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
+
+  const inputConfig = getPlatformInputConfig(selectedPlatform);
 
   useEffect(() => {
     async function loadClient() {
@@ -118,6 +157,13 @@ export default function PlatformsOnboardingPage() {
     loadClient();
   }, [router, supabase]);
 
+  function handlePlatformChange(platformKey: string) {
+    setSelectedPlatform(platformKey);
+    setPlatformUrl("");
+    setUsername("");
+    setMessage("");
+  }
+
   async function handleSave(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
 
@@ -126,8 +172,23 @@ export default function PlatformsOnboardingPage() {
       return;
     }
 
-    if (!platformUrl.trim()) {
-      setMessage("الرجاء إدخال رابط المنصة");
+    if (!businessActivity.trim()) {
+      setMessage("الرجاء إدخال نشاط المنشأة");
+      return;
+    }
+
+    if (selectedPlatform === "google_maps" && !platformUrl.trim()) {
+      setMessage("الرجاء إدخال رابط الموقع في Google Maps");
+      return;
+    }
+
+    if (selectedPlatform === "x" && !username.trim()) {
+      setMessage("الرجاء إدخال اسم المستخدم في X");
+      return;
+    }
+
+    if (selectedPlatform === "tiktok" && !platformUrl.trim()) {
+      setMessage("الرجاء إدخال رابط حساب TikTok");
       return;
     }
 
@@ -162,12 +223,18 @@ export default function PlatformsOnboardingPage() {
       return;
     }
 
+    const finalPlatformUrl =
+      selectedPlatform === "x" ? null : platformUrl.trim();
+
+    const finalUsername =
+      selectedPlatform === "x" ? username.trim() : username.trim() || null;
+
     const { error: insertError } = await supabase.from("client_platforms").insert({
       client_id: clientId,
       platform_name: selectedPlatform,
-      platform_url: platformUrl.trim(),
-      username: username.trim() || null,
-      business_activity: businessActivity.trim() || null,
+      platform_url: finalPlatformUrl,
+      username: finalUsername,
+      business_activity: businessActivity.trim(),
       is_active: true,
     });
 
@@ -216,11 +283,12 @@ export default function PlatformsOnboardingPage() {
           </h1>
 
           <p className="mt-4 text-lg text-gray-500">
-            اختر المنصة الأولى التي تريد ربطها، ويمكنك إضافة منصات أخرى لاحقًا حسب باقتك.
+            أدخلي بيانات المنصة حسب نوعها، وسيتم استخدامها في السحب والتحليل لاحقًا.
           </p>
 
           <p className="mt-3 text-sm font-bold text-[#895159]">
-            باقتك الحالية: {clientPlan} · المنصات المستخدمة: {existingPlatformsCount} / {getPlatformLimit(clientPlan)}
+            باقتك الحالية: {clientPlan} · المنصات المستخدمة:{" "}
+            {existingPlatformsCount} / {getPlatformLimit(clientPlan)}
           </p>
         </div>
 
@@ -237,7 +305,7 @@ export default function PlatformsOnboardingPage() {
                 <button
                   key={platform.key}
                   type="button"
-                  onClick={() => setSelectedPlatform(platform.key)}
+                  onClick={() => handlePlatformChange(platform.key)}
                   className={`rounded-[1.5rem] border p-6 text-right transition ${
                     active
                       ? "border-[#374375] bg-[#374375] text-white shadow-xl"
@@ -276,39 +344,47 @@ export default function PlatformsOnboardingPage() {
           <div className="mt-8 grid gap-5 md:grid-cols-2">
             <div>
               <label className="mb-2 block text-sm font-bold">
-                رابط المنصة
+                {inputConfig.label}
               </label>
+
               <input
-                value={platformUrl}
-                onChange={(e) => setPlatformUrl(e.target.value)}
-                placeholder="ضع رابط Google Maps أو X أو TikTok"
+                value={
+                  inputConfig.fieldName === "username" ? username : platformUrl
+                }
+                onChange={(e) => {
+                  if (inputConfig.fieldName === "username") {
+                    setUsername(e.target.value);
+                  } else {
+                    setPlatformUrl(e.target.value);
+                  }
+                }}
+                placeholder={inputConfig.placeholder}
                 className="w-full rounded-2xl border border-gray-200 px-4 py-4 text-right outline-none transition focus:border-[#374375] focus:ring-4 focus:ring-[#BABDE2]/30"
               />
+
+              {inputConfig.helpText && (
+                <p className="mt-2 text-xs font-bold text-gray-400">
+                  {inputConfig.helpText}
+                </p>
+              )}
             </div>
 
             <div>
               <label className="mb-2 block text-sm font-bold">
-                اسم المستخدم أو اسم الحساب
+                نشاط المنشأة
               </label>
+
               <input
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                placeholder="@username"
+                value={businessActivity}
+                onChange={(e) => setBusinessActivity(e.target.value)}
+                placeholder="مثال: مطعم، عيادة، مقهى، متجر"
                 className="w-full rounded-2xl border border-gray-200 px-4 py-4 text-right outline-none transition focus:border-[#374375] focus:ring-4 focus:ring-[#BABDE2]/30"
               />
-            </div>
-          </div>
 
-          <div className="mt-5">
-            <label className="mb-2 block text-sm font-bold">
-              نشاط المنشأة
-            </label>
-            <input
-              value={businessActivity}
-              onChange={(e) => setBusinessActivity(e.target.value)}
-              placeholder="مثال: مطعم، عيادة، مقهى، متجر"
-              className="w-full rounded-2xl border border-gray-200 px-4 py-4 text-right outline-none transition focus:border-[#374375] focus:ring-4 focus:ring-[#BABDE2]/30"
-            />
+              <p className="mt-2 text-xs font-bold text-gray-400">
+                يساعدنا النشاط في تحسين التحليل والردود المقترحة.
+              </p>
+            </div>
           </div>
 
           {message && (
