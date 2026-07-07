@@ -108,8 +108,9 @@ export default function PlatformsOnboardingPage() {
     setSaving(false);
 
     if (error) {
-      setMessage("حدث خطأ أثناء حفظ المنصة");
-      return;
+  console.error("Save platform error:", error);
+  setMessage(error.message);
+  return;
     }
 
     router.push("/dashboard");
