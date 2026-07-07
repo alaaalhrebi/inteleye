@@ -2,7 +2,6 @@ import { createSupabaseServerClient } from "@/lib/supabase-server";
 import { redirect } from "next/navigation";
 import AppHeader from "@/components/AppHeader";
 import AddBranchForm from "@/components/AddBranchForm";
-
 export default async function DashboardPage() {
   const supabase = createSupabaseServerClient();
 
@@ -13,40 +12,42 @@ export default async function DashboardPage() {
   if (!user) redirect("/login");
 
   const { data: client, error: clientError } = await supabase
-  .from("clients")
-  .select("id, name, subscription_status, plan")
-  .eq("user_id", user.id)
-  .maybeSingle();
+    .from("clients")
+    .select("id, name, subscription_status, plan")
+    .eq("user_id", user.id)
+    .maybeSingle();
 
-if (clientError) {
-  redirect("/login");
-}
+  if (clientError) {
+    redirect("/login");
+  }
 
-  // لو الحساب لسة pending (لم يدفع)، نوجّهه لصفحة الباقات
- if (!client) {
-  redirect("/signup");
-}
+  if (!client) {
+    redirect("/signup");
+  }
 
-const status = client.subscription_status?.toLowerCase();
+  const status = client.subscription_status?.toLowerCase();
 
-if (status !== "active" && status !== "paid" && status !== "completed") {
-  redirect(`/checkout?plan=${client.plan || "basic"}`);
-}
+  if (status !== "active" && status !== "paid" && status !== "completed") {
+    redirect(`/checkout?plan=${client.plan || "basic"}`);
+  }
 
-const { data: platforms, error: platformsError } = await supabase
-  .from("client_platforms")
-  .select("id")
-  .eq("client_id", client.id)
-  .limit(1);
+  const { data: platforms, error: platformsError } = await supabase
+    .from("client_platforms")
+    .select("id")
+    .eq("client_id", client.id)
+    .limit(1);
 
-if (platformsError) {
-  redirect("/onboarding/platforms");
-}
+  if (platformsError) {
+    redirect("/onboarding/platforms");
+  }
 
-if (!platforms || platforms.length === 0) {
-  redirect("/onboarding/platforms");
-}
-const canUseX = client.plan === "pro" || client.plan === "enterprise";
+  if (!platforms || platforms.length === 0) {
+    redirect("/onboarding/platforms");
+  }
+
+  const canUseX = client.plan === "pro" || client.plan === "enterprise";
+
+  // باقي كود الداشبورد بعد هذا كما هو...
   // جلب فروع العميل
   const { data: branches } = await supabase
     .from("branches")
