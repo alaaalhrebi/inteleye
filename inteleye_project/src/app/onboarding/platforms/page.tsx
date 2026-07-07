@@ -97,13 +97,42 @@ export default function PlatformsOnboardingPage() {
     setSaving(true);
     setMessage("");
 
-    const { error } = await supabase.from("client_platforms").insert({
-      client_id: clientId,
-      platform_name: selectedPlatform,
-      platform_url: platformUrl,
-      username: username || null,
-      business_activity: businessActivity || null,
-    });
+    const { data: existingPlatform } = await supabase
+  .from("client_platforms")
+  .select("id")
+  .eq("client_id", clientId)
+  .eq("platform_name", selectedPlatform)
+  .eq("is_active", true)
+  .maybeSingle();
+
+if (existingPlatform) {
+  setLoading(false);
+  setMessage("هذه المنصة مضافة مسبقًا لهذا الحساب");
+  return;
+}
+
+const { error } = await supabase.from("client_platforms").insert({
+  client_id: clientId,
+  platform_name: selectedPlatform,
+  platform_url: platformUrl,
+  username: username || null,
+  business_activity: businessActivity || null,
+  is_active: true,
+});
+
+if (error) {
+  setLoading(false);
+
+  if (error.code === "23505") {
+    setMessage("هذه المنصة مضافة مسبقًا لهذا الحساب");
+    return;
+  }
+
+  setMessage("حدث خطأ أثناء حفظ المنصة");
+  return;
+}
+
+router.push("/dashboard");
 
     setSaving(false);
 
