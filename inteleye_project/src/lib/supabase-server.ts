@@ -18,7 +18,7 @@ export function createSupabaseServerClient() {
               cookieStore.set(name, value, options);
             });
           } catch {
-            // يحدث هذا أحيانًا داخل Server Components، و middleware يتولى تحديث الجلسة
+            // يتم تجاهله داخل Server Components
           }
         },
       },
