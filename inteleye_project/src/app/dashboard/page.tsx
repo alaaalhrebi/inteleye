@@ -12,14 +12,18 @@ export default async function DashboardPage() {
 
   if (!user) redirect("/login");
 
-  const { data: client } = await supabase
-    .from("clients")
-    .select("id, name, subscription_status, plan")
-    .eq("user_id", user.id)
-    .single();
+  const { data: client, error: clientError } = await supabase
+  .from("clients")
+  .select("id, name, subscription_status, plan")
+  .eq("user_id", user.id)
+  .maybeSingle();
+
+if (clientError) {
+  redirect("/login");
+}
 
   // لو الحساب لسة pending (لم يدفع)، نوجّهه لصفحة الباقات
-  if (!client) {
+ if (!client) {
   redirect("/signup");
 }
 
@@ -29,19 +33,20 @@ if (status !== "active" && status !== "paid" && status !== "completed") {
   redirect(`/checkout?plan=${client.plan || "basic"}`);
 }
 
-const { data: platforms } = await supabase
+const { data: platforms, error: platformsError } = await supabase
   .from("client_platforms")
   .select("id")
   .eq("client_id", client.id)
   .limit(1);
 
-if (!platforms || platforms.length === 0) {
+if (platformsError) {
   redirect("/onboarding/platforms");
 }
 
+if (!platforms || platforms.length === 0) {
+  redirect("/onboarding/platforms");
+}
 const canUseX = client.plan === "pro" || client.plan === "enterprise";
-  
-
   // جلب فروع العميل
   const { data: branches } = await supabase
     .from("branches")
