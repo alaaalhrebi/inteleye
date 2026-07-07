@@ -101,7 +101,7 @@ export default async function DashboardPage() {
         ];
 
   return (
-    <div dir="rtl" className="min-h-screen bg-[#FFFCF5] text-[#374375]">
+    <div dir="rtl" className="min-h-screen bg-[#F8F7F3] text-[#374375]">
       <DashboardTopBar
         clientName={client.name}
         plan={client.plan}
@@ -196,7 +196,7 @@ function DashboardTopBar({
   canDownloadPdf: boolean;
 }) {
   return (
-    <header className="sticky top-0 z-50 border-b border-[#BABDE2]/30 bg-[#FFFCF5]/90 backdrop-blur-xl">
+    <header className="sticky top-0 z-50 border-b border-[#BABDE2]/30 bg-[#F8F7F3]/90 backdrop-blur-xl">
       <div className="mx-auto flex max-w-7xl flex-col gap-4 px-6 py-4 xl:flex-row xl:items-center xl:justify-between">
         <div className="flex items-center gap-4">
           <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#374375] text-white">
@@ -326,7 +326,7 @@ function WeeklyComparison() {
 function RatingTrend() {
   return (
     <Panel eyebrow="الاتجاه العام" title="رسم مبسط للتقييمات" icon={<BarChart3 size={22} />}>
-      <div className="flex h-52 items-end gap-3 rounded-3xl bg-[#FFFCF5] p-5">
+      <div className="flex h-52 items-end gap-3 rounded-3xl bg-[#F8F7F3] p-5">
         {[35, 45, 40, 60, 55, 75, 68].map((height, index) => (
           <div
             key={index}
@@ -359,7 +359,7 @@ function TopIssues({ issues }: { issues: any[] }) {
                 <span className="font-bold text-[#374375]">{issue.label}</span>
                 <span className="text-gray-400">{issue.count} مرة</span>
               </div>
-              <div className="h-3 rounded-full bg-[#FFFCF5]">
+              <div className="h-3 rounded-full bg-[#F8F7F3]">
                 <div
                   className="h-3 rounded-full bg-[#895159]"
                   style={{ width: `${width}%` }}
@@ -388,7 +388,7 @@ function SmartAlerts() {
 function SuggestedReplies() {
   return (
     <Panel eyebrow="اقتراح الردود" title="ردود مقترحة جاهزة" icon={<MessageSquareText size={22} />}>
-      <div className="rounded-3xl bg-[#FFFCF5] p-5">
+      <div className="rounded-3xl bg-[#F8F7F3] p-5">
         <p className="text-sm text-gray-400">تعليق</p>
         <p className="mt-2 font-bold text-[#374375]">
           ستظهر هنا التعليقات التي تحتاج رد بعد التحليل.
@@ -416,7 +416,7 @@ function AiRecommendations({ recommendations }: { recommendations: any[] }) {
     <Panel eyebrow="توصيات الذكاء الاصطناعي" title="ماذا تفعل لتحسين الخدمة؟" icon={<Lightbulb size={22} />}>
       <div className="space-y-4">
         {recommendations.map((item, index) => (
-          <div key={index} className="rounded-2xl bg-[#FFFCF5] p-4">
+          <div key={index} className="rounded-2xl bg-[#F8F7F3] p-4">
             <p className="font-extrabold text-[#374375]">
               {index + 1}. {item.title}
             </p>
@@ -441,7 +441,7 @@ function PlatformsSection({
     <Panel eyebrow="المنصات المرتبطة" title="المنصات المفعّلة" icon={<BarChart3 size={22} />}>
       <div className="space-y-4">
         {platforms.map((platform) => (
-          <div key={platform.id} className="rounded-3xl border border-[#BABDE2]/30 bg-[#FFFCF5] p-5">
+          <div key={platform.id} className="rounded-3xl border border-[#BABDE2]/30 bg-[#F8F7F3] p-5">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-extrabold text-[#374375]">
                 {formatPlatform(platform.platform_name)}
@@ -473,13 +473,13 @@ function BranchesSection({ branches }: { branches: any[] }) {
   return (
     <Panel eyebrow="الفروع" title="إدارة الفروع" icon={<Building2 size={22} />}>
       {branches.length === 0 ? (
-        <div className="rounded-3xl bg-[#FFFCF5] p-6 text-center text-gray-500">
+        <div className="rounded-3xl bg-[#F8F7F3] p-6 text-center text-gray-500">
           لا توجد فروع مضافة بعد.
         </div>
       ) : (
         <div className="space-y-4">
           {branches.map((branch) => (
-            <div key={branch.id} className="rounded-3xl bg-[#FFFCF5] p-5">
+            <div key={branch.id} className="rounded-3xl bg-[#F8F7F3] p-5">
               <h3 className="font-extrabold text-[#374375]">{branch.name}</h3>
               <p className="mt-2 text-sm text-gray-500">
                 آخر تقرير: بانتظار أول تشغيل أسبوعي
@@ -574,7 +574,7 @@ function ComparisonRow({
   change: string;
 }) {
   return (
-    <div className="rounded-2xl bg-[#FFFCF5] p-4">
+    <div className="rounded-2xl bg-[#F8F7F3] p-4">
       <div className="flex items-center justify-between">
         <span className="font-bold text-[#374375]">{label}</span>
         <span className="text-sm text-gray-400">{change}</span>
@@ -589,7 +589,7 @@ function ComparisonRow({
 
 function AlertItem({ text }: { text: string }) {
   return (
-    <div className="flex items-start gap-3 rounded-2xl bg-[#FFFCF5] p-4">
+    <div className="flex items-start gap-3 rounded-2xl bg-[#F8F7F3] p-4">
       <AlertTriangle size={18} className="mt-1 text-[#895159]" />
       <p className="leading-7 text-gray-600">{text}</p>
     </div>
