@@ -297,11 +297,11 @@ function KpiCard({
       : "text-[#374375] bg-[#BABDE2]/30";
 
   return (
-  <div className="rounded-[1.7rem] border border-[#BABDE2]/30 bg-[#BABDE2] p-5 shadow-sm">    
-  <div className={`mb-5 flex h-12 w-12 items-center justify-center rounded-2xl ${toneClass}`}>
+  <div className="rounded-[1.7rem] border border-[#BABDE2]/30 bg-white p-5 shadow-sm">
+    <div className={`mb-5 flex h-12 w-12 items-center justify-center rounded-2xl ${toneClass}`}>
         {icon}
       </div>
-    <p className="text-sm font-bold text-[#374375]/80">{title}</p>
+    <p className="text-sm text-gray-400">{title}</p>
     <p className={`mt-3 text-3xl font-extrabold text-[#374375]`}>{value}</p>   
   </div>
   );
@@ -546,7 +546,7 @@ function Panel({
   children: React.ReactNode;
 }) {
   return (
-  <section className="rounded-[2rem] border border-[#BABDE2]/40 bg-[#BABDE2] p-6 shadow-sm">
+  <section className="rounded-[2rem] border border-[#BABDE2]/40 bg-white p-6 shadow-sm">
     <div className="mb-6 flex items-center gap-3">
         <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#BABDE2]/30 text-[#374375]">
           {icon}
