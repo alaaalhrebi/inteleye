@@ -6,10 +6,12 @@ import AddBranchForm from "@/components/AddBranchForm";
 export default async function DashboardPage() {
   const supabase = createSupabaseServerClient();
 
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
   if (!user) redirect("/login");
 
-  // جلب بيانات العميل أولاً — RLS يضمن أن هذا العميل فقط يرى سجله
   const { data: client } = await supabase
     .from("clients")
     .select("id, name, subscription_status, plan")
@@ -18,14 +20,27 @@ export default async function DashboardPage() {
 
   // لو الحساب لسة pending (لم يدفع)، نوجّهه لصفحة الباقات
   if (!client) {
-  redirect("/pricing");
-  }
+  redirect("/signup");
+}
 
-  if (client.subscription_status !== "active") {
-  redirect("/pricing");
-  }
+const status = client.subscription_status?.toLowerCase();
 
-  const canUseX = client.plan === "pro" || client.plan === "enterprise";
+if (status !== "active" && status !== "paid" && status !== "completed") {
+  redirect(`/checkout?plan=${client.plan || "basic"}`);
+}
+
+const { data: platforms } = await supabase
+  .from("client_platforms")
+  .select("id")
+  .eq("client_id", client.id)
+  .limit(1);
+
+if (!platforms || platforms.length === 0) {
+  redirect("/onboarding/platforms");
+}
+
+const canUseX = client.plan === "pro" || client.plan === "enterprise";
+  
 
   // جلب فروع العميل
   const { data: branches } = await supabase
