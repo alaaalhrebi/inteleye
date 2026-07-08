@@ -9,19 +9,20 @@ export default {
   theme: {
 
     extend: {
+colors: {
+  primary: "#19090A",      // اللون الأساسي
+  secondary: "#3B1B1D",    // اللون الثانوي
+  accent: "#714248",       // اللون المساعد
+  olive: "#888157",        // اللون الزيتي
 
-      colors: {
+  background: "#F8F6F1",   // خلفية الموقع
+  surface: "#FFFFFF",      // الكروت والصناديق
 
-        primary: "#166534",
+  text: "#19090A",         // لون النص الأساسي
+  muted: "#6E6663",        // النصوص الثانوية
 
-        secondary: "#C8A648",
-
-        background: "#F8FAF8",
-
-        dark: "#16352B"
-
-      },
-
+  border: "#E8E2D8",       // الحدود
+},
       borderRadius: {
 
         xl: "1rem",
