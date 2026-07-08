@@ -70,7 +70,7 @@ export default function Navbar() {
               >
              <Link
   href="/login"
-  className="inline-flex items-center rounded-full bg-red-600 px-8 py-3 font-bold text-white shadow-lg transition-all duration-300 hover:bg-blue-600"
+  className="inline-flex items-center rounded-full bg-primary px-8 py-3 font-bold text-white shadow-lg transition-all duration-300 hover:bg-blue-600"
 >
   تسجيل الدخول
 </Link>
