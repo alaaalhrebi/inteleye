@@ -68,12 +68,12 @@ export default function Navbar() {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.97 }}
               >
-                <Link
-                  href="/login"
-                 className="inline-flex items-center rounded-full bg-red-600 px-8 py-3 font-bold text-white shadow-lg transition-all duration-300 hover:bg-blue-600"
-                >
-                  تسجيل الدخول
-                </Link>
+             <Link
+  href="/login"
+  className="inline-flex items-center rounded-full bg-red-600 px-8 py-3 font-bold text-white shadow-lg transition-all duration-300 hover:bg-blue-600"
+>
+  تسجيل الدخول
+</Link>
               </motion.div>
             </div>
 
