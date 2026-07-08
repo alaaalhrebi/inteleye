@@ -1,15 +1,22 @@
-@import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  --color-navy: #374375;
-  --color-cloud: #FFFCF5;
-  --color-periwinkle: #BABDE2;
-  --color-maroon: #895159;
-  --color-peach: #DFAEA1;
+  --primary: #19090A;
+  --secondary: #3B1B1D;
+  --accent: #714248;
+  --olive: #888157;
+
+  --background: #F8F6F1;
+  --surface: #FFFFFF;
+
+  --text: #19090A;
+  --muted: #6E6663;
+
+  --border: #E8E2D8;
 }
 
 html {
@@ -17,7 +24,16 @@ html {
 }
 
 body {
-  font-family: 'Tajawal', system-ui, sans-serif;
-  background: var(--color-cloud);
-  color: var(--color-navy);
+  font-family: "Tajawal", sans-serif;
+  background: var(--background);
+  color: var(--text);
+}
+
+* {
+  border-color: var(--border);
+}
+
+::selection {
+  background: var(--accent);
+  color: white;
 }
