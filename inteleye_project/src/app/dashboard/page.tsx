@@ -17,6 +17,7 @@ import {
   TrendingUp,
 } from "lucide-react";
 import LogoutButton from "@/components/dashboard/LogoutButton";
+import DashboardFilters from "@/components/dashboard/DashboardFilters";
 
 export default async function DashboardPage({
   searchParams,
