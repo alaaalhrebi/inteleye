@@ -263,29 +263,7 @@ function DashboardSideMenu({
 }) {
   return (
     <aside className="sticky top-24 h-fit w-full shrink-0 rounded-[2rem] border border-[#BABDE2]/40 bg-white p-5 shadow-sm lg:w-[300px]">
-      <div className="space-y-4">
-        <SidebarSelect label="اختيار الفرع">
-          <option>كل الفروع</option>
-          {branches.map((branch) => (
-            <option key={branch.id}>{branch.name}</option>
-          ))}
-        </SidebarSelect>
-
-        <SidebarSelect label="اختيار المنصة">
-          {platforms.map((platform) => (
-            <option key={platform.id}>
-              {formatPlatform(platform.platform_name)}
-            </option>
-          ))}
-        </SidebarSelect>
-
-        <SidebarSelect label="اختيار الفترة">
-          <option>هذا الأسبوع</option>
-          <option>الأسبوع الماضي</option>
-          <option>هذا الشهر</option>
-          <option>آخر شهرين</option>
-        </SidebarSelect>
-      </div>
+      <DashboardFilters branches={branches} platforms={platforms} />
 
       <div className="mt-6 space-y-3">
         {canDownloadPdf ? (
@@ -334,25 +312,6 @@ function DashboardSideMenu({
   );
 }
 
-function SidebarSelect({
-  label,
-  children,
-}: {
-  label: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div>
-      <label className="mb-2 block text-sm font-extrabold text-[#374375]">
-        {label}
-      </label>
-
-      <select className="w-full rounded-2xl border border-[#BABDE2]/50 bg-[#F8F7F3] px-4 py-3 text-sm font-bold text-[#374375] outline-none transition focus:border-[#374375] focus:ring-4 focus:ring-[#BABDE2]/30">
-        {children}
-      </select>
-    </div>
-  );
-}
 
 function HeroSummary({ clientName }: { clientName: string }) {
   return (
