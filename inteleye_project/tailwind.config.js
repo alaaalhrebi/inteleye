@@ -11,18 +11,22 @@ module.exports = {
       },
 
       colors: {
-        primary: "#19090A",
-        secondary: "#3B1B1D",
-        accent: "#714248",
-        olive: "#888157",
+        primary: "#374375",
+        background: "#FFFCF5",
+        secondary: "#BABDE2",
+        accent: "#895159",
+        peach: "#DFAEA1",
 
-        background: "#F8F6F1",
-        surface: "#FFFFFF",
+        white: "#FFFFFF",
+        text: "#374375",
+        muted: "#6F6F86",
+        border: "#E7E2DD",
+      },
 
-        text: "#19090A",
-        muted: "#6E6663",
-
-        border: "#E8E2D8",
+      borderRadius: {
+        xl: "1rem",
+        "2xl": "1.5rem",
+        "3xl": "2rem",
       },
     },
   },
