@@ -44,9 +44,7 @@ export default async function DashboardPage() {
 
   const { data: platforms, error: platformsError } = await supabase
     .from("client_platforms")
-    .select(
-      "id, platform_name, platform_url, username, business_activity, is_active"
-    )
+    .select("id, platform_name, platform_url, username, business_activity, is_active")
     .eq("client_id", client.id)
     .eq("is_active", true);
 
@@ -102,85 +100,87 @@ export default async function DashboardPage() {
 
   return (
     <div dir="rtl" className="min-h-screen bg-[#F8F7F3] text-[#374375]">
-      <DashboardTopBar
-        clientName={client.name}
-        plan={client.plan}
-        platforms={platforms}
-        branches={branches ?? []}
-        canAddPlatforms={canAddPlatforms}
-        canDownloadPdf={canDownloadPdf}
-      />
+      <div className="mx-auto flex max-w-7xl flex-col gap-6 px-6 py-6 lg:flex-row">
+        <DashboardSideMenu
+          clientName={client.name}
+          plan={client.plan}
+          platforms={platforms}
+          branches={branches ?? []}
+          canAddPlatforms={canAddPlatforms}
+          canDownloadPdf={canDownloadPdf}
+        />
 
-      <main className="mx-auto max-w-7xl px-6 py-10">
-        <HeroSummary clientName={client.name} />
+        <main className="min-w-0 flex-1 pb-10">
+          <HeroSummary clientName={client.name} />
 
-        <section className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-6">
-          <KpiCard
-            title="متوسط التقييم"
-            value={averageRating}
-            icon={<Star size={22} />}
-          />
-          <KpiCard
-            title="تعليقات هذا الأسبوع"
-            value={totalReviews}
-            icon={<MessageSquareText size={22} />}
-          />
-          <KpiCard
-            title="نسبة السلبي"
-            value={`${negativePct}%`}
-            icon={<TrendingDown size={22} />}
-            tone="bad"
-          />
-          <KpiCard
-            title="رضا العملاء"
-            value={positivePct ? `${positivePct}%` : "—"}
-            icon={<CheckCircle2 size={22} />}
-            tone="good"
-          />
-          <KpiCard
-            title="تحتاج تدخل سريع"
-            value={latestReport?.urgent_count ?? 0}
-            icon={<AlertTriangle size={22} />}
-            tone="warn"
-          />
-          <KpiCard
-            title="ردود مقترحة"
-            value={latestReport?.suggested_replies_count ?? 0}
-            icon={<Repeat2 size={22} />}
-          />
-        </section>
+          <section className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-6">
+            <KpiCard
+              title="متوسط التقييم"
+              value={averageRating}
+              icon={<Star size={22} />}
+            />
+            <KpiCard
+              title="تعليقات هذا الأسبوع"
+              value={totalReviews}
+              icon={<MessageSquareText size={22} />}
+            />
+            <KpiCard
+              title="نسبة السلبي"
+              value={`${negativePct}%`}
+              icon={<TrendingDown size={22} />}
+              tone="bad"
+            />
+            <KpiCard
+              title="رضا العملاء"
+              value={positivePct ? `${positivePct}%` : "—"}
+              icon={<CheckCircle2 size={22} />}
+              tone="good"
+            />
+            <KpiCard
+              title="تحتاج تدخل سريع"
+              value={latestReport?.urgent_count ?? 0}
+              icon={<AlertTriangle size={22} />}
+              tone="warn"
+            />
+            <KpiCard
+              title="ردود مقترحة"
+              value={latestReport?.suggested_replies_count ?? 0}
+              icon={<Repeat2 size={22} />}
+            />
+          </section>
 
-        <section className="mt-8 grid gap-6 xl:grid-cols-2">
-          <WeeklyComparison />
-          <RatingTrend />
-        </section>
+          <section className="mt-8 grid gap-6 xl:grid-cols-2">
+            <WeeklyComparison />
+            <RatingTrend />
+          </section>
 
-        <section className="mt-8 grid gap-6 xl:grid-cols-2">
-          <TopIssues issues={topIssues} />
-          <SmartAlerts />
-        </section>
+          <section className="mt-8 grid gap-6 xl:grid-cols-2">
+            <TopIssues issues={topIssues} />
+            <SmartAlerts />
+          </section>
 
-        <section className="mt-8 grid gap-6 xl:grid-cols-2">
-          <SuggestedReplies />
-          <AiRecommendations recommendations={recommendations} />
-        </section>
+          <section className="mt-8 grid gap-6 xl:grid-cols-2">
+            <SuggestedReplies />
+            <AiRecommendations recommendations={recommendations} />
+          </section>
 
-        <section className="mt-8 grid gap-6 xl:grid-cols-2">
-          <PlatformsSection
-            platforms={platforms}
-            canAddPlatforms={canAddPlatforms}
-            plan={plan}
-          />
-          <BranchesSection branches={branches ?? []} />
-        </section>
+          <section className="mt-8 grid gap-6 xl:grid-cols-2">
+            <PlatformsSection
+              platforms={platforms}
+              canAddPlatforms={canAddPlatforms}
+              plan={plan}
+            />
+            <BranchesSection branches={branches ?? []} />
+          </section>
 
-        <ReportsSection canDownloadPdf={canDownloadPdf} />
-      </main>
+          <ReportsSection canDownloadPdf={canDownloadPdf} />
+        </main>
+      </div>
     </div>
   );
 }
 
-function DashboardTopBar({
+function DashboardSideMenu({
   clientName,
   plan,
   platforms,
@@ -196,68 +196,118 @@ function DashboardTopBar({
   canDownloadPdf: boolean;
 }) {
   return (
-    <header className="sticky top-0 z-50 border-b border-[#BABDE2]/30 bg-[#F8F7F3]/90 backdrop-blur-xl">
-      <div className="mx-auto flex max-w-7xl flex-col gap-4 px-6 py-4 xl:flex-row xl:items-center xl:justify-between">
-        <div className="flex items-center gap-4">
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#374375] text-white">
-            <BarChart3 size={24} />
-          </div>
-
-          <div>
-            <h1 className="text-xl font-extrabold text-[#374375]">
-              Intel Eye
-            </h1>
-            <p className="text-sm text-gray-500">
-              {clientName} · باقة {formatPlan(plan)}
-            </p>
-          </div>
+    <aside className="sticky top-6 h-fit w-full shrink-0 rounded-[2rem] border border-[#BABDE2]/40 bg-white p-5 shadow-sm lg:w-[300px]">
+      <div className="mb-6 flex items-center gap-3">
+        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#374375] text-white">
+          <BarChart3 size={24} />
         </div>
 
-        <div className="flex flex-wrap items-center gap-3">
-          <select className="rounded-full border border-[#BABDE2]/50 bg-white px-4 py-3 text-sm font-bold text-[#374375] outline-none">
-            <option>كل الفروع</option>
-            {branches.map((branch) => (
-              <option key={branch.id}>{branch.name}</option>
-            ))}
-          </select>
-
-          <select className="rounded-full border border-[#BABDE2]/50 bg-white px-4 py-3 text-sm font-bold text-[#374375] outline-none">
-            {platforms.map((platform) => (
-              <option key={platform.id}>
-                {formatPlatform(platform.platform_name)}
-              </option>
-            ))}
-          </select>
-
-          <select className="rounded-full border border-[#BABDE2]/50 bg-white px-4 py-3 text-sm font-bold text-[#374375] outline-none">
-            <option>هذا الأسبوع</option>
-            <option>الأسبوع الماضي</option>
-            <option>هذا الشهر</option>
-          </select>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-3">
-          {canDownloadPdf && (
-            <button className="inline-flex items-center gap-2 rounded-full border border-[#374375] bg-white px-5 py-3 text-sm font-bold text-[#374375] transition hover:bg-[#374375] hover:text-white">
-              <Download size={18} />
-              تحميل PDF
-            </button>
-          )}
-
-          {canAddPlatforms && (
-            <Link
-              href="/onboarding/platforms"
-              className="inline-flex items-center gap-2 rounded-full bg-[#374375] px-5 py-3 text-sm font-bold text-white transition hover:bg-[#895159]"
-            >
-              <Plus size={18} />
-              إضافة منصة
-            </Link>
-          )}
-
-          <LogoutButton />
+        <div>
+          <h1 className="text-xl font-extrabold text-[#374375]">
+            Intel Eye
+          </h1>
+          <p className="text-sm text-gray-500">
+            {clientName}
+          </p>
         </div>
       </div>
-    </header>
+
+      <div className="mb-6 rounded-2xl bg-[#F8F7F3] p-4">
+        <p className="text-xs font-bold text-gray-400">الباقة الحالية</p>
+        <p className="mt-1 text-lg font-extrabold text-[#374375]">
+          {formatPlan(plan)}
+        </p>
+      </div>
+
+      <div className="space-y-4">
+        <SidebarSelect label="اختيار الفرع">
+          <option>كل الفروع</option>
+          {branches.map((branch) => (
+            <option key={branch.id}>{branch.name}</option>
+          ))}
+        </SidebarSelect>
+
+        <SidebarSelect label="اختيار المنصة">
+          {platforms.map((platform) => (
+            <option key={platform.id}>
+              {formatPlatform(platform.platform_name)}
+            </option>
+          ))}
+        </SidebarSelect>
+
+        <SidebarSelect label="اختيار الفترة">
+          <option>هذا الأسبوع</option>
+          <option>الأسبوع الماضي</option>
+          <option>هذا الشهر</option>
+          <option>آخر شهرين</option>
+        </SidebarSelect>
+      </div>
+
+      <div className="mt-6 space-y-3">
+        {canDownloadPdf ? (
+          <button className="flex w-full items-center justify-center gap-2 rounded-2xl border border-[#374375] bg-white px-5 py-3 text-sm font-bold text-[#374375] transition hover:bg-[#374375] hover:text-white">
+            <Download size={18} />
+            تحميل التقرير PDF
+          </button>
+        ) : (
+          <div className="rounded-2xl bg-[#DFAEA1]/20 p-4 text-sm font-bold leading-7 text-[#895159]">
+            تحميل PDF متاح في باقة Pro و Enterprise.
+          </div>
+        )}
+
+        {canAddPlatforms ? (
+          <Link
+            href="/onboarding/platforms"
+            className="flex w-full items-center justify-center gap-2 rounded-2xl bg-[#374375] px-5 py-3 text-sm font-bold text-white transition hover:bg-[#895159]"
+          >
+            <Plus size={18} />
+            إضافة منصة
+          </Link>
+        ) : (
+          <div className="rounded-2xl bg-[#F8F7F3] p-4 text-sm font-bold leading-7 text-gray-500">
+            إضافة منصة أخرى متاحة في Pro أو Enterprise.
+          </div>
+        )}
+
+        <Link
+          href="/dashboard/reports"
+          className="flex w-full items-center justify-center gap-2 rounded-2xl border border-[#BABDE2]/60 bg-[#F8F7F3] px-5 py-3 text-sm font-bold text-[#374375] transition hover:bg-[#BABDE2]/30"
+        >
+          <FileText size={18} />
+          عرض التقارير
+        </Link>
+
+        <Link
+          href="/dashboard/branches"
+          className="flex w-full items-center justify-center gap-2 rounded-2xl border border-[#BABDE2]/60 bg-[#F8F7F3] px-5 py-3 text-sm font-bold text-[#374375] transition hover:bg-[#BABDE2]/30"
+        >
+          <Building2 size={18} />
+          إدارة الفروع
+        </Link>
+
+        <LogoutButton />
+      </div>
+    </aside>
+  );
+}
+
+function SidebarSelect({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div>
+      <label className="mb-2 block text-sm font-extrabold text-[#374375]">
+        {label}
+      </label>
+
+      <select className="w-full rounded-2xl border border-[#BABDE2]/50 bg-[#F8F7F3] px-4 py-3 text-sm font-bold text-[#374375] outline-none transition focus:border-[#374375] focus:ring-4 focus:ring-[#BABDE2]/30">
+        {children}
+      </select>
+    </div>
   );
 }
 
@@ -297,13 +347,13 @@ function KpiCard({
       : "text-[#374375] bg-[#BABDE2]/30";
 
   return (
-  <div className="rounded-[1.7rem] border border-[#BABDE2]/30 bg-white p-5 shadow-sm">
-    <div className={`mb-5 flex h-12 w-12 items-center justify-center rounded-2xl ${toneClass}`}>
+    <div className="rounded-[1.7rem] border border-[#BABDE2]/30 bg-white p-5 shadow-sm">
+      <div className={`mb-5 flex h-12 w-12 items-center justify-center rounded-2xl ${toneClass}`}>
         {icon}
       </div>
-    <p className="text-sm text-gray-400">{title}</p>
-    <p className={`mt-3 text-3xl font-extrabold text-[#374375]`}>{value}</p>   
-  </div>
+      <p className="text-sm text-gray-400">{title}</p>
+      <p className="mt-3 text-3xl font-extrabold text-[#374375]">{value}</p>
+    </div>
   );
 }
 
@@ -450,7 +500,11 @@ function PlatformsSection({
                 مفعّلة
               </span>
             </div>
-            <p className="mt-3 break-all text-sm text-gray-500">{platform.platform_url}</p>
+
+            <p className="mt-3 break-all text-sm text-gray-500">
+              {platform.platform_url || platform.username || "—"}
+            </p>
+
             {platform.business_activity && (
               <p className="mt-2 text-sm text-gray-500">
                 النشاط: {platform.business_activity}
@@ -546,8 +600,8 @@ function Panel({
   children: React.ReactNode;
 }) {
   return (
-  <section className="rounded-[2rem] border border-[#BABDE2]/40 bg-white p-6 shadow-sm">
-    <div className="mb-6 flex items-center gap-3">
+    <section className="rounded-[2rem] border border-[#BABDE2]/40 bg-white p-6 shadow-sm">
+      <div className="mb-6 flex items-center gap-3">
         <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#BABDE2]/30 text-[#374375]">
           {icon}
         </div>
