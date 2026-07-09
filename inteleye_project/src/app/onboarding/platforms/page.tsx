@@ -315,8 +315,8 @@ export default function PlatformsOnboardingPage() {
           onSubmit={handleSave}
           className="mx-auto max-w-5xl rounded-[2rem] border border-[#BABDE2]/40 bg-white/90 p-8 shadow-2xl"
         >
-          <div className="grid gap-5 md:grid-cols-3">
-            {platforms.map((platform) => {
+<div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+  {platforms.map((platform) => {
               const Icon = platform.icon;
               const active = selectedPlatform === platform.key;
 
@@ -325,24 +325,24 @@ export default function PlatformsOnboardingPage() {
                   key={platform.key}
                   type="button"
                   onClick={() => handlePlatformChange(platform.key)}
-                  className={`rounded-[1.5rem] border p-6 text-right transition ${
+                  className={`rounded-[1.5rem] border p-4 text-right transition ${
                     active
                       ? "border-[#374375] bg-[#374375] text-white shadow-xl"
                       : "border-gray-200 bg-white text-[#374375] hover:bg-[#BABDE2]/20"
                   }`}
                 >
                   <div
-                    className={`mb-5 flex h-12 w-12 items-center justify-center rounded-2xl ${
+                    className={`mb-5 flex h-10 w-10 items-center justify-center rounded-2xl ${
                       active ? "bg-white/15" : "bg-[#BABDE2]/30"
                     }`}
                   >
                     <Icon size={24} />
                   </div>
 
-                  <h2 className="text-xl font-extrabold">{platform.name}</h2>
+                  <h2 className="text-lg font-extrabold">{platform.name}</h2>
 
                   <p
-                    className={`mt-3 leading-7 ${
+                    className={`mt-2 text-sm leading-6 ${
                       active ? "text-white/80" : "text-gray-500"
                     }`}
                   >
