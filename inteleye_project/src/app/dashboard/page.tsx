@@ -227,13 +227,6 @@ function DashboardSideMenu({
 }) {
   return (
     <aside className="sticky top-24 h-fit w-full shrink-0 rounded-[2rem] border border-[#BABDE2]/40 bg-white p-5 shadow-sm lg:w-[300px]">
-  <div className="mb-6 rounded-2xl bg-[#F8F7F3] p-4">
-    <p className="text-xs font-bold text-gray-400">خيارات العرض</p>
-    <p className="mt-1 text-lg font-extrabold text-[#374375]">
-      الفلاتر والإجراءات
-    </p>
-  </div>
-
       <div className="space-y-4">
         <SidebarSelect label="اختيار الفرع">
           <option>كل الفروع</option>
