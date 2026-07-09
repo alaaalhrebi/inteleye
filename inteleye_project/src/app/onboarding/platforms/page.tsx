@@ -9,6 +9,7 @@ import {
   MapPin,
   MessageCircle,
   Music2,
+  Instagram,
   Sparkles,
 } from "lucide-react";
 import { createSupabaseBrowserClient } from "@/lib/supabase-browser";
@@ -33,10 +34,10 @@ const platforms = [
     icon: Music2,
   },
   {
-    key: "instgram",
-    name: "Instgram",
-    description: "تحليل تعليقات المقاطع من Instgram",
-    icon: Photograph,
+    key: "instagram",
+    name: "Instagram",
+    description: "تحليل تعليقات المقاطع من Instagram",
+    icon: Instagram,
   },
 ];
 
@@ -75,12 +76,12 @@ function getPlatformInputConfig(selectedPlatform: string) {
       placeholder: "مثال: https://www.tiktok.com/@username",
       helpText: "ضعي رابط حساب TikTok الخاص بالمنشأة.",
     };
-    if (selectedPlatform === "instgram") {
+    if (selectedPlatform === "instagram") {
     return {
       fieldName: "platformUrl",
-      label: "رابط حساب instgram",
-      placeholder: "مثال: https://www.instgram.com/@username",
-      helpText: "ضعي رابط حساب instgram الخاص بالمنشأة.",
+      label: "رابط حساب instagram",
+      placeholder: "مثال: https://www.instagram.com/@username",
+      helpText: "ضعي رابط حساب instagram الخاص بالمنشأة.",
     };
   }
 
@@ -199,8 +200,8 @@ export default function PlatformsOnboardingPage() {
       setMessage("الرجاء إدخال رابط حساب TikTok");
       return;
     }
-    if (selectedPlatform === "instgram" && !platformUrl.trim()) {
-      setMessage("الرجاء إدخال رابط حساب Instgram");
+    if (selectedPlatform === "instagram" && !platformUrl.trim()) {
+      setMessage("الرجاء إدخال رابط حساب Instagram");
       return;
     }
 
