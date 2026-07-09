@@ -238,11 +238,17 @@ export default function PlatformsOnboardingPage() {
       return;
     }
 
+    
+    const cleanUsername =
+      selectedPlatform === "x" ? normalizeXUsername(username) : username.trim();
+
     const finalPlatformUrl =
-      selectedPlatform === "x" ? null : platformUrl.trim();
+      selectedPlatform === "x"
+        ? `https://x.com/${cleanUsername}`
+        : platformUrl.trim();
 
     const finalUsername =
-      selectedPlatform === "x" ? username.trim() : username.trim() || null;
+      selectedPlatform === "x" ? cleanUsername : username.trim() || null;
 
     const { error: insertError } = await supabase.from("client_platforms").insert({
       client_id: clientId,
