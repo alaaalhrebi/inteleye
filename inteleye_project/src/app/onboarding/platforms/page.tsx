@@ -91,7 +91,7 @@ function getPlatformInputConfig(selectedPlatform: string) {
     helpText: "",
   };
 }
-
+}
 export default function PlatformsOnboardingPage() {
   const router = useRouter();
   const supabase = useMemo(() => createSupabaseBrowserClient(), []);
