@@ -77,7 +77,8 @@ function getPlatformInputConfig(selectedPlatform: string) {
       placeholder: "مثال: https://www.tiktok.com/@username",
       helpText: "ضعي رابط حساب TikTok الخاص بالمنشأة.",
     };
-    if (selectedPlatform === "instagram") {
+  }
+  if (selectedPlatform === "instagram") {
     return {
       fieldName: "platformUrl",
       label: "رابط حساب instagram",
