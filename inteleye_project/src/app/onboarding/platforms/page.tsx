@@ -12,6 +12,7 @@ import {
   Instagram,
   Sparkles,
 } from "lucide-react";
+
 import { createSupabaseBrowserClient } from "@/lib/supabase-browser";
 
 const platforms = [
