@@ -18,7 +18,19 @@ import {
 } from "lucide-react";
 import LogoutButton from "@/components/dashboard/LogoutButton";
 
-export default async function DashboardPage() {
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams?: {
+    platform?: string;
+    branch?: string;
+    period?: string;
+  };
+}) {
+  const selectedPlatformId = searchParams?.platform;
+  const selectedBranchId = searchParams?.branch;
+  const selectedPeriod = searchParams?.period || "this_week";
+  
   const supabase = createSupabaseServerClient();
 
   const {
@@ -58,11 +70,35 @@ export default async function DashboardPage() {
 
   const branchIds = (branches ?? []).map((b) => b.id);
 
-  const { data: reports } = await supabase
+
+  
+  let reportsQuery = supabase
     .from("reports")
     .select("*")
-    .in("branch_id", branchIds.length > 0 ? branchIds : [-1])
     .order("report_month", { ascending: false });
+  
+  if (selectedBranchId) {
+    reportsQuery = reportsQuery.eq("branch_id", Number(selectedBranchId));
+  } else {
+    reportsQuery = reportsQuery.in(
+      "branch_id",
+      branchIds.length > 0 ? branchIds : [-1]
+    );
+  }
+  
+  if (selectedPlatformId) {
+    reportsQuery = reportsQuery.eq("platform_id", Number(selectedPlatformId));
+  }
+  
+  if (selectedPeriod === "this_week") {
+    reportsQuery = reportsQuery.eq("report_type", "weekly");
+  }
+  
+  if (selectedPeriod === "this_month") {
+    reportsQuery = reportsQuery.eq("report_type", "monthly");
+  }
+  
+  const { data: reports } = await reportsQuery;
 
   const latestReport = reports?.[0] ?? null;
 
