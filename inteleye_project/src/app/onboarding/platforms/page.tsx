@@ -32,12 +32,18 @@ const platforms = [
     description: "تحليل تعليقات المقاطع من TikTok",
     icon: Music2,
   },
+  {
+    key: "instgram",
+    name: "Instgram",
+    description: "تحليل تعليقات المقاطع من Instgram",
+    icon: Photograph,
+  },
 ];
 
 function getPlatformLimit(plan: string) {
   const normalizedPlan = plan?.toLowerCase();
 
-  if (normalizedPlan === "enterprise") return 99;
+  if (normalizedPlan === "enterprise") return 20;
   if (normalizedPlan === "pro") return 2;
 
   return 1;
@@ -68,6 +74,13 @@ function getPlatformInputConfig(selectedPlatform: string) {
       label: "رابط حساب TikTok",
       placeholder: "مثال: https://www.tiktok.com/@username",
       helpText: "ضعي رابط حساب TikTok الخاص بالمنشأة.",
+    };
+    if (selectedPlatform === "instgram") {
+    return {
+      fieldName: "platformUrl",
+      label: "رابط حساب instgram",
+      placeholder: "مثال: https://www.instgram.com/@username",
+      helpText: "ضعي رابط حساب instgram الخاص بالمنشأة.",
     };
   }
 
@@ -139,17 +152,12 @@ export default function PlatformsOnboardingPage() {
       }
 
       const plan = client.plan || "basic";
-      const limit = getPlatformLimit(plan);
       const count = currentPlatforms?.length ?? 0;
 
       setClientId(client.id);
       setClientPlan(plan);
       setExistingPlatformsCount(count);
 
-      if (count >= limit) {
-        router.push("/dashboard");
-        return;
-      }
 
       setLoading(false);
     }
@@ -189,6 +197,10 @@ export default function PlatformsOnboardingPage() {
 
     if (selectedPlatform === "tiktok" && !platformUrl.trim()) {
       setMessage("الرجاء إدخال رابط حساب TikTok");
+      return;
+    }
+    if (selectedPlatform === "instgram" && !platformUrl.trim()) {
+      setMessage("الرجاء إدخال رابط حساب Instgram");
       return;
     }
 
@@ -284,11 +296,6 @@ export default function PlatformsOnboardingPage() {
 
           <p className="mt-4 text-lg text-gray-500">
             أدخلي بيانات المنصة حسب نوعها، وسيتم استخدامها في السحب والتحليل لاحقًا.
-          </p>
-
-          <p className="mt-3 text-sm font-bold text-[#895159]">
-            باقتك الحالية: {clientPlan} · المنصات المستخدمة:{" "}
-            {existingPlatformsCount} / {getPlatformLimit(clientPlan)}
           </p>
         </div>
 
