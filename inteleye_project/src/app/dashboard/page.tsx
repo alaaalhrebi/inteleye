@@ -99,8 +99,10 @@ export default async function DashboardPage() {
         ];
 
   return (
-    <div dir="rtl" className="min-h-screen bg-[#F8F7F3] text-[#374375]">
-      <div className="mx-auto flex max-w-7xl flex-col gap-6 px-6 py-6 lg:flex-row">
+    return (
+  <div dir="rtl" className="min-h-screen bg-[#F8F7F3] text-[#374375]">
+    <DashboardHeader clientName={client.name} plan={client.plan} />
+    <div className="mx-auto flex max-w-7xl flex-col gap-6 px-6 py-6 lg:flex-row">
         <DashboardSideMenu
           clientName={client.name}
           plan={client.plan}
@@ -179,7 +181,36 @@ export default async function DashboardPage() {
     </div>
   );
 }
+function DashboardHeader({
+  clientName,
+  plan,
+}: {
+  clientName: string;
+  plan: string;
+}) {
+  return (
+    <header className="sticky top-0 z-50 border-b border-[#BABDE2]/30 bg-[#F8F7F3]/90 backdrop-blur-xl">
+      <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
+        <div className="flex items-center gap-4">
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#374375] text-white">
+            <BarChart3 size={24} />
+          </div>
 
+          <div>
+            <h1 className="text-xl font-extrabold text-[#374375]">
+              Intel Eye
+            </h1>
+            <p className="text-sm text-gray-500">
+              {clientName} · باقة {formatPlan(plan)}
+            </p>
+          </div>
+        </div>
+
+        <LogoutButton />
+      </div>
+    </header>
+  );
+}
 function DashboardSideMenu({
   clientName,
   plan,
@@ -196,28 +227,13 @@ function DashboardSideMenu({
   canDownloadPdf: boolean;
 }) {
   return (
-    <aside className="sticky top-6 h-fit w-full shrink-0 rounded-[2rem] border border-[#BABDE2]/40 bg-white p-5 shadow-sm lg:w-[300px]">
-      <div className="mb-6 flex items-center gap-3">
-        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#374375] text-white">
-          <BarChart3 size={24} />
-        </div>
-
-        <div>
-          <h1 className="text-xl font-extrabold text-[#374375]">
-            Intel Eye
-          </h1>
-          <p className="text-sm text-gray-500">
-            {clientName}
-          </p>
-        </div>
-      </div>
-
-      <div className="mb-6 rounded-2xl bg-[#F8F7F3] p-4">
-        <p className="text-xs font-bold text-gray-400">الباقة الحالية</p>
-        <p className="mt-1 text-lg font-extrabold text-[#374375]">
-          {formatPlan(plan)}
-        </p>
-      </div>
+    <aside className="sticky top-24 h-fit w-full shrink-0 rounded-[2rem] border border-[#BABDE2]/40 bg-white p-5 shadow-sm lg:w-[300px]">
+  <div className="mb-6 rounded-2xl bg-[#F8F7F3] p-4">
+    <p className="text-xs font-bold text-gray-400">خيارات العرض</p>
+    <p className="mt-1 text-lg font-extrabold text-[#374375]">
+      الفلاتر والإجراءات
+    </p>
+  </div>
 
       <div className="space-y-4">
         <SidebarSelect label="اختيار الفرع">
@@ -285,7 +301,6 @@ function DashboardSideMenu({
           إدارة الفروع
         </Link>
 
-        <LogoutButton />
       </div>
     </aside>
   );
