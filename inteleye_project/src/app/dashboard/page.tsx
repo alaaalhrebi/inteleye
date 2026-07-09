@@ -99,7 +99,6 @@ export default async function DashboardPage() {
         ];
 
   return (
-    return (
   <div dir="rtl" className="min-h-screen bg-[#F8F7F3] text-[#374375]">
     <DashboardHeader clientName={client.name} plan={client.plan} />
     <div className="mx-auto flex max-w-7xl flex-col gap-6 px-6 py-6 lg:flex-row">
