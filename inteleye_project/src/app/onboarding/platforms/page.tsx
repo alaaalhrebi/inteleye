@@ -94,6 +94,9 @@ function getPlatformInputConfig(selectedPlatform: string) {
     helpText: "",
   };
 }
+function normalizeXUsername(value: string) {
+  return value.trim().replace(/^@/, "");
+}
 
 export default function PlatformsOnboardingPage() {
   const router = useRouter();
