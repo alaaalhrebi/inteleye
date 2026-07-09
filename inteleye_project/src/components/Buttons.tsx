@@ -17,16 +17,16 @@ const primaryClassName = `
   items-center
   gap-3
   rounded-full
-  bg-[#374375]
+  bg-primary
   px-7
   py-3.5
-  text-white
   font-semibold
+  text-white
   shadow-lg
   transition-all
   duration-300
-  hover:bg-[#895159]
-  hover:shadow-2xl
+  hover:bg-accent
+  hover:shadow-xl
 `;
 
 const secondaryClassName = `
@@ -35,16 +35,18 @@ const secondaryClassName = `
   justify-center
   rounded-full
   border
-  border-[#374375]
+  border-primary
   bg-white
   px-7
   py-3.5
   font-semibold
-  text-[#374375]
+  text-primary
+  shadow-sm
   transition-all
   duration-300
-  hover:bg-[#374375]
+  hover:bg-primary
   hover:text-white
+  hover:shadow-lg
 `;
 
 export function PrimaryButton({ children, href, onClick }: ButtonProps) {
