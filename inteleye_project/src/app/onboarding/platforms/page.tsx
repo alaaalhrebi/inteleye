@@ -4,6 +4,7 @@
 import { useEffect, useMemo, useState } from "react";
 import type { FormEvent } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import {
   CheckCircle2,
   MapPin,
@@ -296,6 +297,14 @@ export default function PlatformsOnboardingPage() {
       <div className="absolute bottom-[-120px] left-[-120px] h-[360px] w-[360px] rounded-full bg-[#DFAEA1]/40 blur-[120px]" />
 
       <div className="relative mx-auto max-w-6xl">
+        <div className="mb-6 flex justify-start">
+            <Link
+              href="/dashboard"
+              className="inline-flex items-center rounded-full border border-[#374375] bg-white px-5 py-3 text-sm font-bold text-[#374375] transition hover:bg-[#374375] hover:text-white"
+            >
+              الرجوع للداشبورد
+            </Link>
+          </div>
         <div className="mb-10 text-center">
           <div className="mx-auto mb-5 inline-flex items-center gap-2 rounded-full bg-[#BABDE2]/35 px-5 py-2 text-sm font-bold">
             <Sparkles size={16} />
