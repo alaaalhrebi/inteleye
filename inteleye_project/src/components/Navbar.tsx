@@ -29,7 +29,6 @@ export default function Navbar() {
 
           {/* Desktop Menu */}
           <nav className="hidden items-center gap-10 lg:flex">
-
             <a
               href="#"
               className="font-medium text-text transition-all duration-300 hover:text-accent"
@@ -57,23 +56,21 @@ export default function Navbar() {
             >
               تواصل
             </a>
-
           </nav>
 
           {/* Login Button */}
           <div className="flex items-center gap-4">
-
             <div className="hidden md:block">
               <motion.div
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.97 }}
               >
-             <Link
-  href="/login"
-  className="inline-flex items-center rounded-full bg-primary px-8 py-3 font-bold text-white shadow-lg transition-all duration-300 hover:bg-blue-600"
->
-  تسجيل الدخول
-</Link>
+                <Link
+                  href="/login"
+                  className="inline-flex items-center rounded-full bg-primary px-8 py-3 font-bold text-white shadow-lg transition-all duration-300 hover:bg-accent"
+                >
+                  تسجيل الدخول
+                </Link>
               </motion.div>
             </div>
 
@@ -81,7 +78,6 @@ export default function Navbar() {
             <button className="rounded-xl border border-border p-2 text-primary transition hover:bg-background lg:hidden">
               <Menu size={22} />
             </button>
-
           </div>
         </div>
       </div>
