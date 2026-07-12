@@ -1,328 +1,383 @@
 
-import Link from "next/link";
-import { redirect } from "next/navigation";
+"use client";
+
+import { useState } from "react";
+import type { FormEvent } from "react";
 import {
-  ArrowRight,
   Building2,
+  CheckCircle2,
+  Instagram,
   MapPin,
   MessageCircle,
+  Music2,
   Plus,
-  Star,
-  FileText,
-  Lock,
 } from "lucide-react";
-import { createSupabaseServerClient } from "@/lib/supabase-server";
-import AddBranchForm from "@/components/AddBranchForm";
+import { createSupabaseBrowserClient } from "@/lib/supabase-browser";
 
-function getBranchLimit(plan: string) {
+type AddBranchFormProps = {
+  clientId: number;
+  plan?: string;
+  canUseX?: boolean;
+};
+
+const platformOptions = [
+  {
+    key: "google_maps",
+    name: "Google Maps",
+    description: "تقييمات وتعليقات خرائط Google",
+    icon: MapPin,
+  },
+  {
+    key: "x",
+    name: "X",
+    description: "متابعة mentions والتعليقات في X",
+    icon: MessageCircle,
+  },
+  {
+    key: "tiktok",
+    name: "TikTok",
+    description: "تحليل تعليقات مقاطع TikTok",
+    icon: Music2,
+  },
+  {
+    key: "instagram",
+    name: "Instagram",
+    description: "تحليل تعليقات Instagram",
+    icon: Instagram,
+  },
+];
+
+function getPlatformLimit(plan: string) {
   const normalizedPlan = plan?.toLowerCase();
 
-  if (normalizedPlan === "enterprise") return 999;
-  if (normalizedPlan === "pro") return 3;
+  if (normalizedPlan === "enterprise") return 20;
+  if (normalizedPlan === "pro") return 2;
 
   return 1;
 }
 
-export default async function BranchesPage() {
-  const supabase = createSupabaseServerClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) redirect("/login");
-
-  const { data: client } = await supabase
-    .from("clients")
-    .select("id, name, plan, subscription_status")
-    .eq("user_id", user.id)
-    .maybeSingle();
-
-  if (!client) redirect("/signup");
-
-  const status = client.subscription_status?.toLowerCase();
-
-  if (status !== "active" && status !== "paid" && status !== "completed") {
-    redirect(`/checkout?plan=${client.plan || "basic"}`);
+function getPlatformInputConfig(platform: string) {
+  if (platform === "google_maps") {
+    return {
+      label: "رابط Google Maps",
+      placeholder: "مثال: https://maps.app.goo.gl/xxxx",
+      helpText: "ضعي رابط الفرع في Google Maps.",
+      type: "url",
+    };
   }
 
-  const plan = client.plan?.toLowerCase() || "basic";
-  const branchLimit = getBranchLimit(plan);
-  const canUseX = plan === "pro" || plan === "enterprise";
-
-  const { data: branches } = await supabase
-    .from("branches")
-    .select("id, name, google_maps_url, x_handle")
-    .eq("client_id", client.id);
-
-  const currentBranchesCount = branches?.length ?? 0;
-  const canAddBranch = currentBranchesCount < branchLimit;
-
-  const branchIds = (branches ?? []).map((branch) => branch.id);
-
-  let reports: any[] = [];
-
-  if (branchIds.length > 0) {
-    const { data } = await supabase
-      .from("reports")
-      .select("*")
-      .in("branch_id", branchIds)
-      .order("created_at", { ascending: false });
-
-    reports = data ?? [];
+  if (platform === "x") {
+    return {
+      label: "اسم المستخدم في X",
+      placeholder: "مثال: top_5 أو @top_5",
+      helpText: "ضعي اسم الحساب بدون رابط.",
+      type: "username",
+    };
   }
 
-  const latestReportByBranch = new Map<number, any>();
+  if (platform === "tiktok") {
+    return {
+      label: "رابط حساب TikTok",
+      placeholder: "مثال: https://www.tiktok.com/@username",
+      helpText: "ضعي رابط حساب TikTok الخاص بالفرع أو البراند.",
+      type: "url",
+    };
+  }
 
-  for (const report of reports) {
-    if (!latestReportByBranch.has(report.branch_id)) {
-      latestReportByBranch.set(report.branch_id, report);
+  if (platform === "instagram") {
+    return {
+      label: "رابط حساب Instagram",
+      placeholder: "مثال: https://www.instagram.com/username",
+      helpText: "ضعي رابط حساب Instagram الخاص بالفرع أو البراند.",
+      type: "url",
+    };
+  }
+
+  return {
+    label: "رابط المنصة",
+    placeholder: "ضعي رابط المنصة",
+    helpText: "",
+    type: "url",
+  };
+}
+
+function normalizeUsername(value: string) {
+  return value.trim().replace(/^@/, "");
+}
+
+export default function AddBranchForm({
+  clientId,
+  plan = "basic",
+}: AddBranchFormProps) {
+  const supabase = createSupabaseBrowserClient();
+
+  const [branchName, setBranchName] = useState("");
+  const [selectedPlatform, setSelectedPlatform] = useState("google_maps");
+  const [platformValue, setPlatformValue] = useState("");
+  const [businessActivity, setBusinessActivity] = useState("");
+
+  const [saving, setSaving] = useState(false);
+  const [message, setMessage] = useState("");
+
+  const inputConfig = getPlatformInputConfig(selectedPlatform);
+
+  function handlePlatformChange(platformKey: string) {
+    setSelectedPlatform(platformKey);
+    setPlatformValue("");
+    setMessage("");
+  }
+
+  async function handleSubmit(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+
+    if (!branchName.trim()) {
+      setMessage("الرجاء إدخال اسم الفرع");
+      return;
     }
+
+    if (!platformValue.trim()) {
+      setMessage(`الرجاء إدخال ${inputConfig.label}`);
+      return;
+    }
+
+    if (!businessActivity.trim()) {
+      setMessage("الرجاء إدخال نشاط المنشأة");
+      return;
+    }
+
+    setSaving(true);
+    setMessage("");
+
+    const { data: activePlatforms, error: activePlatformsError } =
+      await supabase
+        .from("client_platforms")
+        .select("platform_name")
+        .eq("client_id", clientId)
+        .eq("is_active", true);
+
+    if (activePlatformsError) {
+      console.error("Active platforms error:", activePlatformsError);
+      setMessage("حدث خطأ أثناء التحقق من المنصات الحالية");
+      setSaving(false);
+      return;
+    }
+
+    const usedPlatformNames = new Set(
+      (activePlatforms ?? []).map((item) => item.platform_name)
+    );
+
+    const platformLimit = getPlatformLimit(plan);
+    const isNewPlatformType = !usedPlatformNames.has(selectedPlatform);
+
+    if (isNewPlatformType && usedPlatformNames.size >= platformLimit) {
+      setMessage(
+        `باقتك الحالية تسمح بعدد ${platformLimit} منصة فقط. للزيادة يمكنك الترقية إلى باقة أعلى.`
+      );
+      setSaving(false);
+      return;
+    }
+
+    const cleanUsername =
+      selectedPlatform === "x" ? normalizeUsername(platformValue) : "";
+
+    const finalPlatformUrl =
+      selectedPlatform === "x"
+        ? `https://x.com/${cleanUsername}`
+        : platformValue.trim();
+
+    const finalUsername =
+      selectedPlatform === "x" ? cleanUsername : null;
+
+    const { data: branch, error: branchError } = await supabase
+      .from("branches")
+      .insert({
+        client_id: clientId,
+        name: branchName.trim(),
+        google_maps_url:
+          selectedPlatform === "google_maps" ? finalPlatformUrl : null,
+        x_handle: selectedPlatform === "x" ? cleanUsername : null,
+      })
+      .select("id")
+      .single();
+
+    if (branchError || !branch) {
+      console.error("Branch insert error:", branchError);
+      setMessage("حدث خطأ أثناء حفظ الفرع");
+      setSaving(false);
+      return;
+    }
+
+    const { error: platformError } = await supabase
+      .from("client_platforms")
+      .insert({
+        client_id: clientId,
+        branch_id: branch.id,
+        platform_name: selectedPlatform,
+        platform_url: finalPlatformUrl,
+        username: finalUsername,
+        business_activity: businessActivity.trim(),
+        is_active: true,
+      });
+
+    if (platformError) {
+      console.error("Platform insert error:", platformError);
+
+      if (platformError.code === "23505") {
+        setMessage("هذه المنصة مضافة مسبقًا لهذا الفرع");
+        setSaving(false);
+        return;
+      }
+
+      setMessage(`تم حفظ الفرع، لكن حدث خطأ أثناء ربط المنصة: ${platformError.message}`);
+      setSaving(false);
+      return;
+    }
+
+    setMessage("تمت إضافة الفرع والمنصة بنجاح");
+
+    setBranchName("");
+    setPlatformValue("");
+    setBusinessActivity("");
+    setSelectedPlatform("google_maps");
+    setSaving(false);
+
+    window.location.reload();
   }
 
   return (
-    <main
-      dir="rtl"
-      className="min-h-screen bg-[#F8F7F3] px-6 py-8 text-[#374375]"
+    <form
+      onSubmit={handleSubmit}
+      className="rounded-[2rem] border border-[#BABDE2]/30 bg-white p-6"
     >
-      <div className="mx-auto max-w-7xl">
-        <header className="mb-8 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <div>
-            <p className="text-sm font-bold text-gray-400">
-              لوحة التحكم / الفروع
-            </p>
+      <div className="mb-6 flex items-center gap-3">
+        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#BABDE2]/30 text-[#374375]">
+          <Building2 size={22} />
+        </div>
 
-            <h1 className="mt-2 text-4xl font-extrabold text-[#374375]">
-              إدارة الفروع
-            </h1>
-
-            <p className="mt-3 max-w-2xl leading-7 text-gray-500">
-              أضيفي فروع المنشأة، واربطي كل فرع بالمنصات المناسبة لعرض التقارير والتحليلات بشكل منظم.
-            </p>
-          </div>
-
-          <Link
-            href="/dashboard"
-            className="inline-flex items-center justify-center gap-2 rounded-full border border-[#374375] bg-white px-5 py-3 text-sm font-bold text-[#374375] transition hover:bg-[#374375] hover:text-white"
-          >
-            <ArrowRight size={18} />
-            الرجوع للداشبورد
-          </Link>
-        </header>
-
-        <section className="mb-8 grid gap-4 md:grid-cols-3">
-          <InfoCard
-            title="عدد الفروع الحالية"
-            value={currentBranchesCount}
-            icon={<Building2 size={22} />}
-          />
-
-          <InfoCard
-            title="الحد حسب الباقة"
-            value={branchLimit === 999 ? "غير محدود" : branchLimit}
-            icon={<Lock size={22} />}
-          />
-
-          <InfoCard
-            title="الباقة الحالية"
-            value={formatPlan(plan)}
-            icon={<Star size={22} />}
-          />
-        </section>
-
-        <section className="mb-8 rounded-[2rem] border border-[#BABDE2]/40 bg-white p-6 shadow-sm">
-          <div className="mb-6 flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#BABDE2]/30 text-[#374375]">
-              <Plus size={22} />
-            </div>
-
-            <div>
-              <p className="text-xs font-bold text-gray-400">إضافة فرع</p>
-              <h2 className="text-xl font-extrabold text-[#374375]">
-                فرع جديد
-              </h2>
-            </div>
-          </div>
-
-          {canAddBranch ? (
-            <AddBranchForm clientId={client.id} canUseX={canUseX} />
-          ) : (
-            <div className="rounded-3xl bg-[#DFAEA1]/20 p-6 text-center">
-              <h3 className="text-lg font-extrabold text-[#895159]">
-                وصلتِ للحد الأعلى من الفروع في باقتك الحالية
-              </h3>
-
-              <p className="mt-2 text-sm leading-7 text-[#895159]">
-                باقة {formatPlan(plan)} تسمح بعدد {branchLimit} فرع. للزيادة يمكنك الترقية إلى باقة أعلى.
-              </p>
-            </div>
-          )}
-        </section>
-
-        <section className="rounded-[2rem] border border-[#BABDE2]/40 bg-white p-6 shadow-sm">
-          <div className="mb-6 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-            <div>
-              <p className="text-xs font-bold text-gray-400">الفروع المسجلة</p>
-              <h2 className="text-2xl font-extrabold text-[#374375]">
-                قائمة الفروع
-              </h2>
-            </div>
-
-            <p className="rounded-full bg-[#F8F7F3] px-4 py-2 text-sm font-bold text-gray-500">
-              {currentBranchesCount} فرع
-            </p>
-          </div>
-
-          {!branches || branches.length === 0 ? (
-            <EmptyBranches />
-          ) : (
-            <div className="grid gap-5 lg:grid-cols-2">
-              {branches.map((branch) => {
-                const report = latestReportByBranch.get(branch.id);
-
-                return (
-                  <BranchCard
-                    key={branch.id}
-                    branch={branch}
-                    report={report}
-                  />
-                );
-              })}
-            </div>
-          )}
-        </section>
-      </div>
-    </main>
-  );
-}
-
-function InfoCard({
-  title,
-  value,
-  icon,
-}: {
-  title: string;
-  value: any;
-  icon: React.ReactNode;
-}) {
-  return (
-    <div className="rounded-[1.7rem] border border-[#BABDE2]/30 bg-white p-5 shadow-sm">
-      <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-2xl bg-[#BABDE2]/30 text-[#374375]">
-        {icon}
-      </div>
-
-      <p className="text-sm text-gray-400">{title}</p>
-      <p className="mt-3 text-3xl font-extrabold text-[#374375]">{value}</p>
-    </div>
-  );
-}
-
-function BranchCard({
-  branch,
-  report,
-}: {
-  branch: any;
-  report: any;
-}) {
-  return (
-    <div className="rounded-3xl border border-[#BABDE2]/30 bg-[#F8F7F3] p-5">
-      <div className="mb-5 flex items-start justify-between gap-4">
         <div>
+          <p className="text-xs font-bold text-gray-400">إضافة فرع جديد</p>
           <h3 className="text-xl font-extrabold text-[#374375]">
-            {branch.name}
+            بيانات الفرع والمنصة
           </h3>
+        </div>
+      </div>
 
-          <p className="mt-2 text-sm text-gray-500">
-            آخر تقرير: {report?.period_label || "لا يوجد تقرير بعد"}
+      <div className="mb-6">
+        <label className="mb-2 block text-sm font-bold text-[#374375]">
+          اسم الفرع
+        </label>
+
+        <input
+          value={branchName}
+          onChange={(e) => setBranchName(e.target.value)}
+          placeholder="مثال: فرع الرياض"
+          className="w-full rounded-2xl border border-gray-200 px-4 py-4 text-right outline-none transition focus:border-[#374375] focus:ring-4 focus:ring-[#BABDE2]/30"
+        />
+      </div>
+
+      <div className="mb-6">
+        <label className="mb-3 block text-sm font-bold text-[#374375]">
+          اختر المنصة المرتبطة بهذا الفرع
+        </label>
+
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          {platformOptions.map((platform) => {
+            const Icon = platform.icon;
+            const active = selectedPlatform === platform.key;
+
+            return (
+              <button
+                key={platform.key}
+                type="button"
+                onClick={() => handlePlatformChange(platform.key)}
+                className={`rounded-[1.25rem] border p-4 text-right transition ${
+                  active
+                    ? "border-[#374375] bg-[#374375] text-white shadow-lg"
+                    : "border-gray-200 bg-[#F8F7F3] text-[#374375] hover:bg-[#BABDE2]/20"
+                }`}
+              >
+                <div
+                  className={`mb-4 flex h-10 w-10 items-center justify-center rounded-xl ${
+                    active ? "bg-white/15" : "bg-[#BABDE2]/30"
+                  }`}
+                >
+                  <Icon size={22} />
+                </div>
+
+                <h4 className="text-base font-extrabold">{platform.name}</h4>
+
+                <p
+                  className={`mt-2 text-xs leading-6 ${
+                    active ? "text-white/80" : "text-gray-500"
+                  }`}
+                >
+                  {platform.description}
+                </p>
+
+                {active && (
+                  <div className="mt-3 flex items-center gap-2 text-xs font-bold">
+                    <CheckCircle2 size={15} />
+                    تم الاختيار
+                  </div>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      <div className="grid gap-5 md:grid-cols-2">
+        <div>
+          <label className="mb-2 block text-sm font-bold text-[#374375]">
+            {inputConfig.label}
+          </label>
+
+          <input
+            value={platformValue}
+            onChange={(e) => setPlatformValue(e.target.value)}
+            placeholder={inputConfig.placeholder}
+            className="w-full rounded-2xl border border-gray-200 px-4 py-4 text-right outline-none transition focus:border-[#374375] focus:ring-4 focus:ring-[#BABDE2]/30"
+          />
+
+          {inputConfig.helpText && (
+            <p className="mt-2 text-xs font-bold text-gray-400">
+              {inputConfig.helpText}
+            </p>
+          )}
+        </div>
+
+        <div>
+          <label className="mb-2 block text-sm font-bold text-[#374375]">
+            نشاط المنشأة
+          </label>
+
+          <input
+            value={businessActivity}
+            onChange={(e) => setBusinessActivity(e.target.value)}
+            placeholder="مثال: مطعم، عيادة، مقهى، متجر"
+            className="w-full rounded-2xl border border-gray-200 px-4 py-4 text-right outline-none transition focus:border-[#374375] focus:ring-4 focus:ring-[#BABDE2]/30"
+          />
+
+          <p className="mt-2 text-xs font-bold text-gray-400">
+            يساعد النشاط في تحسين التحليل والردود المقترحة.
           </p>
         </div>
-
-        <span className="rounded-full bg-[#BABDE2]/40 px-3 py-1 text-xs font-bold text-[#374375]">
-          مفعّل
-        </span>
       </div>
 
-      <div className="space-y-3">
-        {branch.google_maps_url && (
-          <a
-            href={branch.google_maps_url}
-            target="_blank"
-            rel="noreferrer"
-            className="flex items-center gap-2 rounded-2xl bg-white px-4 py-3 text-sm font-bold text-[#374375] transition hover:bg-[#BABDE2]/20"
-          >
-            <MapPin size={18} />
-            رابط Google Maps
-          </a>
-        )}
+      {message && (
+        <p className="mt-5 rounded-2xl bg-[#DFAEA1]/30 px-4 py-3 text-center text-sm font-bold text-[#895159]">
+          {message}
+        </p>
+      )}
 
-        {branch.x_handle && (
-          <div className="flex items-center gap-2 rounded-2xl bg-white px-4 py-3 text-sm font-bold text-[#374375]">
-            <MessageCircle size={18} />
-            حساب X: {branch.x_handle}
-          </div>
-        )}
-
-        <div className="grid gap-3 md:grid-cols-3">
-          <MiniStat
-            label="متوسط التقييم"
-            value={report?.google_rating ?? "—"}
-          />
-          <MiniStat
-            label="التعليقات"
-            value={report?.total_reviews ?? report?.total_feedback ?? 0}
-          />
-          <MiniStat
-            label="نسبة السلبي"
-            value={`${report?.negative_pct ?? 0}%`}
-          />
-        </div>
-      </div>
-
-      <div className="mt-5 flex flex-wrap gap-3">
-        <Link
-          href={`/dashboard/reports?branch=${branch.id}`}
-          className="inline-flex items-center gap-2 rounded-full bg-[#374375] px-5 py-3 text-sm font-bold text-white transition hover:bg-[#895159]"
-        >
-          <FileText size={18} />
-          عرض تقارير الفرع
-        </Link>
-      </div>
-    </div>
+      <button
+        type="submit"
+        disabled={saving}
+        className="mt-6 flex w-full items-center justify-center gap-2 rounded-2xl bg-[#374375] px-6 py-4 text-lg font-extrabold text-white shadow-lg transition hover:bg-[#895159] disabled:opacity-60"
+      >
+        <Plus size={20} />
+        {saving ? "جاري إضافة الفرع..." : "إضافة الفرع والمنصة"}
+      </button>
+    </form>
   );
-}
-
-function MiniStat({
-  label,
-  value,
-}: {
-  label: string;
-  value: any;
-}) {
-  return (
-    <div className="rounded-2xl bg-white p-4 text-center">
-      <p className="text-lg font-extrabold text-[#374375]">{value}</p>
-      <p className="mt-1 text-xs font-bold text-gray-400">{label}</p>
-    </div>
-  );
-}
-
-function EmptyBranches() {
-  return (
-    <div className="rounded-3xl bg-[#F8F7F3] p-10 text-center">
-      <Building2 className="mx-auto mb-4 text-[#BABDE2]" size={46} />
-
-      <h3 className="text-xl font-extrabold text-[#374375]">
-        لا توجد فروع حتى الآن
-      </h3>
-
-      <p className="mx-auto mt-3 max-w-xl leading-7 text-gray-500">
-        أضيفي أول فرع للمنشأة، وبعد ربطه بالمنصات ستظهر تقاريره وتحليلاته هنا.
-      </p>
-    </div>
-  );
-}
-
-function formatPlan(plan: string) {
-  if (!plan) return "Basic";
-  return plan.charAt(0).toUpperCase() + plan.slice(1);
 }
