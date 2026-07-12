@@ -32,9 +32,9 @@ export default function HeroSection() {
 
           <div className="mb-8 inline-flex items-center gap-2 rounded-full bg-[#EEF1FF] px-5 py-2 text-sm font-medium text-[#374375]">
 
-            <Sparkles size={16} />
+            <Sparkles size={13} />
 
-            منصة ذكاء اصطناعي لإدارة السمعة
+            منصة ذكاء اصطناعي لإدارة أراء العملاء
 
           </div>
 
@@ -48,9 +48,9 @@ export default function HeroSection() {
 
           </h1>
 
-          <p className="mt-7 text-[18px] leading-9 text-[#5F667A]">
+          <p className="mt-7 text-[14px] leading-9 text-[#5F667A]">
 
-            IntelEye منصة ذكاء اصطناعي تساعد الشركات على تحليل تقييمات العملاء،
+             منصة ذكاء اصطناعي تساعد الشركات على تحليل تقييمات العملاء IntelEye
             واكتشاف المشاكل المتكررة، واقتراح ردود احترافية، وإنشاء تقارير ذكية
             تساعد في تحسين جودة الخدمة ورفع السمعة الرقمية لمنشأتك.
 
