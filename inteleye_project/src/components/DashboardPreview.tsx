@@ -15,75 +15,163 @@ export default function DashboardPreview() {
       initial={{ opacity: 0, y: 25 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.7 }}
-      className="w-[420px] h-[470px] overflow-hidden rounded-[26px] border border-gray-200 bg-white shadow-[0_25px_70px_rgba(0,0,0,.12)]"
+      className="w-[390px] h-[440px] overflow-hidden rounded-[26px] border border-gray-200 bg-white shadow-[0_25px_70px_rgba(0,0,0,.12)]"
       dir="rtl"
     >
 
-      {/* Header */}
+  {/* Header */}
 
-      <div className="border-b border-gray-100 px-6 py-5">
+<div className="border-b border-gray-100 px-5 py-5">
 
-        <span className="text-xs font-medium tracking-wide text-gray-400">
-          لوحة تحليل السمعة
-        </span>
+  <div className="flex items-start justify-between">
 
-        <h2 className="mt-2 text-2xl font-bold text-[#374375]">
-          IntelEye
-        </h2>
+    {/* Logo */}
 
-        <p className="mt-2 text-sm leading-6 text-gray-500">
-          متابعة تقييمات العملاء وتحليل السمعة الرقمية باستخدام الذكاء الاصطناعي.
-        </p>
+    <img
+      src="/logo.svg"
+      alt="IntelEye"
+      className="h-7 w-auto object-contain"
+    />
 
-      </div>
+    {/* Title */}
 
-      {/* Summary */}
+    <div className="text-right">
 
-      <div className="grid grid-cols-3 gap-3 p-5">
+      <span className="text-xs font-medium tracking-wide text-gray-400">
+        لوحة تحليل السمعة
+      </span>
 
-        <SummaryCard
-          icon={<Star size={18} />}
-          title="التقييم"
-          value="4.8"
-        />
+      <h2 className="mt-1 text-lg font-bold text-[#374375]">
+        IntelEye
+      </h2>
 
-        <SummaryCard
-          icon={<MessageSquare size={18} />}
-          title="المراجعات"
-          value="1,248"
-        />
+      <p className="mt-1 text-xs text-gray-400">
+        آخر 30 يوماً
+      </p>
 
-        <SummaryCard
-          icon={<TrendingUp size={18} />}
-          title="النمو"
-          value="+18%"
-        />
+    </div>
 
-      </div>
+  </div>
+
+</div>
+
+      
+{/* Summary */}
+
+<div className="grid grid-cols-3 gap-3 px-5 py-5">
+
+  <SummaryCard
+    icon={<Star size={16} className="text-[#C8A648]" />}
+    title="متوسط التقييم"
+    value="4.8"
+  />
+
+  <SummaryCard
+    icon={<MessageSquare size={16} className="text-[#374375]" />}
+    title="إجمالي المراجعات"
+    value="1,248"
+  />
+
+  <SummaryCard
+    icon={<TrendingUp size={16} className="text-green-600" />}
+    title="نمو السمعة"
+    value="+18%"
+  />
+
+</div>
             {/* اتجاه التقييمات */}
 
-      <div className="border-y border-gray-100 px-5 py-5">
+     {/* Rating Trend */}
 
-        <div className="mb-4 flex items-center justify-between">
+<div className="border-t border-gray-100 px-5 py-5">
 
-          <div className="flex items-center gap-2">
+  <div className="mb-4 flex items-center justify-between">
 
-            <LineChart
-              size={18}
-              className="text-[#374375]"
-            />
+    <div className="text-right">
 
-            <span className="font-semibold text-[#374375]">
-              اتجاه التقييمات
-            </span>
+      <h3 className="text-sm font-semibold text-[#374375]">
+        اتجاه التقييمات
+      </h3>
 
-          </div>
+      <p className="text-xs text-gray-400">
+        آخر 30 يوماً
+      </p>
 
-          <span className="text-xs text-gray-400">
-            آخر 30 يوم
-          </span>
+    </div>
 
-        </div>
+    <BarChart3 size={18} className="text-[#374375]" />
+
+  </div>
+
+  <div className="relative h-40">
+
+    <div className="absolute inset-0 flex flex-col justify-between">
+      {[1,2,3,4].map((i) => (
+        <div key={i} className="border-t border-dashed border-gray-100" />
+      ))}
+    </div>
+
+    <svg
+      viewBox="0 0 420 150"
+      className="absolute inset-0 h-full w-full"
+    >
+
+      <defs>
+
+        <linearGradient
+          id="area"
+          x1="0"
+          y1="0"
+          x2="0"
+          y2="1"
+        >
+          <stop offset="0%" stopColor="#374375" stopOpacity="0.25" />
+          <stop offset="100%" stopColor="#374375" stopOpacity="0" />
+        </linearGradient>
+
+      </defs>
+
+      <path
+        d="M10 120
+           C60 90 100 70 140 75
+           S220 95 270 60
+           S350 40 410 30
+           L410 150
+           L10 150 Z"
+        fill="url(#area)"
+      />
+
+      <path
+        d="M10 120
+           C60 90 100 70 140 75
+           S220 95 270 60
+           S350 40 410 30"
+        fill="none"
+        stroke="#374375"
+        strokeWidth="3"
+        strokeLinecap="round"
+      />
+
+      {[
+        [10,120],
+        [140,75],
+        [270,60],
+        [410,30],
+      ].map(([x,y],i)=>(
+        <circle
+          key={i}
+          cx={x}
+          cy={y}
+          r="4"
+          fill="#374375"
+        />
+      ))}
+
+    </svg>
+
+  </div>
+
+</div>
 
         {/* الرسم البياني */}
 
@@ -140,65 +228,91 @@ export default function DashboardPreview() {
       </div>
 
       {/* تحليل الذكاء الاصطناعي */}
+{/* AI Insights */}
 
-      <div className="px-5 py-5">
+<div className="px-5 py-5">
 
-        <div className="mb-4 flex items-center gap-2">
+  <div className="mb-4 flex items-center justify-between">
 
-          <Brain
-            size={18}
-            className="text-[#374375]"
-          />
+    <h3 className="text-sm font-semibold text-[#374375]">
+      تحليل الذكاء الاصطناعي
+    </h3>
 
-          <span className="font-semibold text-[#374375]">
-            تحليل الذكاء الاصطناعي
-          </span>
+    <Brain size={18} className="text-[#374375]" />
 
-        </div>
+  </div>
 
-        <div className="space-y-3">
+  <div className="space-y-2">
 
-          <InsightCard
-            title="ارتفاع التقييمات الإيجابية"
-            description="ارتفع معدل التقييمات الإيجابية خلال الشهر الحالي بنسبة 18٪."
-          />
+    <InsightItem
+      title="ارتفعت التقييمات الإيجابية بنسبة 18٪"
+    />
 
-          <InsightCard
-            title="انخفاض الشكاوى"
-            description="انخفضت الشكاوى المتعلقة بسرعة الخدمة مقارنة بالشهر الماضي."
-          />
+    <InsightItem
+      title="12 مراجعة تحتاج إلى رد"
+    />
 
-        </div>
+    <InsightItem
+      title="انخفاض الشكاوى المتعلقة بالخدمة"
+    />
 
-      </div>
+  </div>
+
+</div>
             {/* آخر التقييمات */}
+{/* آخر التقييمات */}
 
-      <div className="border-t border-gray-100 px-5 py-5">
+<div className="border-t border-gray-100 px-5 py-5">
 
-        <h3 className="mb-4 font-semibold text-[#374375]">
-          آخر التقييمات
-        </h3>
+  <div className="mb-3 flex items-center justify-between">
 
-        <div className="space-y-3">
+    <h3 className="text-sm font-semibold text-[#374375]">
+      آخر التقييمات
+    </h3>
 
-          <ReviewCard
-            name="مطعم الرياض"
-            rating="5.0"
-            review="الخدمة ممتازة وسرعة الاستجابة كانت رائعة."
-          />
+    <span className="text-xs text-gray-400">
+      Google
+    </span>
 
-          <ReviewCard
-            name="فرع جدة"
-            rating="4.7"
-            review="تجربة جميلة، فقط وقت الانتظار يحتاج إلى تحسين."
-          />
+  </div>
 
-        </div>
+  <div className="rounded-2xl bg-[#F8FAFC] p-4">
+
+    <div className="mb-3 flex items-center justify-between">
+
+      <div>
+
+        <h4 className="text-sm font-semibold text-[#374375]">
+          مطعم الرياض
+        </h4>
+
+        <p className="text-xs text-gray-400">
+          قبل ساعتين
+        </p>
 
       </div>
 
-    </motion.div>
-  );
+      <div className="rounded-lg bg-green-100 px-2 py-1">
+
+        <span className="text-xs font-semibold text-green-700">
+          4.8
+        </span>
+
+      </div>
+
+    </div>
+
+    <p className="text-sm leading-6 text-gray-600">
+      خدمة ممتازة وسرعة في الرد، وتمت معالجة الملاحظة خلال وقت قصير.
+    </p>
+
+  </div>
+
+</div>
+
+</motion.div>
+
+);
 }
 
 /* ===========================
@@ -217,18 +331,22 @@ function SummaryCard({
   value,
 }: SummaryCardProps) {
   return (
-    <div className="rounded-2xl border border-gray-200 bg-[#F8FAFC] p-4">
+    <div className="rounded-2xl border border-gray-100 bg-[#FAFBFD] p-3">
 
-      <div className="mb-3 text-[#374375]">
+      <div className="mb-3 flex justify-end">
         {icon}
       </div>
 
-      <div className="text-xl font-bold text-[#374375]">
-        {value}
-      </div>
+      <div className="text-right">
 
-      <div className="mt-1 text-xs text-gray-500">
-        {title}
+        <h3 className="text-2xl font-bold text-[#374375]">
+          {value}
+        </h3>
+
+        <p className="mt-1 text-[11px] text-gray-500">
+          {title}
+        </p>
+
       </div>
 
     </div>
@@ -239,24 +357,21 @@ function SummaryCard({
    Insight Card
 =========================== */
 
-type InsightCardProps = {
+type InsightItemProps = {
   title: string;
-  description: string;
 };
 
-function InsightCard({
+function InsightItem({
   title,
-  description,
-}: InsightCardProps) {
+}: InsightItemProps) {
+
   return (
-    <div className="rounded-xl border border-gray-200 bg-[#F8FAFC] p-3">
+    <div className="flex items-center gap-3 rounded-xl bg-[#F8FAFC] px-4 py-3">
 
-      <h4 className="text-sm font-semibold text-[#374375]">
+      <div className="h-2 w-2 rounded-full bg-[#374375]" />
+
+      <p className="text-sm text-gray-600">
         {title}
-      </h4>
-
-      <p className="mt-2 text-xs leading-6 text-gray-500">
-        {description}
       </p>
 
     </div>
