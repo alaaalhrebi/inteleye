@@ -261,7 +261,7 @@ function DashboardSideMenu({
   canDownloadPdf: boolean;
 }) {
   return (
-    <aside className="sticky top-24 h-fit w-full shrink-0 rounded-[2rem] border border-[#BABDE2]/40 bg-white p-5 shadow-sm lg:w-[300px]">
+    <aside className="w-full shrink-0 rounded-[2rem] border border-[#BABDE2]/40 bg-white p-5 shadow-sm lg:sticky lg:top-24 lg:w-[300px]">
       <DashboardFilters branches={branches} platforms={platforms} />
 
       <div className="mt-6 space-y-3">
