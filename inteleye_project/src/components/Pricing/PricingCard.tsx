@@ -68,7 +68,7 @@ export default function PricingCard({ plan }: Props) {
 
         <h3
           className={`text-2xl font-bold ${
-            plan.featured ? "text-white" : "text-[#16352B]"
+plan.featured ? "text-white" : "text-primary"
           }`}
         >
           {plan.name}
@@ -77,7 +77,7 @@ export default function PricingCard({ plan }: Props) {
         <div className="mt-8 flex items-end gap-2">
           <span
             className={`text-6xl font-bold ${
-              plan.featured ? "text-white" : "text-[#16352B]"
+plan.featured ? "text-white" : "text-primary"
             }`}
           >
             {plan.price}
