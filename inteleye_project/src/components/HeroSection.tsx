@@ -42,8 +42,7 @@ export default function HeroSection() {
 
           {/* Title */}
 
-          <h1 className="text-4xl font-bold leading-[1.4] tracking-tight text-[#16352B] xl:text-5xl">
-
+<h1 className="text-4xl font-bold leading-[1.4] tracking-tight text-primary xl:text-5xl">
   حلّل آراء عملائك...
 
   <br />
@@ -154,8 +153,8 @@ function Stat({ number, title }: StatProps) {
   return (
     <div className="rounded-2xl border border-gray-100 bg-white p-5 text-center shadow-sm">
 
-      <h2 className="text-2xl font-bold text-[#16352B]">
-        {number}
+<h2 className="text-2xl font-bold text-primary">
+  {number}
       </h2>
 
       <p className="mt-2 text-sm text-[#6B7280]">
