@@ -16,9 +16,9 @@ type SummaryCardProps = {
   title: string;
   value: string;
 };
-export default function DashboardPreview() {
+    export default function DashboardPreview() {
   return (
-    <motion.div
+   <motion.div
       initial={{ opacity: 0, y: 25 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.7 }}
