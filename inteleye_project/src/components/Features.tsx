@@ -79,8 +79,7 @@ export default function Features() {
 
           </span>
 
-          <h2 className="text-5xl font-bold mt-8 text-[#16352B] leading-tight">
-
+<h2 className="text-5xl font-bold mt-8 text-primary leading-tight">
             كل ما تحتاجه لفهم عملائك
             <br />
             في منصة واحدة
@@ -148,8 +147,7 @@ export default function Features() {
 
                 </div>
 
-                <h3 className="text-2xl font-bold text-[#16352B] mt-8">
-
+<h3 className="text-2xl font-bold text-primary mt-8">
                   {feature.title}
 
                 </h3>
