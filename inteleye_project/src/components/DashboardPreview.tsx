@@ -1,30 +1,14 @@
 "use client";
 
-import Image from "next/image";
 import { motion } from "framer-motion";
-import {
-  BarChart3,
-  Brain,
-  MessageSquare,
-  Star,
-  TrendingUp,
-} from "lucide-react";
-import type { ReactNode } from "react";
 
-type SummaryCardProps = {
-  icon: ReactNode;
-  title: string;
-  value: string;
-};
-    export default function DashboardPreview() {
+export default function DashboardPreview() {
   return (
-   <motion.div
-      initial={{ opacity: 0, y: 25 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.7 }}
-      className="w-full max-w-[920px] h-[600px] overflow-hidden rounded-[28px] border border-gray-200 bg-white shadow-[0_30px_80px_rgba(0,0,0,.12)]"
-      dir="rtl"
-    >
+    <motion.div className="h-40 w-40 bg-red-500">
+      Test
+    </motion.div>
+  );
+}
       {/* Header */}
       <div className="flex h-16 items-center justify-between border-b border-gray-100 px-6">
         <div className="flex items-center gap-3">
