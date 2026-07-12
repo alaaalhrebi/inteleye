@@ -9,7 +9,7 @@ const ibmPlexArabic = IBM_Plex_Sans_Arabic({
 });
 
 export const metadata: Metadata = {
-  title: "Inteleye -  تقارير أسبوعية لسمعتك على منصات التواصل الإجتماعي ",
+title: "IntelEye - تقارير أسبوعية لسمعتك على منصات التواصل الاجتماعي",
   description:
     "تقارير أسبوعية مع التحليل  ذكية لسمعتك على المنصات AI وتنبيهات فورية",
   keywords:
