@@ -232,7 +232,7 @@ function DashboardHeader({
 
           <div>
             <h1 className="text-xl font-extrabold text-[#374375]">
-              Intel Eye
+              IntelEye
             </h1>
             <p className="text-sm text-gray-500">
               {clientName} · باقة {formatPlan(plan)}
