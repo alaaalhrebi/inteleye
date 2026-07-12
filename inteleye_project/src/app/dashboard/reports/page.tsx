@@ -94,16 +94,13 @@ export default async function ReportsPage({ searchParams }: ReportsPageProps) {
       <div className="mx-auto max-w-7xl">
         <header className="mb-8 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
-            <p className="text-sm font-bold text-gray-400">
-              لوحة التحكم / التقارير
-            </p>
 
             <h1 className="mt-2 text-4xl font-extrabold text-[#374375]">
               التقارير
             </h1>
 
             <p className="mt-3 max-w-2xl leading-7 text-gray-500">
-              هنا تجدين أرشيف التقارير السابقة، مع إمكانية الفلترة حسب المنصة أو الفرع أو نوع التقرير.
+              هنا تجد أرشيف التقارير السابقة، مع إمكانية الفلترة حسب المنصة أو الفرع أو نوع التقرير.
             </p>
           </div>
 
