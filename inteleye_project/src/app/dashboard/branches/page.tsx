@@ -17,7 +17,6 @@ import { createSupabaseBrowserClient } from "@/lib/supabase-browser";
 type AddBranchFormProps = {
   clientId: number;
   plan?: string;
-  canUseX?: boolean;
 };
 
 const platformOptions = [
@@ -220,18 +219,24 @@ export default function AddBranchForm({
       });
 
     if (platformError) {
-      console.error("Platform insert error:", platformError);
+  console.error("Platform insert error:", platformError);
 
-      if (platformError.code === "23505") {
-        setMessage("هذه المنصة مضافة مسبقًا لهذا الفرع");
-        setSaving(false);
-        return;
-      }
+  await supabase
+    .from("branches")
+    .delete()
+    .eq("id", branch.id)
+    .eq("client_id", clientId);
 
-      setMessage(`تم حفظ الفرع، لكن حدث خطأ أثناء ربط المنصة: ${platformError.message}`);
-      setSaving(false);
-      return;
-    }
+  if (platformError.code === "23505") {
+    setMessage("هذه المنصة مضافة مسبقًا لهذا الفرع");
+    setSaving(false);
+    return;
+  }
+
+  setMessage(`حدث خطأ أثناء ربط المنصة: ${platformError.message}`);
+  setSaving(false);
+  return;
+}
 
     setMessage("تمت إضافة الفرع والمنصة بنجاح");
 
