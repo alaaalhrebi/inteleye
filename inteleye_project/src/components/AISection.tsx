@@ -13,7 +13,7 @@ const steps = [
     icon: SearchCheck,
     title: "جمع التقييمات",
     description:
-      "يجمع Intel Eye تقييمات العملاء من المنصات المختلفة ويقوم بتوحيدها في لوحة تحكم واحدة."
+      "يجمع IntelEye تقييمات العملاء من المنصات المختلفة ويقوم بتوحيدها في لوحة تحكم واحدة."
   },
   {
     icon: BrainCircuit,
@@ -47,7 +47,7 @@ export default function AISection() {
 
             <BrainCircuit size={16} />
 
-            كيف يعمل Intel Eye
+            كيف يعمل IntelEye
 
           </span>
 
@@ -62,7 +62,7 @@ export default function AISection() {
           <p className="text-gray-600 text-xl leading-9 mt-8">
 
             بدل قراءة مئات التعليقات يدوياً،
-            يقوم Intel Eye بتحليلها، تصنيفها،
+            يقوم IntelEye بتحليلها، تصنيفها،
             واستخراج أهم المعلومات التي تساعدك
             على تحسين تجربة العملاء.
 
