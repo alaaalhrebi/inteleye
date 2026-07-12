@@ -22,8 +22,7 @@ export default function CTA() {
 
           <div className="absolute -top-24 -left-24 h-72 w-72 rounded-full bg-white/10 blur-3xl" />
 
-          <div className="absolute -bottom-24 -right-24 h-72 w-72 rounded-full bg-[#D4AF37]/20 blur-3xl" />
-
+<div className="absolute -bottom-24 -right-24 h-72 w-72 rounded-full bg-accent/20 blur-3xl" />
           <div className="relative z-10">
 
             <span className="inline-block rounded-full bg-white/10 border border-white/20 px-5 py-2 text-sm backdrop-blur">
