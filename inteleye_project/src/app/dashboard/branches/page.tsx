@@ -87,16 +87,13 @@ export default async function BranchesPage() {
       <div className="mx-auto max-w-7xl">
         <header className="mb-8 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
-            <p className="text-sm font-bold text-gray-400">
-              لوحة التحكم / الفروع
-            </p>
 
             <h1 className="mt-2 text-4xl font-extrabold text-[#374375]">
               إدارة الفروع
             </h1>
 
             <p className="mt-3 max-w-2xl leading-7 text-gray-500">
-              أضيفي فروع المنشأة، واربطي كل فرع بالمنصة المناسبة حسب باقتك.
+              أضف فروع المنشأة، واربط كل فرع بالمنصة المناسبة حسب باقتك.
             </p>
           </div>
 
@@ -306,7 +303,7 @@ function EmptyBranches() {
       </h3>
 
       <p className="mx-auto mt-3 max-w-xl leading-7 text-gray-500">
-        أضيفي أول فرع للمنشأة، وبعد ربطه بالمنصات ستظهر تقاريره وتحليلاته هنا.
+        أضف أول فرع للمنشأة، وبعد ربطه بالمنصات ستظهر تقاريره وتحليلاته هنا.
       </p>
     </div>
   );
