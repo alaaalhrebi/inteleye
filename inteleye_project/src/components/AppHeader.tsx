@@ -18,8 +18,7 @@ export default function AppHeader({ rightLabel }: { rightLabel?: string }) {
       dir="rtl"
       className="sticky top-0 z-50 bg-[#1a1a2e] text-white px-5 py-3 flex items-center justify-between"
     >
-      <span className="font-bold text-sm">Inteleye</span>
-
+<span className="font-bold text-sm">IntelEye</span>
       <div className="flex items-center gap-4">
         {rightLabel && <span className="text-xs text-gray-300">{rightLabel}</span>}
         <button
