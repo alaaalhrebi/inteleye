@@ -74,9 +74,10 @@ export default async function DashboardPage({
 
   
   let reportsQuery = supabase
-    .from("reports")
-    .select("*")
-    .order("report_month", { ascending: false });
+  .from("reports")
+  .select("*")
+  .eq("client_id", client.id)
+  .order("report_month", { ascending: false });
   
   if (selectedBranchId) {
     reportsQuery = reportsQuery.eq("branch_id", Number(selectedBranchId));
@@ -202,16 +203,13 @@ export default async function DashboardPage({
             <AiRecommendations recommendations={recommendations} />
           </section>
 
-          <section className="mt-8 grid gap-6 xl:grid-cols-2">
+          <section className="mt-8">
             <PlatformsSection
               platforms={platforms}
               canAddPlatforms={canAddPlatforms}
               plan={plan}
             />
-            <BranchesSection branches={branches ?? []} />
           </section>
-
-          <ReportsSection canDownloadPdf={canDownloadPdf} />
         </main>
       </div>
     </div>
