@@ -526,70 +526,7 @@ function PlatformsSection({
   );
 }
 
-function BranchesSection({ branches }: { branches: any[] }) {
-  return (
-    <Panel eyebrow="الفروع" title="إدارة الفروع" icon={<Building2 size={22} />}>
-      {branches.length === 0 ? (
-        <div className="rounded-3xl bg-[#F8F7F3] p-6 text-center text-gray-500">
-          لا توجد فروع مضافة بعد.
-        </div>
-      ) : (
-        <div className="space-y-4">
-          {branches.map((branch) => (
-            <div key={branch.id} className="rounded-3xl bg-[#F8F7F3] p-5">
-              <h3 className="font-extrabold text-[#374375]">{branch.name}</h3>
-              <p className="mt-2 text-sm text-gray-500">
-                آخر تقرير: بانتظار أول تشغيل أسبوعي
-              </p>
-            </div>
-          ))}
-        </div>
-      )}
 
-      <Link
-        href="/dashboard/branches"
-        className="mt-5 inline-flex rounded-full bg-[#374375] px-5 py-3 text-sm font-bold text-white transition hover:bg-[#895159]"
-      >
-        إدارة الفروع
-      </Link>
-    </Panel>
-  );
-}
-
-function ReportsSection({ canDownloadPdf }: { canDownloadPdf: boolean }) {
-  return (
-    <section className="mt-8 rounded-[2rem] border border-[#BABDE2]/40 bg-white p-6 shadow-sm">
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <div>
-          <p className="text-xs text-gray-400">التقارير</p>
-          <h2 className="mt-1 text-2xl font-extrabold text-[#374375]">
-            التقارير الأسبوعية
-          </h2>
-          <p className="mt-2 text-gray-500">
-            سيظهر هنا تقرير هذا الأسبوع، تقرير الأسبوع الماضي، وخيارات التصدير.
-          </p>
-        </div>
-
-        <div className="flex flex-wrap gap-3">
-          <Link
-            href="/dashboard/reports"
-            className="inline-flex items-center gap-2 rounded-full border border-[#374375] px-5 py-3 text-sm font-bold text-[#374375] transition hover:bg-[#374375] hover:text-white"
-          >
-            <FileText size={18} />
-            عرض التقارير
-          </Link>
-
-          {canDownloadPdf && (
-            <button className="inline-flex items-center gap-2 rounded-full bg-[#374375] px-5 py-3 text-sm font-bold text-white transition hover:bg-[#895159]">
-              <Download size={18} />
-              تحميل PDF
-            </button>
-          )}
-        </div>
-      </div>
-    </section>
-  );
-}
 
 function Panel({
   eyebrow,
