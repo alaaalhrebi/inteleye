@@ -1,8 +1,11 @@
 "use client";
 
+import Image from "next/image";
+import { motion } from "framer-motion";
+
 import {
+  BarChart3,
   Brain,
-  LineChart,
   MessageSquare,
   Star,
   TrendingUp,
@@ -26,12 +29,13 @@ export default function DashboardPreview() {
   <div className="flex items-start justify-between">
 
     {/* Logo */}
-
-    <img
-      src="/logo.svg"
-      alt="IntelEye"
-      className="h-7 w-auto object-contain"
-    />
+<Image
+  src="/logo.svg"
+  alt="IntelEye"
+  width={28}
+  height={28}
+  className="object-contain"
+/>
 
     {/* Title */}
 
@@ -173,59 +177,6 @@ export default function DashboardPreview() {
 
 </div>
 
-        {/* الرسم البياني */}
-
-        <div className="relative h-32">
-
-          <div className="absolute inset-0 flex flex-col justify-between">
-
-            {[1,2,3,4].map((i)=>(
-              <div
-                key={i}
-                className="border-t border-dashed border-gray-200"
-              />
-            ))}
-
-          </div>
-
-          <svg
-            viewBox="0 0 360 120"
-            className="absolute inset-0 h-full w-full"
-          >
-
-            <path
-              d="
-              M10 95
-              C45 82 70 50 110 55
-              S180 30 220 42
-              S285 72 350 28
-              "
-              fill="none"
-              stroke="#374375"
-              strokeWidth="3"
-              strokeLinecap="round"
-            />
-
-            {[
-              [10,95],
-              [110,55],
-              [220,42],
-              [350,28],
-            ].map(([x,y],i)=>(
-              <circle
-                key={i}
-                cx={x}
-                cy={y}
-                r="4"
-                fill="#374375"
-              />
-            ))}
-
-          </svg>
-
-        </div>
-
-      </div>
 
       {/* تحليل الذكاء الاصطناعي */}
 {/* AI Insights */}
