@@ -9,7 +9,13 @@ import {
   Star,
   TrendingUp,
 } from "lucide-react";
+import type { ReactNode } from "react";
 
+type SummaryCardProps = {
+  icon: ReactNode;
+  title: string;
+  value: string;
+};
 export default function DashboardPreview() {
   return (
     <motion.div
