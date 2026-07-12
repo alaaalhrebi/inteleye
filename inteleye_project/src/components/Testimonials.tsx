@@ -83,8 +83,8 @@ export default function Testimonials() {
                   <Star
                     key={star}
                     size={18}
-                    fill="#FACC15"
-                    color="#FACC15"
+                    fill="#895159"
+                    color="#895159"
                   />
                 ))}
 
