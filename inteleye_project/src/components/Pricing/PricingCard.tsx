@@ -61,8 +61,8 @@ export default function PricingCard({ plan }: Props) {
         `}
       >
         {plan.featured && (
-          <div className="absolute right-8 top-8 rounded-full bg-[#D4AF37] px-4 py-1 text-sm font-semibold text-black">
-            الأكثر طلبًا
+<div className="absolute right-8 top-8 rounded-full bg-accent px-4 py-1 text-sm font-semibold text-white">
+  الأكثر طلبًا
           </div>
         )}
 
@@ -149,8 +149,8 @@ plan.featured ? "text-white" : "text-primary"
             bottom-0
             h-1
             rounded-b-[32px]
-            ${plan.featured ? "bg-[#D4AF37]" : "bg-[#374375]"}
-          `}
+${plan.featured ? "bg-accent" : "bg-[#374375]"}
+`}
         />
       </motion.div>
     </SpotlightBorder>
