@@ -10,30 +10,30 @@ export default function DashboardPreview() {
   );
 }
       {/* Header */}
-      <div className="flex h-16 items-center justify-between border-b border-gray-100 px-6">
-        <div className="flex items-center gap-3">
-          <Image
-            src="/logo.svg"
-            alt="IntelEye"
-            width={32}
-            height={32}
-          />
+    <div className="flex h-16 items-center justify-between border-b border-gray-100 px-6">
+  <div className="flex items-center gap-3">
+    <Image
+      src="/logo.svg"
+      alt="IntelEye"
+      width={32}
+      height={32}
+    />
 
-          <div>
-            <h2 className="text-lg font-bold text-[#374375]">
-              IntelEye Dashboard
-            </h2>
+    <div>
+      <h2 className="text-lg font-bold text-[#374375]">
+        IntelEye Dashboard
+      </h2>
 
-            <p className="text-xs text-gray-400">
-              Reputation Monitoring Platform
-            </p>
-          </div>
-        </div>
+      <p className="text-xs text-gray-400">
+        Reputation Monitoring Platform
+      </p>
+    </div>
+  </div>
 
-        <div className="text-sm font-medium text-gray-500">
-          Last 30 Days
-        </div>
-      </div>
+  <div className="text-sm font-medium text-gray-500">
+    Last 30 Days
+  </div>
+</div>
 
       {/* Dashboard Layout */}
       <div className="grid h-[536px] grid-cols-[220px_1fr]">
