@@ -44,8 +44,7 @@ export default function Testimonials() {
 
           </span>
 
-          <h2 className="text-5xl font-bold text-[#16352B] mt-8">
-
+<h2 className="text-5xl font-bold text-primary mt-8">
             ماذا يقول عملاؤنا؟
 
           </h2>
@@ -107,8 +106,7 @@ export default function Testimonials() {
 
                 <div>
 
-                  <h4 className="font-bold text-[#16352B]">
-
+<h4 className="font-bold text-primary">
                     {item.name}
 
                   </h4>
