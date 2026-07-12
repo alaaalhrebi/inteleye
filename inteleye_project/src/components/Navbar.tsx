@@ -1,10 +1,13 @@
 "use client";
 
-import { Menu } from "lucide-react";
+import { useState } from "react";
+import { Menu, X } from "lucide-react";
 import { motion } from "framer-motion";
 import Link from "next/link";
 
 export default function Navbar() {
+  const [open, setOpen] = useState(false);
+
   return (
     <motion.header
       initial={{ y: -60, opacity: 0 }}
@@ -75,11 +78,42 @@ export default function Navbar() {
             </div>
 
             {/* Mobile Menu */}
-            <button className="rounded-xl border border-border p-2 text-primary transition hover:bg-background lg:hidden">
-              <Menu size={22} />
+           <button
+              onClick={() => setOpen(!open)}
+              aria-label={open ? "إغلاق القائمة" : "فتح القائمة"}
+              className="rounded-xl border border-border p-2 text-primary transition hover:bg-background lg:hidden"
+            >
+              {open ? <X size={22} /> : <Menu size={22} />}
             </button>
           </div>
         </div>
+     </div>
+
+        {open && (
+          <div className="mt-3 rounded-3xl border border-border bg-background/95 px-8 py-6 shadow-xl backdrop-blur-md lg:hidden">
+            <nav className="flex flex-col gap-5 text-right">
+              <a href="#" onClick={() => setOpen(false)} className="font-medium text-text">
+                الرئيسية
+              </a>
+              <a href="#features" onClick={() => setOpen(false)} className="font-medium text-text">
+                المميزات
+              </a>
+              <a href="#pricing" onClick={() => setOpen(false)} className="font-medium text-text">
+                الأسعار
+              </a>
+              <a href="#contact" onClick={() => setOpen(false)} className="font-medium text-text">
+                تواصل
+              </a>
+              <Link
+                href="/login"
+                onClick={() => setOpen(false)}
+                className="mt-2 inline-flex items-center justify-center rounded-full bg-primary px-8 py-3 font-bold text-white"
+              >
+                تسجيل الدخول
+              </Link>
+            </nav>
+          </div>
+        )}
       </div>
     </motion.header>
   );
