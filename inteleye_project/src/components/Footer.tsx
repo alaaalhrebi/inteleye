@@ -28,13 +28,13 @@ export default function Footer() {
 
           {/* الشعار - الوسط */}
           <div className="flex flex-col items-center text-center">
-
-            <img
+<img
               src="/logo.png"
-              className="w-30 h-30 object-contain"
+              alt="IntelEye"
+              className="w-24 h-24 object-contain"
             />
-
             
+
 
             <p className="mt-6 max-w-sm leading-8 text-[#FFFCF5]/90">
               منصة ذكاء اصطناعي تساعد الشركات على تحليل تقييمات العملاء،
@@ -55,7 +55,7 @@ export default function Footer() {
 
               <div className="flex items-center gap-3 justify-start">
                 <Mail size={18} />
-                <span>hello@inteleye.ai</span>
+<span>hello@inteleye-sa.com</span>
               </div>
 
               <div className="flex items-center gap-3 justify-start">
