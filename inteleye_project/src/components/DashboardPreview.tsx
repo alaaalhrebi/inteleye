@@ -1,14 +1,19 @@
 "use client";
 
+import Image from "next/image";
 import { motion } from "framer-motion";
+import {
+  BarChart3,
+  Brain,
+  MessageSquare,
+  Star,
+  TrendingUp,
+} from "lucide-react";
+import type { ReactNode } from "react";
 
 export default function DashboardPreview() {
   return (
-    <motion.div className="h-40 w-40 bg-red-500">
-      Test
-    </motion.div>
-  );
-}
+    <motion.div
       {/* Header */}
     <div className="flex h-16 items-center justify-between border-b border-gray-100 px-6">
   <div className="flex items-center gap-3">
@@ -319,7 +324,7 @@ export default function DashboardPreview() {
 =========================== */
 
 type SummaryCardProps = {
-  icon: React.ReactNode;
+ icon: ReactNode;
   title: string;
   value: string;
 };
