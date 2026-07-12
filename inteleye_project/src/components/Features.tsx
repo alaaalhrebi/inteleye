@@ -15,7 +15,7 @@ const features = [
     icon: Brain,
     title: "تحليل ذكي للتقييمات",
     description:
-      "يحلل Intel Eye آلاف التعليقات باستخدام الذكاء الاصطناعي ويستخرج أهم الأفكار خلال ثوانٍ.",
+      "يحلل IntelEye آلاف التعليقات باستخدام الذكاء الاصطناعي ويستخرج أهم الأفكار خلال ثوانٍ.",
     color: "bg-[#BABDE2]/40 text-[#374375]",
   },
   {
@@ -75,7 +75,7 @@ export default function Features() {
 
           <span className="inline-block rounded-full bg-[#BABDE2]/40 text-[#374375] px-5 py-2 text-sm font-medium">
 
-            لماذا Intel Eye؟
+            لماذا IntelEye؟
 
           </span>
 
@@ -89,7 +89,7 @@ export default function Features() {
 
           <p className="mt-8 text-xl text-gray-600 leading-9">
 
-            يساعدك Intel Eye على تحليل تقييمات العملاء، اكتشاف المشكلات،
+            يساعدك IntelEye على تحليل تقييمات العملاء، اكتشاف المشكلات،
             إصدار تقارير ذكية، واقتراح أفضل الردود لتحسين تجربة العملاء
             ورفع تقييم منشأتك.
 
