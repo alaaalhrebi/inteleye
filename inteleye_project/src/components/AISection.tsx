@@ -51,8 +51,7 @@ export default function AISection() {
 
           </span>
 
-          <h2 className="text-5xl font-bold text-[#16352B] mt-8 leading-tight">
-
+<h2 className="text-5xl font-bold text-primary mt-8 leading-tight">
             الذكاء الاصطناعي يحول
             <br />
             التعليقات إلى قرارات
@@ -117,8 +116,7 @@ export default function AISection() {
 
                 </div>
 
-                <h3 className="text-2xl font-bold text-[#16352B] mt-8">
-
+<h3 className="text-2xl font-bold text-primary mt-8">
                   {step.title}
 
                 </h3>
