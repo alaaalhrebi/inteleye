@@ -112,8 +112,8 @@ type SocialProps = {
 
 function SocialIcon({ children }: SocialProps) {
   return (
-    <button className="w-11 h-11 rounded-xl bg-white/10 border border-white/10 flex items-center justify-center hover:bg-[#D4AF37] hover:text-black transition">
-      {children}
+<button className="w-11 h-11 rounded-xl bg-white/10 border border-white/10 flex items-center justify-center hover:bg-accent hover:text-white transition">
+  {children}
     </button>
   );
 }
