@@ -59,8 +59,7 @@ export default function Stats() {
 
           </span>
 
-          <h2 className="text-5xl font-bold text-[#16352B]">
-
+<h2 className="text-5xl font-bold text-primary">
             نتائج تساعدك على اتخاذ القرار
 
           </h2>
@@ -136,8 +135,7 @@ export default function Stats() {
 
                 </div>
 
-                <h3 className="text-5xl font-bold text-[#16352B] mt-8">
-
+<h3 className="text-5xl font-bold text-primary mt-8">
                   {item.value}
 
                 </h3>
