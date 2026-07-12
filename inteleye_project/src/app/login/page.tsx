@@ -127,7 +127,7 @@ export default function LoginPage() {
           </div>
 
           <h1 className="max-w-xl text-5xl font-extrabold leading-[1.25] text-[#374375]">
-            مرحبًا بعودتك إلى Intel Eye
+            مرحبًا بعودتك إلى IntelEye
           </h1>
 
           <p className="mt-6 max-w-xl text-xl leading-10 text-gray-600">
@@ -177,7 +177,7 @@ export default function LoginPage() {
                 تسجيل الدخول إلى حسابك
               </p>
               <p className="text-lg font-extrabold text-[#374375]">
-                Intel Eye Dashboard
+                IntelEye Dashboard
               </p>
             </div>
 
