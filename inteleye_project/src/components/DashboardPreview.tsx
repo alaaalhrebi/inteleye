@@ -10,7 +10,7 @@ import {
   Star,
   TrendingUp,
 } from "lucide-react";
-import { motion } from "framer-motion";
+
 
 export default function DashboardPreview() {
   return (
