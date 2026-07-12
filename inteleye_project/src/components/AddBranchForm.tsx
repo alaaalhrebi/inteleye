@@ -6,10 +6,10 @@ import { createSupabaseBrowserClient } from "@/lib/supabase-browser";
 
 type AddBranchFormProps = {
   clientId: number;
-  canUseX: boolean;
+  plan?: string;
 };
 
-export default function AddBranchForm({ clientId, canUseX }: AddBranchFormProps) {
+export default function AddBranchForm({ clientId, plan = "basic" }: AddBranchFormProps) {
   const router = useRouter();
   const supabase = createSupabaseBrowserClient();
 
