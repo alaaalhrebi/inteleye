@@ -67,7 +67,7 @@ export default function Stats() {
 
           <p className="mt-6 text-gray-600 text-lg max-w-3xl mx-auto leading-9">
 
-            يحول Intel Eye آلاف التعليقات إلى مؤشرات ورسوم بيانية
+            يحول IntelEye آلاف التعليقات إلى مؤشرات ورسوم بيانية
             تساعدك على معرفة مستوى رضا العملاء واتخاذ قرارات مبنية
             على البيانات.
 
