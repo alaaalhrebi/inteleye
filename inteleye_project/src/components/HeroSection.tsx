@@ -7,19 +7,19 @@ import DashboardPreview from "./DashboardPreview";
 
 export default function HeroSection() {
   return (
-    <section className="relative overflow-hidden bg-[#F8FAF8] pt-40 pb-24">
+    <section className="relative overflow-hidden bg-[#F8FAF8] pt-36 pb-24">
 
       {/* Background */}
 
       <div className="absolute inset-0 -z-10">
 
-        <div className="absolute top-0 left-0 h-[500px] w-[500px] rounded-full bg-[#BABDE2]/30 blur-[180px]" />
+        <div className="absolute left-0 top-0 h-[500px] w-[500px] rounded-full bg-[#BABDE2]/30 blur-[180px]" />
 
         <div className="absolute bottom-0 right-0 h-[450px] w-[450px] rounded-full bg-[#FFF2D7] blur-[170px]" />
 
       </div>
 
-      <div className="mx-auto grid max-w-7xl items-center gap-24 px-8 lg:grid-cols-2">
+      <div className="mx-auto grid max-w-7xl items-center gap-20 px-8 lg:grid-cols-2">
 
         {/* Hero Text */}
 
@@ -30,31 +30,54 @@ export default function HeroSection() {
           className="max-w-xl"
         >
 
-          <div className="mb-8 inline-flex items-center gap-2 rounded-full bg-[#EEF1FF] px-5 py-2 text-sm font-medium text-[#374375]">
+          {/* Badge */}
 
-            <Sparkles size={13} />
+          <div className="mb-7 inline-flex items-center gap-2 rounded-full bg-[#EEF1FF] px-5 py-2 text-sm font-medium text-[#374375]">
 
-            منصة ذكاء اصطناعي لإدارة أراء العملاء
+            <Sparkles size={14} />
+
+            منصة ذكاء اصطناعي لإدارة تقييمات العملاء
 
           </div>
 
-          <h1 className="text-5xl font-extrabold leading-[1.35] text-[#16352B] xl:text-6xl">
+          {/* Title */}
 
-            افهم تقييمات عملائك
+          <h1 className="text-4xl font-bold leading-[1.4] tracking-tight text-[#16352B] xl:text-5xl">
 
-            <br />
+  حلّل آراء عملائك...
 
-            واتخذ قرارات أذكى
+  <br />
 
-          </h1>
+  وطوّر سمعة علامتك التجارية
 
-          <p className="mt-7 text-[14px] leading-9 text-[#5F667A]">
+  <br />
 
-             منصة ذكاء اصطناعي تساعد الشركات على تحليل تقييمات العملاء IntelEye
-            واكتشاف المشاكل المتكررة، واقتراح ردود احترافية، وإنشاء تقارير ذكية
-            تساعد في تحسين جودة الخدمة ورفع السمعة الرقمية لمنشأتك.
+  <span className="text-[#374375]">
+    بالذكاء الاصطناعي
+  </span>
+
+</h1>
+
+          {/* Description */}
+
+          <p className="mt-8 text-[15px] leading-9 text-[#5F667A]">
+
+            <span className="rounded-lg bg-[#EEF1FF] px-2 py-1 text-xl font-extrabold tracking-wide text-[#374375]">
+              IntelEye
+            </span>
+
+            <span className="mx-2">
+
+              منصة ذكاء اصطناعي تساعد الشركات على تحليل تقييمات العملاء،
+              واكتشاف المشكلات المتكررة، واقتراح ردود احترافية،
+              وإنشاء تقارير ذكية تساعد على تحسين جودة الخدمة
+              وتعزيز السمعة الرقمية للمنشأة.
+
+            </span>
 
           </p>
+
+          {/* Buttons */}
 
           <div className="mt-10 flex flex-wrap gap-4">
 
@@ -76,11 +99,13 @@ export default function HeroSection() {
 
           </div>
 
+          {/* Stats */}
+
           <div className="mt-12 grid grid-cols-3 gap-5">
 
             <Stat
               number="120K+"
-              title="تعليق تم تحليله"
+              title="تقييم تم تحليله"
             />
 
             <Stat
@@ -106,7 +131,7 @@ export default function HeroSection() {
           className="flex justify-center"
         >
 
-          <div className="origin-center scale-[0.88] xl:scale-95">
+          <div className="origin-center scale-95">
 
             <DashboardPreview />
 
@@ -127,18 +152,14 @@ type StatProps = {
 
 function Stat({ number, title }: StatProps) {
   return (
-    <div className="rounded-3xl border border-gray-100 bg-white p-5 text-center shadow-lg">
+    <div className="rounded-2xl border border-gray-100 bg-white p-5 text-center shadow-sm">
 
       <h2 className="text-2xl font-bold text-[#16352B]">
-
         {number}
-
       </h2>
 
       <p className="mt-2 text-sm text-[#6B7280]">
-
         {title}
-
       </p>
 
     </div>
