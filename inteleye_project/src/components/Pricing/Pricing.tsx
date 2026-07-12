@@ -28,8 +28,7 @@ export default function Pricing() {
 
           </span>
 
-          <h2 className="mt-8 text-5xl font-bold text-[#16352B] leading-tight">
-
+<h2 className="mt-8 text-5xl font-bold text-primary leading-tight">
             اختر الخطة المناسبة
             <br />
             لنمو أعمالك
