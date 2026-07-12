@@ -29,8 +29,9 @@ export default function AnimatedText({
         {children}
       </motion.span>
 
-      {/* النص الثاني */}
+     {/* النص الثاني */}
       <motion.span
+        aria-hidden="true"
         initial={{ y: "100%" }}
         whileHover={{ y: 0 }}
         transition={{
