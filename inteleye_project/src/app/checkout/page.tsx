@@ -83,7 +83,7 @@ function CheckoutForm() {
         element: ".mysr-form",
         amount: price,
         currency: "SAR",
-        description: `اشتراك Inteleye — باقة ${PLAN_LABELS[plan] ?? plan}`,
+description: `اشتراك IntelEye — باقة ${PLAN_LABELS[plan] ?? plan}`,
         publishable_api_key: publishableKey,
         callback_url: `${window.location.origin}/checkout/success`,
         methods: ["creditcard"],
