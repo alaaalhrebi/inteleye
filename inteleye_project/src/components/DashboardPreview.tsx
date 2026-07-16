@@ -4,15 +4,12 @@ import Image from "next/image";
 import { motion } from "framer-motion";
 import {
   BarChart3,
-  Brain,
   FileText,
-
   LayoutGrid,
   MessageSquare,
   PieChart,
   Settings,
   Star,
-  TrendingUp,
 } from "lucide-react";
 import type { ReactNode } from "react";
 
