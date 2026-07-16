@@ -19,8 +19,7 @@ export default function DashboardPreview() {
       initial={{ opacity: 0, y: 25 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.7 }}
-className="w-full max-w-[760px] overflow-hidden rounded-[32px] border border-gray-200 bg-white shadow-[0_40px_100px_rgba(0,0,0,.14)]"      dir="rtl"
-    >
+className="w-full max-w-[900px] h-[620px] overflow-hidden rounded-[32px] border border-gray-200 bg-white shadow-[0_40px_100px_rgba(0,0,0,.14)]"    >
       {/* Header */}
       <div className="flex h-16 items-center justify-between border-b border-gray-100 px-6">
         <div className="flex items-center gap-3">
