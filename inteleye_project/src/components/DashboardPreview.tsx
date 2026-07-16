@@ -6,7 +6,7 @@ import {
   BarChart3,
   Brain,
   FileText,
-  HelpCircle,
+
   LayoutGrid,
   MessageSquare,
   PieChart,
@@ -27,9 +27,13 @@ className="w-full max-w-[760px] overflow-hidden rounded-[32px] border border-gra
       {/* Header */}
       <div className="flex h-16 items-center justify-between border-b border-gray-100 px-6">
         <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#EEF2FF] text-[#374375]">
-            <HelpCircle size={18} />
-          </div>
+        <Image
+  src="/logo.png"
+  alt="IntelEye"
+  width={120}
+  height={34}
+  className="h-8 w-auto"
+/>
 
           <div>
             <h2 className="text-lg font-bold text-[#374375]">
@@ -48,37 +52,37 @@ className="w-full max-w-[760px] overflow-hidden rounded-[32px] border border-gra
       </div>
 
       {/* Dashboard Layout */}
-      <div className="grid h-[536px] grid-cols-[220px_1fr]">
-        {/* Sidebar */}
+<div className="grid h-[456px] grid-cols-[170px_1fr]">
+  {/* Sidebar */}
         <aside className="border-l border-gray-100 bg-[#FAFBFD] px-5 py-6">
           <nav className="space-y-2">
             <button className="flex w-full items-center gap-3 rounded-xl bg-[#374375] px-4 py-3 text-sm font-medium text-white">
-              <LayoutGrid size={18} />
+             
               لوحة التحكم
             </button>
 
             <button className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-gray-600 transition hover:bg-white">
-              <MessageSquare size={18} />
+              
               المراجعات
             </button>
 
             <button className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-gray-600 transition hover:bg-white">
-              <Brain size={18} />
+             
               الذكاء الاصطناعي
             </button>
 
             <button className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-gray-600 transition hover:bg-white">
-              <PieChart size={18} />
+             
               التحليلات
             </button>
 
             <button className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-gray-600 transition hover:bg-white">
-              <FileText size={18} />
+            
               التقارير
             </button>
 
             <button className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-gray-600 transition hover:bg-white">
-              <Settings size={18} />
+            
               الإعدادات
             </button>
           </nav>
@@ -89,25 +93,22 @@ className="w-full max-w-[760px] overflow-hidden rounded-[32px] border border-gra
           {/* Summary Cards */}
           <div className="grid grid-cols-4 gap-4">
             <SummaryCard
-              icon={<Brain size={18} className="text-[#374375]" />}
+            
               title="درجة الذكاء الاصطناعي"
               value="96%"
             />
 
             <SummaryCard
-              icon={<TrendingUp size={18} className="text-[#374375]" />}
               title="نمو السمعة"
               value="+18%"
             />
 
             <SummaryCard
-              icon={<MessageSquare size={18} className="text-[#374375]" />}
               title="إجمالي المراجعات"
               value="1,248"
             />
 
             <SummaryCard
-              icon={<Star size={18} className="text-[#895159]" />}
               title="متوسط التقييم من 5"
               value="4.8"
             />
@@ -126,7 +127,7 @@ className="w-full max-w-[760px] overflow-hidden rounded-[32px] border border-gra
                 </p>
               </div>
 
-              <BarChart3 size={22} className="text-[#374375]" />
+           
             </div>
 
             <div className="flex gap-3">
@@ -221,7 +222,7 @@ className="w-full max-w-[760px] overflow-hidden rounded-[32px] border border-gra
           <div className="mt-6 rounded-3xl border border-gray-100 bg-white p-6">
             <div className="mb-5 flex items-center justify-between">
               <h3 className="flex items-center gap-2 text-lg font-semibold text-[#374375]">
-                <MessageSquare size={18} />
+                
                 آخر المراجعات
               </h3>
 
