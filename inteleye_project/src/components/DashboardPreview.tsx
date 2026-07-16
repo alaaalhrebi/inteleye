@@ -248,26 +248,30 @@ className="w-full max-w-[760px] overflow-hidden rounded-[32px] border border-gra
 /* ===========================
    Summary Card
 =========================== */
-
 type SummaryCardProps = {
-  icon: ReactNode;
   title: string;
   value: string;
 };
 
-function SummaryCard({ icon, title, value }: SummaryCardProps) {
+function SummaryCard({ title, value }: SummaryCardProps) {
   return (
     <div className="rounded-2xl border border-gray-100 bg-[#FAFBFD] p-4">
-      <div className="mb-4 flex justify-end">{icon}</div>
 
       <div className="text-right">
-        <h3 className="text-3xl font-bold text-[#374375]">{value}</h3>
-        <p className="mt-2 text-sm text-gray-500">{title}</p>
+
+        <h3 className="text-3xl font-bold text-[#374375]">
+          {value}
+        </h3>
+
+        <p className="mt-2 text-sm text-gray-500">
+          {title}
+        </p>
+
       </div>
+
     </div>
   );
 }
-
 /* ===========================
    Review Item
 =========================== */
