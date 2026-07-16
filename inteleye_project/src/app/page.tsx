@@ -19,7 +19,7 @@ export default function Home() {
       <Pricing />
       <Testimonials />
       <Footer />
-<AnimatedText>IntelEye</AnimatedText>
+/*<AnimatedText>IntelEye</AnimatedText>*/
     </>
   );
 }
