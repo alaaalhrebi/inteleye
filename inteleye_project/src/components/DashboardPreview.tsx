@@ -19,7 +19,7 @@ export default function DashboardPreview() {
       initial={{ opacity: 0, y: 25 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.7 }}
-className="w-full max-w-[900px] h-[620px] overflow-hidden rounded-[32px] border border-gray-200 bg-white shadow-[0_40px_100px_rgba(0,0,0,.14)]"    >
+className="pointer-events-none select-none w-full max-w-[800px] h-[680px] overflow-hidden rounded-[32px] border border-gray-200 bg-white shadow-[0_40px_100px_rgba(0,0,0,.14)]"
       {/* Header */}
       <div className="flex h-16 items-center justify-between border-b border-gray-100 px-6">
         <div className="flex items-center gap-3">
@@ -85,8 +85,8 @@ className="w-full max-w-[900px] h-[620px] overflow-hidden rounded-[32px] border 
         </aside>
 
         {/* Main Content */}
-        <main className="overflow-y-auto p-6">
-          {/* Summary Cards */}
+<main className="overflow-hidden p-6">
+  {/* Summary Cards */}
           <div className="grid grid-cols-4 gap-4">
             <SummaryCard
             
@@ -112,8 +112,8 @@ className="w-full max-w-[900px] h-[620px] overflow-hidden rounded-[32px] border 
 
        
          {/* Chart */}
-          <div className="mt-6 rounded-3xl border border-gray-100 bg-white p-6">
-            <div className="mb-6 flex items-center justify-between">
+          <div className="mt-4 rounded-3xl border border-gray-100 bg-white p-5">
+            <div className="mb-4 flex items-center justify-between">
               <div>
                 <h3 className="text-lg font-semibold text-[#374375]">
                   اتجاه التقييمات
@@ -129,13 +129,13 @@ className="w-full max-w-[900px] h-[620px] overflow-hidden rounded-[32px] border 
 
             <div className="flex gap-3">
               {/* Y-axis labels */}
-              <div className="flex h-[220px] flex-col justify-between pb-6 text-xs text-gray-400">
+              <div className="flex h-[180px] flex-col justify-between pb-6 text-xs text-gray-400">
                 {[5, 4, 3, 2, 1].map((n) => (
                   <span key={n}>{n}</span>
                 ))}
               </div>
 
-              <div className="relative h-[260px] flex-1">
+              <div className="relative h-[220px] flex-1">
                 <div className="absolute inset-0 flex flex-col justify-between pb-6">
                   {[1, 2, 3, 4, 5].map((item) => (
                     <div
