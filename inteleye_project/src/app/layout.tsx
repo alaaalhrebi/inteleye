@@ -1,11 +1,9 @@
 import type { Metadata } from "next";
-import { IBM_Plex_Sans_Arabic } from "next/font/google";
+import { Tajawal } from "next/font/google";
 import "./globals.css";
-
-const ibmPlexArabic = IBM_Plex_Sans_Arabic({
+const tajawal = Tajawal({
   subsets: ["arabic"],
-  weight: ["300", "400", "500", "600", "700"],
-  display: "swap",
+  weight: ["400","500","700","800"],
 });
 
 export const metadata: Metadata = {
@@ -23,8 +21,8 @@ export default function RootLayout({
 }) {
   return (
     <html lang="ar" dir="rtl">
-      <body className={ibmPlexArabic.className}>
-        {children}
+<body className={tajawal.className}>
+  {children}
       </body>
     </html>
   );
