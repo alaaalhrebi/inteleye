@@ -7,7 +7,7 @@ import DashboardPreview from "./DashboardPreview";
 
 export default function HeroSection() {
   return (
-    <section className="relative overflow-hidden bg-[#F8FAF8] pt-36 pb-24">
+    <section className="relative overflow-hidden bg-[#F8FAF8] pt-30 pb-18">
 
       {/* Background */}
 
@@ -34,7 +34,7 @@ export default function HeroSection() {
 
           <div className="mb-7 inline-flex items-center gap-2 rounded-full bg-[#EEF1FF] px-5 py-2 text-sm font-medium text-[#374375]">
 
-            <Sparkles size={14} />
+            <Sparkles size={10} />
 
             منصة ذكاء اصطناعي لإدارة تقييمات العملاء
 
@@ -59,7 +59,7 @@ export default function HeroSection() {
 
           {/* Description */}
 
-          <p className="mt-8 text-[15px] leading-9 text-[#5F667A]">
+          <p className="mt-8 text-[12px] leading-9 text-[#5F667A]">
 
             <span className="rounded-lg bg-[#EEF1FF] px-2 py-1 text-xl font-extrabold tracking-wide text-[#374375]">
               IntelEye
@@ -88,7 +88,7 @@ export default function HeroSection() {
 
               <div className="flex items-center gap-2">
 
-                <PlayCircle size={20} />
+                <PlayCircle size={17} />
 
                 مشاهدة العرض
 
