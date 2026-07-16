@@ -7,7 +7,7 @@ import DashboardPreview from "./DashboardPreview";
 
 export default function HeroSection() {
   return (
-    <section className="relative overflow-hidden bg-[#F8FAF8] pt-30 pb-18">
+    <section className="relative overflow-hidden bg-[#F8FAF8] pt-32 pb-20">
 
       {/* Background */}
 
@@ -34,7 +34,7 @@ export default function HeroSection() {
 
           <div className="mb-7 inline-flex items-center gap-2 rounded-full bg-[#EEF1FF] px-5 py-2 text-sm font-medium text-[#374375]">
 
-            <Sparkles size={10} />
+            <Sparkles size={14} />
 
             منصة ذكاء اصطناعي لإدارة تقييمات العملاء
 
@@ -42,27 +42,30 @@ export default function HeroSection() {
 
           {/* Title */}
 
-<h1 className="text-4xl font-bold leading-[1.4] tracking-tight text-primary xl:text-5xl">
-  حلّل آراء عملائك...
+          <h1 className="text-5xl font-bold leading-[1.25] tracking-tight text-primary xl:text-6xl">
 
-  <br />
+            حلّل آراء عملائك...
 
-  وطوّر سمعة علامتك التجارية
+            <br />
 
-  <br />
+            وطوّر سمعة علامتك التجارية
 
-  <span className="text-[#374375]">
-    بالذكاء الاصطناعي
-  </span>
+            <br />
 
-</h1>
+            <span className="text-[#374375]">
+              بالذكاء الاصطناعي
+            </span>
+
+          </h1>
 
           {/* Description */}
 
-          <p className="mt-8 text-[12px] leading-9 text-[#5F667A]">
+          <p className="mt-8 text-base leading-8 text-[#5F667A]">
 
-            <span className="rounded-lg bg-[#EEF1FF] px-2 py-1 text-xl font-extrabold tracking-wide text-[#374375]">
+            <span className="rounded-lg bg-[#EEF1FF] px-3 py-1 text-2xl font-extrabold tracking-wide text-[#374375]">
+
               IntelEye
+
             </span>
 
             <span className="mx-2">
@@ -88,7 +91,7 @@ export default function HeroSection() {
 
               <div className="flex items-center gap-2">
 
-                <PlayCircle size={17} />
+                <PlayCircle size={20} />
 
                 مشاهدة العرض
 
@@ -130,7 +133,7 @@ export default function HeroSection() {
           className="flex justify-center"
         >
 
-          <div className="origin-center scale-95">
+          <div className="w-[760px] origin-center">
 
             <DashboardPreview />
 
@@ -153,8 +156,8 @@ function Stat({ number, title }: StatProps) {
   return (
     <div className="rounded-2xl border border-gray-100 bg-white p-5 text-center shadow-sm">
 
-<h2 className="text-2xl font-bold text-primary">
-  {number}
+      <h2 className="text-2xl font-bold text-primary">
+        {number}
       </h2>
 
       <p className="mt-2 text-sm text-[#6B7280]">
