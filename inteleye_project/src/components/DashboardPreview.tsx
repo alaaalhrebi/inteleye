@@ -319,7 +319,7 @@ export default function DashboardPreview() {
                 </table>
               </div>
             </div>
-
+          </div>
           </main>
       </div>
     </motion.div>
