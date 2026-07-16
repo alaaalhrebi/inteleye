@@ -32,8 +32,8 @@ export default function HeroSection() {
           </div>
 
           {/* Title */}
-          <h1 className="text-4xl xl:text-[56px] font-bold leading-[1.25] tracking-tight text-primary">
-            حلّل آراء عملائك...
+<h1 className="text-[36px] xl:text-[44px] font-bold leading-[1.25] tracking-tight text-primary">
+  حلّل آراء عملائك...
             <br />
             وطوّر سمعة علامتك التجارية
             <br />
@@ -43,8 +43,8 @@ export default function HeroSection() {
           </h1>
 
           {/* Description */}
-          <p className="mt-7 text-lg leading-9 text-[#5F667A]">
-            <span className="rounded-lg bg-[#EEF1FF] px-2 py-1 text-xl font-extrabold text-[#374375]">
+<p className="mt-6 text-[15px] leading-8 text-[#5F667A]">
+  <span className="rounded-lg bg-[#EEF1FF] px-2 py-1 text-xl font-extrabold text-[#374375]">
               IntelEye
             </span>
 
@@ -57,7 +57,7 @@ export default function HeroSection() {
           </p>
 
           {/* Buttons */}
-          <div className="mt-10 flex flex-wrap gap-4">
+          <div className="mt-7 flex flex-wrap gap-4">
             <PrimaryButton href="/signup">
               ابدأ التجربة
             </PrimaryButton>
@@ -84,8 +84,8 @@ export default function HeroSection() {
           initial={{ opacity: 0, x: 40 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.8 }}
-          className="flex justify-center"
-        >
+className="flex justify-center -mt-4"
+          >
           <div className="origin-center scale-[0.88]">
             <DashboardPreview />
           </div>
