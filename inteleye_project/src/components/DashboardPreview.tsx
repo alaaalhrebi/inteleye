@@ -111,7 +111,8 @@ className="w-full max-w-[760px] overflow-hidden rounded-[32px] border border-gra
             />
           </div>
 
-          {/* Chart */}
+       
+         {/* Chart */}
           <div className="mt-6 rounded-3xl border border-gray-100 bg-white p-6">
             <div className="mb-6 flex items-center justify-between">
               <div>
@@ -241,6 +242,7 @@ className="w-full max-w-[760px] overflow-hidden rounded-[32px] border border-gra
     </motion.div>
   );
 }
+
 
 /* ===========================
    Summary Card
