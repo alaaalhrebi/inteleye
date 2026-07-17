@@ -2,171 +2,157 @@
 
 import Image from "next/image";
 import { motion } from "framer-motion";
-import { Star } from "lucide-react";
+import {
+  BarChart3,
+  Brain,
+  FileText,
+  LayoutGrid,
+  MessageSquare,
+  PieChart,
+  Settings,
+  Star,
+  TrendingUp,
+} from "lucide-react";
 import type { ReactNode } from "react";
 
 export default function DashboardPreview() {
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 25 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.7 }}
-      className="pointer-events-none select-none w-full max-w-[800px] h-[680px] overflow-hidden rounded-[32px] border border-gray-200 bg-white shadow-[0_40px_100px_rgba(0,0,0,.14)]"
-      dir="rtl"
-    >
-
+    <div className="w-full overflow-hidden rounded-[32px] border border-[#E5E7EB] bg-white shadow-2xl" dir="rtl">
       {/* Header */}
-
-      <div className="flex h-16 items-center justify-between border-b border-gray-100 px-6">
-
+      <div className="flex h-16 items-center justify-between border-b border-[#E5E7EB] px-8 bg-[#FAFBFD]">
         <div className="flex items-center gap-3">
-
-          <Image
-            src="/logo.png"
-            alt="IntelEye"
-            width={120}
-            height={34}
-            className="h-8 w-auto"
-          />
-
+          {/* Logo Placeholder */}
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#374375] text-white overflow-hidden">
+            {/* يمكنك استبدال هذا بـ <Image src="/logo.png" ... /> */}
+            <span className="text-xs font-bold">IE</span>
+          </div>
           <div>
-
-            <h2 className="text-lg font-bold text-[#374375]">
+            <h3 className="text-sm font-bold text-[#374375]">
               لوحة تحكم IntelEye
-            </h2>
-
-            <p className="text-xs text-gray-400">
+            </h3>
+            <p className="text-[10px] text-gray-400">
               منصة مراقبة وتحليل السمعة
             </p>
-
           </div>
-
         </div>
-
-        <div className="text-sm font-medium text-gray-500">
+        <span className="text-xs font-medium text-gray-400">
           آخر 30 يوماً
-        </div>
-
+        </span>
       </div>
 
       {/* Dashboard Layout */}
-
-      <div className="grid h-[456px] grid-cols-[170px_1fr]">
-
+      <div className="grid grid-cols-[220px_1fr] min-h-[580px]">
         {/* Sidebar */}
-
-        <aside className="border-l border-gray-100 bg-[#FAFBFD] px-5 py-6">
-
-          <nav className="space-y-2">
-
-            <button className="flex w-full items-center gap-3 rounded-xl bg-[#374375] px-4 py-3 text-sm font-medium text-white">
+        <aside className="border-l border-[#E5E7EB] bg-[#FAFBFD] px-5 py-8">
+          <nav className="space-y-1.5">
+            <button className="flex w-full items-center gap-3 rounded-xl bg-[#374375] px-4 py-3 text-sm font-medium text-white transition-all">
+              <LayoutGrid size={18} />
               لوحة التحكم
             </button>
-
-            <button className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-gray-600 transition hover:bg-white">
-              المراجعات
-            </button>
-
-            <button className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-gray-600 transition hover:bg-white">
-              الذكاء الاصطناعي
-            </button>
-
-            <button className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-gray-600 transition hover:bg-white">
-              التحليلات
-            </button>
-
-            <button className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-gray-600 transition hover:bg-white">
-              التقارير
-            </button>
-
-            <button className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-gray-600 transition hover:bg-white">
-              الإعدادات
-            </button>
-
+            {[
+              { icon: MessageSquare, label: "المراجعات" },
+              { icon: Brain, label: "الذكاء الاصطناعي" },
+              { icon: PieChart, label: "التحليلات" },
+              { icon: FileText, label: "التقارير" },
+              { icon: Settings, label: "الإعدادات" },
+            ].map((item, idx) => (
+              <button
+                key={idx}
+                className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-gray-600 transition hover:bg-white hover:text-[#374375]"
+              >
+                <item.icon size={18} />
+                {item.label}
+              </button>
+            ))}
           </nav>
-
         </aside>
 
         {/* Main Content */}
-
-        <main className="overflow-hidden p-6">
-
+        <main className="p-8 bg-white">
           {/* Summary Cards */}
-
-          <div className="grid grid-cols-4 gap-4">
-
-            <SummaryCard
-              title="درجة الذكاء الاصطناعي"
-              value="96%"
-            />
-
-            <SummaryCard
-              title="نمو السمعة"
-              value="+18%"
-            />
-
-            <SummaryCard
-              title="إجمالي المراجعات"
-              value="1,248"
-            />
-
-            <SummaryCard
-              title="متوسط التقييم من 5"
-              value="4.8"
-            />
-
+          <div className="grid grid-cols-4 gap-4 mb-8">
+            {[
+              {
+                icon: Brain,
+                title: "درجة الذكاء الاصطناعي",
+                value: "96%",
+              },
+              {
+                icon: TrendingUp,
+                title: "نمو السمعة",
+                value: "+18%",
+              },
+              {
+                icon: MessageSquare,
+                title: "إجمالي المراجعات",
+                value: "1,248",
+              },
+              { icon: Star, title: "متوسط التقييم من 5", value: "4.8" },
+            ].map((card, idx) => (
+              <div
+                key={idx}
+                className="rounded-2xl border border-[#F1F5F9] bg-[#FAFBFD] p-4"
+              >
+                <div className="mb-3 flex justify-end">
+                  <card.icon
+                    size={16}
+                    className={
+                      idx === 3
+                        ? "text-[#895159]"
+                        : "text-[#374375]"
+                    }
+                  />
+                </div>
+                <div className="text-right">
+                  <h4 className="text-xl font-bold text-[#374375]">
+                    {card.value}
+                  </h4>
+                  <p className="mt-1 text-[10px] text-gray-500 font-medium">
+                    {card.title}
+                  </p>
+                </div>
+              </div>
+            ))}
           </div>
-                    {/* Chart */}
 
-          <div className="mt-4 rounded-3xl border border-gray-100 bg-white p-5">
-
-            <div className="mb-4">
-
-              <h3 className="text-lg font-semibold text-[#374375]">
-                اتجاه التقييمات
-              </h3>
-
-              <p className="mt-1 text-sm text-gray-400">
-                المراجعات التي تم جمعها خلال آخر 30 يوماً
-              </p>
-
+          {/* Chart */}
+          <div className="rounded-2xl border border-[#F1F5F9] bg-white p-6 shadow-sm">
+            <div className="mb-6 flex items-center justify-between">
+              <div>
+                <h4 className="text-base font-bold text-[#374375]">
+                  اتجاه التقييمات
+                </h4>
+                <p className="mt-0.5 text-xs text-gray-400">
+                  تحليل المراجعات خلال آخر 30 يوماً
+                </p>
+              </div>
+              <BarChart3 size={20} className="text-[#374375] opacity-50" />
             </div>
 
-            <div className="flex gap-3">
-
-              {/* Y Axis */}
-
-              <div className="flex h-[180px] flex-col justify-between pb-6 text-xs text-gray-400">
-
+            <div className="flex gap-4">
+              {/* Y-axis labels */}
+              <div className="flex h-[200px] flex-col justify-between pb-6 text-[10px] text-gray-400 font-medium">
                 {[5, 4, 3, 2, 1].map((n) => (
                   <span key={n}>{n}</span>
                 ))}
-
               </div>
 
-              <div className="relative h-[220px] flex-1">
-
+              <div className="relative h-[240px] flex-1">
                 <div className="absolute inset-0 flex flex-col justify-between pb-6">
-
-                  {[1,2,3,4,5].map((item)=>(
-
+                  {[1, 2, 3, 4, 5].map((item) => (
                     <div
                       key={item}
                       className="border-t border-dashed border-gray-100"
                     />
-
                   ))}
-
                 </div>
 
                 <svg
-                  viewBox="0 0 800 220"
-                  className="absolute inset-0 h-[220px] w-full"
+                  viewBox="0 0 800 200"
+                  className="absolute inset-0 h-[200px] w-full"
                   preserveAspectRatio="none"
                 >
-
                   <defs>
-
                     <linearGradient
                       id="chartArea"
                       x1="0"
@@ -174,213 +160,89 @@ export default function DashboardPreview() {
                       x2="0"
                       y2="1"
                     >
-
                       <stop
                         offset="0%"
                         stopColor="#374375"
-                        stopOpacity="0.20"
+                        stopOpacity="0.15"
                       />
-
                       <stop
                         offset="100%"
                         stopColor="#374375"
                         stopOpacity="0"
                       />
-
                     </linearGradient>
-
                   </defs>
 
                   <path
-                    d="
-                    M20 175
-                    C90 148 140 122 200 132
-                    S330 158 400 105
-                    S540 65 620 78
-                    S730 55 780 30
-                    L780 220
-                    L20 220
-                    Z
-                    "
+                    d="M20 160 C90 135 140 110 200 120 S330 145 400 95 S540 60 620 70 S730 50 780 25 L780 200 L20 200 Z"
                     fill="url(#chartArea)"
                   />
 
                   <path
-                    d="
-                    M20 175
-                    C90 148 140 122 200 132
-                    S330 158 400 105
-                    S540 65 620 78
-                    S730 55 780 30
-                    "
+                    d="M20 160 C90 135 140 110 200 120 S330 145 400 95 S540 60 620 70 S730 50 780 25"
                     fill="none"
                     stroke="#374375"
-                    strokeWidth="4"
+                    strokeWidth="3"
                     strokeLinecap="round"
                   />
 
                   {[
-                    [20,175],
-                    [200,132],
-                    [400,105],
-                    [620,78],
-                    [780,30],
-                  ].map(([x,y],index)=>(
-
+                    [20, 160],
+                    [200, 120],
+                    [400, 95],
+                    [620, 70],
+                    [780, 25],
+                  ].map(([x, y], index) => (
                     <circle
                       key={index}
                       cx={x}
                       cy={y}
-                      r="5"
+                      r="4"
                       fill="#374375"
                     />
-
                   ))}
-
                 </svg>
 
-                <div className="absolute inset-x-0 bottom-0 flex justify-between text-xs text-gray-400">
-
-                  <span>مايو 1</span>
-                  <span>مايو 7</span>
-                  <span>مايو 15</span>
-                  <span>مايو 22</span>
-                  <span>مايو 30</span>
+                {/* X-axis labels */}
+                <div className="absolute inset-x-0 bottom-0 flex justify-between text-[10px] text-gray-400 font-medium">
+                  <span>1 مايو</span>
+                  <span>7 مايو</span>
+                  <span>15 مايو</span>
+                  <span>22 مايو</span>
+                  <span>30 مايو</span>
                   <span>اليوم</span>
-
                 </div>
-
               </div>
-
             </div>
-
           </div>
 
-          {/* Latest Reviews */}
-
-          <div className="mt-6 rounded-3xl border border-gray-100 bg-white p-6">
-
-            <div className="mb-5 flex items-center justify-between">
-
-              <h3 className="text-lg font-semibold text-[#374375]">
-                آخر المراجعات
-              </h3>
-
-              <span className="text-sm font-medium text-gray-400">
-                Google
+          {/* Latest Review Snippet */}
+          <div className="mt-6 rounded-2xl border border-[#F1F5F9] bg-[#FAFBFD] p-5">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-1">
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <Star
+                      key={i}
+                      size={12}
+                      className="fill-[#895159] text-[#895159]"
+                    />
+                  ))}
+                </div>
+                <span className="text-[11px] font-bold text-[#374375]">
+                  مطعم الرياض
+                </span>
+              </div>
+              <span className="text-[10px] text-gray-400 font-medium">
+                قبل ساعتين
               </span>
-
             </div>
-
-            <ReviewItem
-              rating="4.8"
-              business="مطعم الرياض"
-              stars={5}
-              time="قبل ساعتين"
-              content="خدمة ممتازة وسرعة في الرد، وتمت معالجة الملاحظة خلال وقت قصير."
-            />
-
-          </div>
-
-        </main>
-
-      </div>
-
-    </motion.div>
-
-  );
-}
-/* ===========================
-   Summary Card
-=========================== */
-
-type SummaryCardProps = {
-  title: string;
-  value: string;
-};
-
-function SummaryCard({ title, value }: SummaryCardProps) {
-  return (
-    <div className="rounded-2xl border border-gray-100 bg-[#FAFBFD] p-4">
-
-      <div className="text-right">
-
-        <h3 className="text-3xl font-bold text-[#374375]">
-          {value}
-        </h3>
-
-        <p className="mt-2 text-sm text-gray-500">
-          {title}
-        </p>
-
-      </div>
-
-    </div>
-  );
-}
-
-/* ===========================
-   Review Item
-=========================== */
-
-type ReviewItemProps = {
-  rating: string;
-  business: string;
-  stars: number;
-  time: string;
-  content: string;
-};
-
-function ReviewItem({
-  rating,
-  business,
-  stars,
-  time,
-  content,
-}: ReviewItemProps) {
-  return (
-    <div className="rounded-2xl bg-[#F8FAFC] p-5">
-
-      <div className="flex items-center justify-between">
-
-        <div className="flex items-center gap-3">
-
-          <span className="rounded-full bg-[#EEF2FF] px-3 py-1 text-sm font-semibold text-[#374375]">
-            {rating}
-          </span>
-
-          <div>
-
-            <p className="text-sm font-semibold text-[#374375]">
-              {business}
+            <p className="text-xs leading-5 text-gray-600">
+              خدمة ممتازة وسرعة في الرد، وتمت معالجة الملاحظة خلال وقت قصير جداً.
             </p>
-
-            <div className="mt-1 flex items-center gap-1">
-
-              {Array.from({ length: stars }).map((_, i) => (
-                <Star
-                  key={i}
-                  size={14}
-                  className="fill-[#895159] text-[#895159]"
-                />
-              ))}
-
-            </div>
-
           </div>
-
-        </div>
-
-        <span className="text-xs text-gray-400">
-          {time}
-        </span>
-
+        </main>
       </div>
-
-      <p className="mt-4 text-sm leading-6 text-gray-600">
-        {content}
-      </p>
-
     </div>
   );
 }
