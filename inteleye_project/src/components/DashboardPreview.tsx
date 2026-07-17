@@ -23,101 +23,7 @@ import type { ReactNode } from "react";
 export default function DashboardPreview() {
   return (
     <div className="w-full">
-      {/* Hero Section */}
-      <motion.section
-        initial={{ opacity: 0, y: 30 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.7 }}
-        className="relative min-h-screen flex flex-col items-center justify-center px-6 py-20 bg-gradient-to-br from-white via-[#F8FAFC] to-white"
-      >
-        {/* Background Decoration */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute top-20 right-10 w-72 h-72 bg-blue-100 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob"></div>
-          <div className="absolute bottom-20 left-10 w-72 h-72 bg-indigo-100 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-2000"></div>
-        </div>
-
-        <div className="relative z-10 max-w-3xl text-center">
-          {/* Badge */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.2, duration: 0.5 }}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#EEF2FF] border border-[#D4E0FF] mb-6"
-          >
-            <span className="w-2 h-2 bg-[#374375] rounded-full"></span>
-            <span className="text-sm font-semibold text-[#374375]">
-              منصة ذكاء اصطناعي متقدمة
-            </span>
-          </motion.div>
-
-          {/* Main Headline */}
-          <motion.h1
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3, duration: 0.6 }}
-            className="text-5xl md:text-6xl font-bold text-[#1A1A1A] mb-6 leading-tight"
-          >
-            حلل آراء عملائك
-            <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#374375] to-[#5B6BA8]">
-              وطور سمعتك التجارية
-            </span>
-          </motion.h1>
-
-          {/* Subheading */}
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4, duration: 0.6 }}
-            className="text-lg text-gray-600 mb-8 leading-relaxed max-w-2xl mx-auto"
-          >
-            منصة ذكاء اصطناعي متطورة لتحليل تقييمات العملاء وتطوير سمعتك التجارية بالذكاء الاصطناعي
-          </motion.p>
-
-          {/* CTA Buttons */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5, duration: 0.6 }}
-            className="flex flex-col sm:flex-row gap-4 justify-center mb-12"
-          >
-            <button className="px-8 py-4 bg-[#374375] text-white font-semibold rounded-lg hover:bg-[#2D3560] transition-all duration-300 flex items-center justify-center gap-2 group shadow-lg hover:shadow-xl">
-              <div className="flex flex-col items-start">
-                <span>تجربة مجانية لمدة 14 يوم</span>
-                <span className="text-xs font-normal opacity-90">بدون الحاجة لبطاقة ائتمان</span>
-              </div>
-              <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
-            </button>
-            <button className="px-8 py-3 bg-white text-[#374375] font-semibold rounded-lg border-2 border-[#E5E7EB] hover:border-[#374375] transition-all duration-300 flex items-center justify-center gap-2">
-              <HelpCircle size={18} />
-              مشاهدة العرض التوضيحي
-            </button>
-          </motion.div>
-
-          {/* Features Tags */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.6, duration: 0.6 }}
-            className="flex flex-wrap justify-center gap-3"
-          >
-            {[
-              { icon: <CheckCircle2 size={16} />, text: "تحليل فوري للتقييمات" },
-              { icon: <Zap size={16} />, text: "ذكاء اصطناعي متقدم" },
-              { icon: <Users size={16} />, text: "دعم متعدد المنصات" },
-            ].map((feature, idx) => (
-              <div
-                key={idx}
-                className="flex items-center gap-2 px-4 py-2 bg-white rounded-full border border-[#E5E7EB] text-sm text-gray-700"
-              >
-                <span className="text-[#374375]">{feature.icon}</span>
-                {feature.text}
-              </div>
-            ))}
-          </motion.div>
-        </div>
-      </motion.section>
-
+    
       {/* Dashboard Preview Section */}
       <motion.section
         initial={{ opacity: 0, y: 50 }}
@@ -409,27 +315,6 @@ export default function DashboardPreview() {
           </div>
         </div>
       </motion.section>
-
-      {/* Stats Section */}
-      <motion.section
-        initial={{ opacity: 0, y: 30 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 1, duration: 0.7 }}
-        className="px-6 py-20 bg-[#F8FAFC]"
-      >
-        <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-3 gap-8 text-center">
-            {[
-              { number: "+120K", label: "تقييم تم تحليله" },
-              { number: "98%", label: "دقة التحليل" },
-              { number: "24/7", label: "مراقبة مستمرة" },
-            ].map((stat, idx) => (
-              <div key={idx}>
-                <h3 className="text-4xl font-bold text-[#374375] mb-2">
-                  {stat.number}
-                </h3>
-                <p className="text-gray-600">{stat.label}</p>
-              </div>
             ))}
           </div>
         </div>
