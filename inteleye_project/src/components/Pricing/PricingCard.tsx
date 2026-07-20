@@ -39,19 +39,19 @@ export default function PricingCard({ plan }: Props) {
     <SpotlightBorder className="group h-full">
       <motion.div
         whileHover={{
-          y: -8,
-          scale: 1.015,
+          y: -6,
+          scale: 1.02,
         }}
-        transition={{
-          duration: 0.35,
-        }}
+        transition={{ duration: 0.3 }}
         className={`
           relative
+          flex
+          flex-col
           h-full
-          rounded-[32px]
+          rounded-[24px]
           border
-          p-10
-          shadow-xl
+          p-7
+          shadow-lg
           transition-all
           ${
             plan.featured
@@ -61,30 +61,30 @@ export default function PricingCard({ plan }: Props) {
         `}
       >
         {plan.featured && (
-<div className="absolute right-8 top-8 rounded-full bg-accent px-4 py-1 text-sm font-semibold text-white">
-  الأكثر طلبًا
+          <div className="absolute right-6 top-6 rounded-full bg-accent px-3 py-1 text-xs font-semibold text-white">
+            الأكثر طلبًا
           </div>
         )}
 
         <h3
-          className={`text-2xl font-bold ${
-plan.featured ? "text-white" : "text-primary"
+          className={`text-xl font-bold ${
+            plan.featured ? "text-white" : "text-primary"
           }`}
         >
           {plan.name}
         </h3>
 
-        <div className="mt-8 flex items-end gap-2">
+        <div className="mt-6 flex items-end gap-2">
           <span
-            className={`text-6xl font-bold ${
-plan.featured ? "text-white" : "text-primary"
+            className={`text-5xl font-bold ${
+              plan.featured ? "text-white" : "text-primary"
             }`}
           >
             {plan.price}
           </span>
 
           <span
-            className={`mb-2 ${
+            className={`mb-2 text-sm ${
               plan.featured ? "text-[#FFFCF5]/90" : "text-gray-500"
             }`}
           >
@@ -93,7 +93,7 @@ plan.featured ? "text-white" : "text-primary"
         </div>
 
         <p
-          className={`mt-6 leading-8 ${
+          className={`mt-5 leading-7 text-sm ${
             plan.featured ? "text-[#FFFCF5]" : "text-gray-600"
           }`}
         >
@@ -103,14 +103,14 @@ plan.featured ? "text-white" : "text-primary"
         <Link
           href={`/signup?plan=${planSlug}`}
           className={`
-            mt-10
+            mt-7
             flex
             w-full
             items-center
             justify-center
-            rounded-2xl
-            py-4
-            text-lg
+            rounded-xl
+            py-3
+            text-base
             font-semibold
             transition-all
             duration-300
@@ -125,14 +125,14 @@ plan.featured ? "text-white" : "text-primary"
         </Link>
 
         <div
-          className={`my-10 ${
+          className={`my-7 ${
             plan.featured
               ? "border-t border-white/20"
               : "border-t border-gray-200"
           }`}
         />
 
-        <div className="space-y-5">
+        <div className="flex-1 space-y-3">
           {plan.features.map((feature, index) => (
             <FeatureItem
               key={index}
@@ -148,9 +148,9 @@ plan.featured ? "text-white" : "text-primary"
             inset-x-0
             bottom-0
             h-1
-            rounded-b-[32px]
-${plan.featured ? "bg-accent" : "bg-[#374375]"}
-`}
+            rounded-b-[24px]
+            ${plan.featured ? "bg-accent" : "bg-[#374375]"}
+          `}
         />
       </motion.div>
     </SpotlightBorder>
