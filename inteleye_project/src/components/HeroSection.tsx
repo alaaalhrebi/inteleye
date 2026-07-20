@@ -29,7 +29,7 @@ export default function HeroSection() {
             transition={{ delay: 0.2, duration: 0.5 }}
             className="mb-8 inline-flex items-center gap-2 rounded-full bg-[#EEF1FF] px-5 py-2 text-sm font-semibold text-[#374375] border border-[#D4E0FF]"
           >
-            <Sparkles size={14} />
+            < />
             منصة ذكاء اصطناعي لإدارة تقييمات العملاء
           </motion.div>
 
@@ -57,11 +57,6 @@ export default function HeroSection() {
               <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
             </button>
 
-            <button className="h-[64px] px-8 bg-white text-[#374375] font-bold rounded-xl border-2 border-[#E5E7EB] hover:border-[#374375] transition-all duration-300 flex items-center justify-center gap-2">
-              <PlayCircle size={20} />
-              مشاهدة العرض التوضيحي
-            </button>
-          </div>
 
           {/* Features Tags */}
           <div className="flex flex-wrap justify-center gap-4 mb-20">
