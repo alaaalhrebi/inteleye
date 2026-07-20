@@ -55,106 +55,96 @@ export default function Features() {
       id="features"
       className="py-28 bg-gradient-to-b from-[#F8FAF8] to-white"
     >
-      <div className="max-w-6xl mx-auto px-6">
-
+      <div className="max-w-7xl mx-auto px-8">
         {/* Header */}
 
         <motion.div
-          initial={{ opacity: 0, y: 35 }}
+          initial={{ opacity: 0, y: 40 }}
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
           viewport={{ once: true }}
           className="text-center max-w-3xl mx-auto"
         >
-          <span className="inline-block rounded-full bg-[#BABDE2]/30 text-primary px-5 py-2 text-sm font-medium">
+          <span className="inline-block rounded-full bg-[#BABDE2]/40 text-[#374375] px-5 py-2 text-sm font-medium">
             لماذا IntelEye؟
           </span>
 
-          <h2 className="text-5xl font-bold text-primary mt-8 leading-tight">
+          <h2 className="text-5xl font-bold mt-8 text-primary leading-tight">
             كل ما تحتاجه لفهم عملائك
             <br />
             في منصة واحدة
           </h2>
 
           <p className="mt-8 text-xl text-gray-600 leading-9">
-            يساعدك IntelEye على تحليل تقييمات العملاء واكتشاف المشكلات
-            وإصدار تقارير ذكية واقتراح أفضل الردود لتحسين تجربة العملاء
+            يساعدك IntelEye على تحليل تقييمات العملاء، اكتشاف المشكلات،
+            إصدار تقارير ذكية، واقتراح أفضل الردود لتحسين تجربة العملاء
             ورفع تقييم منشأتك.
           </p>
         </motion.div>
 
-        {/* Features */}
+        {/* Cards */}
 
-        <div className="mt-24 space-y-14">
-
+        <div className="grid lg:grid-cols-3 md:grid-cols-2 gap-8 mt-20">
           {features.map((feature, index) => {
-
             const Icon = feature.icon;
 
             return (
-
               <motion.div
                 key={index}
-                initial={{ opacity: 0, x: -30 }}
-                whileInView={{ opacity: 1, x: 0 }}
+                initial={{ opacity: 0, y: 35 }}
+                whileInView={{ opacity: 1, y: 0 }}
                 transition={{
                   duration: 0.5,
-                  delay: index * 0.08,
+                  delay: index * 0.1,
                 }}
                 viewport={{ once: true }}
                 whileHover={{
-                  x: 8,
+                  y: -8,
+                  scale: 1.02,
                 }}
-                className="group"
+                className="
+                  group
+                  rounded-[30px]
+                  bg-white
+                  p-8
+                  border
+                  border-gray-100
+                  shadow-lg
+                  hover:shadow-2xl
+                  transition-all
+                "
               >
+                {/* Icon */}
 
-                <div className="flex items-start gap-8">
-
-                  {/* Icon */}
-
-                  <div className="flex flex-col items-center flex-shrink-0">
-
-                    <Icon
-                      size={38}
-                      className="
-                        text-primary
-                        stroke-[1.8]
-                        transition-all
-                        duration-300
-                        group-hover:scale-110
-                      "
-                    />
-
-                    {index !== features.length - 1 && (
-                      <div className="w-[2px] h-28 bg-primary/20 rounded-full mt-6"></div>
-                    )}
-
-                  </div>
-
-                  {/* Content */}
-
-                  <div className="pb-8">
-
-                    <h3 className="text-3xl font-bold text-primary">
-                      {feature.title}
-                    </h3>
-
-                    <p className="mt-4 text-gray-600 text-lg leading-9 max-w-2xl">
-                      {feature.description}
-                    </p>
-
-                  </div>
-
+                <div className="w-16 h-16 flex items-center justify-center">
+                  <Icon
+                    size={34}
+                    className="
+                      text-primary
+                      stroke-[1.8]
+                      transition-all
+                      duration-300
+                      group-hover:scale-110
+                      group-hover:text-[#895159]
+                    "
+                  />
                 </div>
 
+                {/* Title */}
+
+                <h3 className="text-2xl font-bold text-primary mt-6">
+                  {feature.title}
+                </h3>
+
+                {/* Description */}
+
+                <p className="text-gray-600 leading-8 mt-5">
+                  {feature.description}
+                </p>
               </motion.div>
-
             );
-
           })}
-
         </div>
-
       </div>
     </section>
   );
