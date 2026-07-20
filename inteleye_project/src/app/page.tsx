@@ -5,6 +5,7 @@ import Features from "@/components/Features";
 import AISection from "@/components/AISection";
 import Pricing from "@/components/Pricing/Pricing";
 import Testimonials from "@/components/Testimonials";
+import CTA from "@/components/CTA";
 import Footer from "@/components/Footer";
 import AnimatedText from "@/components/AnimatedText";
 
@@ -18,8 +19,12 @@ export default function Home() {
       <AISection />
       <Pricing />
       <Testimonials />
+
+      <CTA />
+
       <Footer />
-<AnimatedText>IntelEye</AnimatedText> 
+
+      <AnimatedText>IntelEye</AnimatedText>
     </>
   );
 }
