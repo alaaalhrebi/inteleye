@@ -38,7 +38,10 @@ export default function PricingCard({ plan }: Props) {
   return (
     <SpotlightBorder className="group h-full">
       <motion.div
-        whileHover={{ y: -6, scale: 1.02 }}
+        whileHover={{
+          y: -6,
+          scale: 1.02,
+        }}
         transition={{ duration: 0.3 }}
         className={`
           relative
@@ -71,7 +74,7 @@ export default function PricingCard({ plan }: Props) {
           {plan.name}
         </h3>
 
-        <div className="mt-5 flex items-end gap-2">
+        <div className="mt-6 flex items-end gap-2">
           <span
             className={`text-5xl font-bold ${
               plan.featured ? "text-white" : "text-primary"
@@ -90,37 +93,17 @@ export default function PricingCard({ plan }: Props) {
         </div>
 
         <p
-          className={`mt-5 text-sm leading-7 ${
+          className={`mt-5 leading-7 text-sm ${
             plan.featured ? "text-[#FFFCF5]" : "text-gray-600"
           }`}
         >
           {plan.description}
         </p>
 
-        <div
-          className={`my-7 ${
-            plan.featured
-              ? "border-t border-white/20"
-              : "border-t border-gray-200"
-          }`}
-        />
-
-        {/* Features */}
-        <div className="flex-1 space-y-3">
-          {plan.features.map((feature, index) => (
-            <FeatureItem
-              key={index}
-              text={feature.text}
-              featured={plan.featured}
-            />
-          ))}
-        </div>
-
-        {/* Button */}
         <Link
           href={`/signup?plan=${planSlug}`}
           className={`
-            mt-8
+            mt-7
             flex
             w-full
             items-center
@@ -140,6 +123,24 @@ export default function PricingCard({ plan }: Props) {
         >
           <AnimatedText>ابدأ الآن</AnimatedText>
         </Link>
+
+        <div
+          className={`my-7 ${
+            plan.featured
+              ? "border-t border-white/20"
+              : "border-t border-gray-200"
+          }`}
+        />
+
+        <div className="flex-1 space-y-3">
+          {plan.features.map((feature, index) => (
+            <FeatureItem
+              key={index}
+              text={feature.text}
+              featured={plan.featured}
+            />
+          ))}
+        </div>
 
         <div
           className={`
