@@ -13,37 +13,30 @@ const stats = [
     icon: Star,
     value: "4.9",
     label: "متوسط التقييم",
-    color: "text-yellow-500",
-    bg: "bg-yellow-50",
   },
   {
     icon: Users,
     value: "120K+",
     label: "عميل تم تحليل آرائهم",
-    color: "text-blue-600",
-    bg: "bg-blue-50",
   },
   {
     icon: MessageSquareText,
     value: "850K+",
     label: "تعليق تم تحليله",
-    color: "text-[#895159]",
-    bg: "bg-[#FFFCF5]",
   },
   {
     icon: TrendingUp,
     value: "98%",
     label: "دقة تحليل الذكاء الاصطناعي",
-    color: "text-[#895159]",
-    bg: "bg-[#BABDE2]/30",
   },
 ];
 
 export default function Stats() {
   return (
     <section className="py-24 bg-[#F5F9F6]">
-
       <div className="max-w-7xl mx-auto px-8">
+
+        {/* Header */}
 
         <motion.div
           initial={{ opacity: 0 }}
@@ -52,29 +45,24 @@ export default function Stats() {
           viewport={{ once: true }}
           className="text-center mb-16"
         >
-
           <span className="inline-block rounded-full bg-[#BABDE2]/40 text-[#374375] px-5 py-2 mb-6">
-
             أرقام تتحدث
-
           </span>
 
-<h2 className="text-5xl font-bold text-primary">
+          <h2 className="text-5xl font-bold text-primary">
             نتائج تساعدك على اتخاذ القرار
-
           </h2>
 
           <p className="mt-6 text-gray-600 text-lg max-w-3xl mx-auto leading-9">
-
             يحول IntelEye آلاف التعليقات إلى مؤشرات ورسوم بيانية
             تساعدك على معرفة مستوى رضا العملاء واتخاذ قرارات مبنية
             على البيانات.
-
           </p>
-
         </motion.div>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+        {/* Cards */}
+
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
 
           {stats.map((item, index) => {
 
@@ -83,67 +71,57 @@ export default function Stats() {
             return (
 
               <motion.div
-
                 key={index}
-
-                initial={{
-                  opacity:0,
-                  y:40
-                }}
-
-                whileInView={{
-                  opacity:1,
-                  y:0
-                }}
-
-                viewport={{
-                  once:true
-                }}
-
+                initial={{ opacity: 0, y: 40 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
                 transition={{
-                  delay:index*.1,
-                  duration:.6
+                  delay: index * .1,
+                  duration: .6,
                 }}
-
                 whileHover={{
-                  y:-8,
-                  scale:1.03
+                  y: -6,
+                  scale: 1.02,
                 }}
-
                 className="
+                  group
                   bg-white
-                  rounded-[32px]
-                  shadow-lg
+                  rounded-[24px]
                   border
                   border-gray-100
-                  p-8
-                  text-center
-                  hover:shadow-2xl
+                  shadow-md
+                  hover:shadow-xl
                   transition-all
+                  p-6
+                  text-center
                 "
-
               >
 
-                <div
-                  className={`w-16 h-16 mx-auto rounded-2xl flex items-center justify-center ${item.bg}`}
-                >
+                {/* Icon */}
 
+                <div className="w-14 h-14 mx-auto flex items-center justify-center">
                   <Icon
                     size={30}
-                    className={item.color}
+                    className="
+                      text-primary
+                      stroke-[1.8]
+                      transition-all
+                      duration-300
+                      group-hover:scale-110
+                    "
                   />
-
                 </div>
 
-<h3 className="text-5xl font-bold text-primary mt-8">
-                  {item.value}
+                {/* Number */}
 
+                <h3 className="text-4xl font-bold text-primary mt-5">
+                  {item.value}
                 </h3>
 
-                <p className="mt-4 text-gray-600 leading-7">
+                {/* Label */}
 
+                <p className="mt-3 text-gray-600 leading-7 text-sm">
                   {item.label}
-
                 </p>
 
               </motion.div>
@@ -155,7 +133,6 @@ export default function Stats() {
         </div>
 
       </div>
-
     </section>
   );
 }
