@@ -22,13 +22,14 @@ export default function DashboardPreview() {
       <div className="flex h-16 items-center justify-between border-b border-[#E5E7EB] px-8 bg-[#FAFBFD]">
         <div className="flex items-center gap-3">
           {/* Logo Placeholder */}
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#374375] text-white overflow-hidden">
-            <Image
-  src="/logo.png"
-  alt="Inteleye Logo"
-  width={40}
-  height={40}
-/>
+  <div className="flex h-10 w-10 items-center justify-center overflow-hidden">
+  <Image
+    src="/logo.png"
+    alt="Inteleye Logo"
+    width={40}
+    height={40}
+    className="object-contain"
+  />
           </div>
           <div>
             <h3 className="text-sm font-bold text-[#374375]">
