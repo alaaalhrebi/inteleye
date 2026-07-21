@@ -23,8 +23,8 @@ export default function DashboardPreview() {
         <div className="flex items-center gap-3">
           {/* Logo Placeholder */}
           <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#374375] text-white overflow-hidden">
-            {/* يمكنك استبدال هذا بـ <Image src="/logo.png" ... /> */}
-            <span className="text-xs font-bold">IE</span>
+            {/* يمكنك استبدال هذ<span className="text-xs font-bold">IE</span>ا بـ <Image src="/logo.png" ... /> */}
+            <Image src="/logo.png"  />
           </div>
           <div>
             <h3 className="text-sm font-bold text-[#374375]">
