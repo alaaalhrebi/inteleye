@@ -2,94 +2,87 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { motion, AnimatePresence } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import { Menu, X } from "lucide-react";
 
 export default function Navbar() {
   const [open, setOpen] = useState(false);
 
-  const navLink =
-    "relative text-[16px] font-bold text-[#374375] transition-all duration-300 hover:text-primary after:absolute after:left-0 after:-bottom-2 after:h-[2px] after:w-0 after:bg-primary after:transition-all after:duration-300 hover:after:w-full";
+  const navItem =
+    "text-[16px] font-semibold text-[#374375] hover:text-[#22315E] transition-all duration-300";
+
+  const buttonClass =
+    "rounded-full bg-[#374375] px-6 py-3 text-sm font-bold text-white shadow-md transition-all duration-300 hover:bg-[#2A3460] hover:shadow-lg";
 
   return (
     <motion.header
       initial={{ y: -80, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
-      transition={{ duration: 0.6 }}
+      transition={{ duration: 0.5 }}
       className="fixed inset-x-0 top-0 z-50"
     >
       <div className="mx-auto max-w-7xl px-6 pt-5">
-        <div className="flex items-center justify-between rounded-3xl border border-border bg-background/90 px-8 py-5 shadow-xl backdrop-blur-xl">
 
-          {/* Logo */}
-          <Link href="/" className="flex items-center gap-4">
+        <div className="grid grid-cols-3 items-center rounded-3xl border border-border bg-background/90 px-8 py-5 shadow-xl backdrop-blur-xl">
+
+          {/* Left */}
+          <div className="flex items-center gap-3">
 
             <img
               src="/logo.png"
               alt="IntelEye"
-              className="h-14 w-auto object-contain"
+              className="h-14 w-auto"
             />
 
             <span
-              className="select-none text-[34px] font-black tracking-[-0.05em] text-[#374375]"
+              className="text-[32px] font-black tracking-tight text-[#374375] select-none"
               style={{
-                fontFamily: "'Space Grotesk', 'Sora', 'Inter', sans-serif",
+                fontFamily:
+                  "'Plus Jakarta Sans','Inter','Segoe UI',sans-serif",
               }}
             >
               INTELEYE
             </span>
 
-          </Link>
+          </div>
 
-          {/* Desktop Navigation */}
-          <nav className="hidden lg:flex items-center gap-10">
+          {/* Center */}
+          <nav className="hidden lg:flex items-center justify-center gap-8">
 
-            <Link href="/" className={navLink}>
+            <Link href="/" className={navItem}>
               الرئيسية
             </Link>
 
-            <a href="#features" className={navLink}>
+            <a href="#features" className={navItem}>
               المميزات
             </a>
 
-            <a href="#pricing" className={navLink}>
+            <a href="#pricing" className={navItem}>
               الأسعار
             </a>
 
-            <a href="#contact" className={navLink}>
+            <a href="#contact" className={navItem}>
               تواصل
             </a>
 
           </nav>
 
-          {/* Right Buttons */}
-          <div className="flex items-center gap-4">
+          {/* Right */}
+          <div className="flex items-center justify-end gap-3">
 
-            <motion.div
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.97 }}
-              className="hidden md:block"
+            <Link
+              href="/demo"
+              className={`hidden md:block ${buttonClass}`}
             >
-              <Link
-                href="/demo"
-                className="rounded-full border-2 border-[#374375] px-6 py-3 font-semibold text-[#374375] transition-all duration-300 hover:bg-[#374375] hover:text-white"
-              >
-                تجربة مجانية
-              </Link>
-            </motion.div>
+              تجربة مجانية
+            </Link>
 
-            <motion.div
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.97 }}
-              className="hidden md:block"
+            <Link
+              href="/login"
+              className={`hidden md:block ${buttonClass}`}
             >
-              <Link
-                href="/login"
-                className="rounded-full bg-[#374375] px-7 py-3 font-bold text-white shadow-lg transition-all duration-300 hover:bg-[#2E365F]"
-              >
-                تسجيل الدخول
-              </Link>
-            </motion.div>
+              تسجيل الدخول
+            </Link>
 
             <button
               onClick={() => setOpen(!open)}
@@ -110,7 +103,7 @@ export default function Navbar() {
               transition={{ duration: 0.25 }}
               className="mt-3 rounded-3xl border border-border bg-background/95 p-6 shadow-xl backdrop-blur-xl lg:hidden"
             >
-              <nav className="flex flex-col gap-6 text-right">
+              <nav className="flex flex-col gap-5">
 
                 <Link
                   href="/"
@@ -149,7 +142,7 @@ export default function Navbar() {
                   <Link
                     href="/demo"
                     onClick={() => setOpen(false)}
-                    className="rounded-full border-2 border-[#374375] px-6 py-3 text-center font-semibold text-[#374375] transition hover:bg-[#374375] hover:text-white"
+                    className={buttonClass}
                   >
                     تجربة مجانية
                   </Link>
@@ -157,7 +150,7 @@ export default function Navbar() {
                   <Link
                     href="/login"
                     onClick={() => setOpen(false)}
-                    className="rounded-full bg-[#374375] px-6 py-3 text-center font-bold text-white shadow-lg transition hover:bg-[#2E365F]"
+                    className={buttonClass}
                   >
                     تسجيل الدخول
                   </Link>
