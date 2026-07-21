@@ -5,7 +5,7 @@ import {
 
 export default function Footer() {
   return (
-    <footer className="relative overflow-hidden bg-[#24304F] text-white">
+    <footer className="relative overflow-hidden bg-[#374375] text-white">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.08),transparent_55%)]" />
       <div className="relative mx-auto max-w-7xl px-8 py-24">
         <div className="flex flex-col items-center text-center">
@@ -68,7 +68,7 @@ export default function Footer() {
 
 function SocialIcon({children}:{children:React.ReactNode}){
   return (
-    <button className="flex h-12 w-12 items-center justify-center rounded-2xl border border-white/15 bg-white/10 transition hover:-translate-y-1 hover:bg-white hover:text-[#24304F]">
+    <button className="flex h-12 w-12 items-center justify-center rounded-2xl border border-white/15 bg-white/10 transition hover:-translate-y-1 hover:bg-white hover:text-[#374375]">
       {children}
     </button>
   );
