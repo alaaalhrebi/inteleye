@@ -37,6 +37,7 @@ export default function PricingCard({ plan }: Props) {
 
   return (
     <SpotlightBorder className="group h-full">
+
       <motion.div
         whileHover={{
           y: -6,
@@ -46,11 +47,13 @@ export default function PricingCard({ plan }: Props) {
         className={`
           relative
           flex
-          flex-col
           h-full
+          flex-col
           rounded-[24px]
           border
-          p-7
+          p-5
+          sm:p-6
+          lg:p-7
           shadow-lg
           transition-all
           ${
@@ -60,23 +63,29 @@ export default function PricingCard({ plan }: Props) {
           }
         `}
       >
+
         {plan.featured && (
-          <div className="absolute right-6 top-6 rounded-full bg-accent px-3 py-1 text-xs font-semibold text-white">
+          <div className="absolute right-4 top-4 sm:right-6 sm:top-6 rounded-full bg-accent px-3 py-1 text-[11px] sm:text-xs font-semibold text-white">
             الأكثر طلبًا
           </div>
         )}
 
+        {/* Plan Name */}
+
         <h3
-          className={`text-xl font-bold ${
+          className={`text-xl sm:text-2xl font-bold break-words ${
             plan.featured ? "text-white" : "text-primary"
           }`}
         >
           {plan.name}
         </h3>
 
+        {/* Price */}
+
         <div className="mt-6 flex items-end gap-2">
+
           <span
-            className={`text-5xl font-bold ${
+            className={`text-4xl sm:text-5xl font-bold ${
               plan.featured ? "text-white" : "text-primary"
             }`}
           >
@@ -90,15 +99,20 @@ export default function PricingCard({ plan }: Props) {
           >
             ريال / شهر
           </span>
+
         </div>
 
+        {/* Description */}
+
         <p
-          className={`mt-5 leading-7 text-sm ${
+          className={`mt-5 text-sm sm:text-base leading-7 ${
             plan.featured ? "text-[#FFFCF5]" : "text-gray-600"
           }`}
         >
           {plan.description}
         </p>
+
+        {/* Button */}
 
         <Link
           href={`/signup?plan=${planSlug}`}
@@ -110,7 +124,8 @@ export default function PricingCard({ plan }: Props) {
             justify-center
             rounded-xl
             py-3
-            text-base
+            text-sm
+            sm:text-base
             font-semibold
             transition-all
             duration-300
@@ -132,7 +147,10 @@ export default function PricingCard({ plan }: Props) {
           }`}
         />
 
+        {/* Features */}
+
         <div className="flex-1 space-y-3">
+
           {plan.features.map((feature, index) => (
             <FeatureItem
               key={index}
@@ -140,7 +158,10 @@ export default function PricingCard({ plan }: Props) {
               featured={plan.featured}
             />
           ))}
+
         </div>
+
+        {/* Bottom Line */}
 
         <div
           className={`
@@ -152,7 +173,9 @@ export default function PricingCard({ plan }: Props) {
             ${plan.featured ? "bg-accent" : "bg-[#374375]"}
           `}
         />
+
       </motion.div>
+
     </SpotlightBorder>
   );
 }
