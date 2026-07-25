@@ -143,17 +143,15 @@ export default function AISection() {
                   <ArrowRight size={18} />
 
                 </button>
-
               </motion.div>
             );
           })}
-
         </div>
+
+        </motion.div>
 
       </div>
 
     </section>
   );
 }
-
-        </motion.div>
