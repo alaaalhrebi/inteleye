@@ -53,33 +53,42 @@ export default function Features() {
   return (
     <section
       id="features"
-      className="py-28 bg-gradient-to-b from-[#F8FAF8] to-white"
+      className="bg-gradient-to-b from-[#F8FAF8] to-white py-20 sm:py-24 lg:py-28"
     >
-      <div className="max-w-7xl mx-auto px-8">
-        {/* Header */}
+      <div className="mx-auto max-w-7xl px-5 sm:px-6 lg:px-8">
 
         <motion.div
           initial={{ opacity: 0, y: 40 }}
           whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
+          transition={{ duration: .6 }}
           viewport={{ once: true }}
-          className="text-center max-w-3xl mx-auto"
+          className="mx-auto max-w-3xl text-center"
         >
-          <span className="inline-block rounded-full bg-[#BABDE2]/40 text-[#374375] px-5 py-2 text-sm font-medium">
+
+          <span className="inline-block rounded-full bg-[#BABDE2]/40 px-4 sm:px-5 py-2 text-xs sm:text-sm font-medium text-[#374375]">
             لماذا IntelEye؟
           </span>
 
-          <h2 className="text-5xl font-bold mt-8 text-primary leading-tight">
+          <h2 className="mt-6 sm:mt-8 text-3xl sm:text-4xl lg:text-5xl font-bold leading-tight text-primary">
+
             كل ما تحتاجه لفهم عملائك
+
             <br />
+
             في منصة واحدة
+
           </h2>
 
-          <p className="mt-8 text-xl text-gray-600 leading-9">
-            يساعدك IntelEye على تحليل تقييمات العملاء، اكتشاف المشكلات،
-            إصدار تقارير ذكية، واقتراح أفضل الردود لتحسين تجربة العملاء
+          <p className="mt-6 sm:mt-8 text-base sm:text-lg lg:text-xl leading-8 lg:leading-9 text-gray-600">
+
+            يساعدك IntelEye على تحليل تقييمات العملاء،
+            اكتشاف المشكلات،
+            إصدار تقارير ذكية،
+            واقتراح أفضل الردود لتحسين تجربة العملاء
             ورفع تقييم منشأتك.
+
           </p>
+
         </motion.div>
 
         {/* Cards */}
