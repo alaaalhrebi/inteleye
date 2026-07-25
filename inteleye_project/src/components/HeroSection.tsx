@@ -17,7 +17,7 @@ export default function HeroSection() {
 
       </div>
 
-      <div className="mx-auto flex max-w-7xl flex-col items-center px-5 text-center sm:px-6 lg:px-8">
+      <div className="mx-auto flex max-w-[1400px] flex-col items-center px-4 text-center sm:px-6 lg:px-12">
 
         {/* Hero Text */}
         <motion.div
@@ -39,7 +39,7 @@ export default function HeroSection() {
           </motion.div>
 
           {/* Title */}
-          <h1 className="mb-6 text-4xl font-extrabold leading-[1.15] tracking-tight text-[#1A1A1A] sm:text-5xl lg:text-6xl">
+          <h1 className="mb-6 text-3xl font-extrabold leading-[1.15] tracking-tight text-[#1A1A1A] sm:text-4xl lg:text-5xl xl:text-6xl">
 
             حلّل آراء عملائك...
 
@@ -52,7 +52,7 @@ export default function HeroSection() {
           </h1>
 
           {/* Description */}
-          <p className="mx-auto mb-10 max-w-2xl text-base leading-8 text-[#5F667A] sm:text-lg md:text-xl md:leading-relaxed">
+          <p className="mx-auto mb-10 max-w-2xl text-sm leading-7 text-[#5F667A] sm:text-base md:text-lg lg:text-xl lg:leading-relaxed">
 
             منصة ذكاء اصطناعي تساعد الشركات على تحليل تقييمات العملاء،
             واكتشاف المشكلات المتكررة،
@@ -86,7 +86,7 @@ export default function HeroSection() {
 
           </div>
                     {/* Features Tags */}
-          <div className="mb-20 flex flex-wrap justify-center gap-3 sm:gap-4">
+          <div className="mb-16 sm:mb-20 flex flex-wrap justify-center gap-2 sm:gap-3 lg:gap-4">
 
             {[
               "تحليل فوري للتقييمات",
@@ -129,7 +129,7 @@ export default function HeroSection() {
           whileInView={{ opacity: 1 }}
           transition={{ delay: .3 }}
           viewport={{ once: true }}
-          className="mt-20 grid w-full max-w-4xl grid-cols-2 gap-5 sm:mt-24 sm:gap-8 md:grid-cols-3"
+          className="mt-16 sm:mt-20 lg:mt-24 grid w-full max-w-4xl grid-cols-2 gap-4 sm:gap-6 lg:gap-8 md:grid-cols-3"
         >
 
           <Stat
@@ -167,11 +167,11 @@ function Stat({
   return (
     <div className={`text-center ${className}`}>
 
-      <h2 className="mb-2 text-3xl font-bold text-[#374375] sm:text-4xl">
+      <h2 className="mb-2 text-2xl font-bold text-[#374375] sm:text-3xl lg:text-4xl">
         {number}
       </h2>
 
-      <p className="text-xs font-medium uppercase tracking-wide text-gray-500 sm:text-sm">
+      <p className="text-[10px] font-medium uppercase tracking-wide text-gray-500 sm:text-xs lg:text-sm">
         {title}
       </p>
 
