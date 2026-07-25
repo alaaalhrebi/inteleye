@@ -47,14 +47,14 @@ export default function PricingPage() {
   return (
      <div dir="rtl" className="min-h-screen bg-[#f5f4f0]">
     {isLoggedIn && <AppHeader rightLabel="حسابك مسجل" />}
-    <div className="py-12 px-4">
-      <div className="max-w-4xl mx-auto">
+    <div className="py-12 sm:py-16 px-4">
+      <div className="max-w-[1200px] mx-auto">
         <h1 className="text-2xl font-bold text-[#1a1a2e] text-center mb-2">اختر باقتك</h1>
         <p className="text-sm text-gray-500 text-center mb-10">
           تتبّع تقييمات Google Maps واستلم تقريراً أسبوعياً واضحاً
         </p>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {PLANS.map((plan) => (
             <div
               key={plan.id}
@@ -63,9 +63,9 @@ export default function PricingPage() {
               }`}
             >
               <p className="font-bold text-lg text-[#1a1a2e]">{plan.name}</p>
-              <p className="text-3xl font-bold mt-2 mb-4">
+              <p className="text-2xl sm:text-3xl font-bold mt-2 mb-4">
                 {plan.price}
-                <span className="text-sm text-gray-400 font-normal"> ريال / شهر</span>
+                <span className="text-xs sm:text-sm text-gray-400 font-normal"> ريال / شهر</span>
               </p>
               <ul className="text-sm text-gray-600 space-y-2 flex-1 mb-5">
                 {plan.features.map((f) => (
