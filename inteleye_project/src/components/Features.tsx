@@ -55,7 +55,7 @@ export default function Features() {
       id="features"
       className="bg-gradient-to-b from-[#F8FAF8] to-white py-20 sm:py-24 lg:py-28"
     >
-      <div className="mx-auto max-w-7xl px-5 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-[1400px] px-4 sm:px-6 lg:px-12">
 
         <motion.div
           initial={{ opacity: 0, y: 40 }}
@@ -69,7 +69,7 @@ export default function Features() {
             لماذا IntelEye؟
           </span>
 
-          <h2 className="mt-6 sm:mt-8 text-3xl sm:text-4xl lg:text-5xl font-bold leading-tight text-primary">
+          <h2 className="mt-6 sm:mt-8 text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-bold leading-tight text-primary">
 
             كل ما تحتاجه لفهم عملائك
 
@@ -92,7 +92,7 @@ export default function Features() {
         </motion.div>
                 {/* Cards */}
 
-        <div className="mt-14 grid grid-cols-1 gap-5 sm:mt-16 sm:grid-cols-2 sm:gap-6 xl:mt-20 xl:grid-cols-3 xl:gap-8">
+        <div className="mt-12 grid grid-cols-1 gap-5 sm:mt-16 sm:grid-cols-2 sm:gap-6 lg:gap-6 xl:mt-20 xl:grid-cols-3 xl:gap-8">
 
           {features.map((feature, index) => {
             const Icon = feature.icon;
@@ -113,47 +113,44 @@ export default function Features() {
                 }}
                 className="
                   group
-                  rounded-[24px]
+                  rounded-[20px] sm:rounded-[24px]
                   lg:rounded-[30px]
                   border
                   border-gray-100
                   bg-white
-                  p-5
-                  sm:p-6
+                  p-4 sm:p-6
                   lg:p-8
-                  shadow-lg
+                  shadow-md hover:shadow-lg
                   transition-all
-                  hover:-translate-y-2
-                  hover:shadow-2xl
+                  hover:-translate-y-1 sm:hover:-translate-y-2
+                  lg:hover:shadow-2xl
                 "
               >
 
                 {/* Icon */}
 
-                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#F7F8FD] transition-all duration-300 group-hover:bg-[#374375]/10 sm:h-16 sm:w-16">
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#F7F8FD] transition-all duration-300 group-hover:bg-[#374375]/10 sm:h-14 sm:w-14 lg:h-16 lg:w-16">
 
                   <Icon
+                    size={24}
+                    className="sm:hidden text-primary transition-all duration-300 group-hover:scale-110 group-hover:text-[#895159]"
+                  />
+                  <Icon
                     size={30}
-                    className="
-                      text-primary
-                      transition-all
-                      duration-300
-                      group-hover:scale-110
-                      group-hover:text-[#895159]
-                    "
+                    className="hidden sm:block text-primary transition-all duration-300 group-hover:scale-110 group-hover:text-[#895159]"
                   />
 
                 </div>
 
                 {/* Title */}
 
-                <h3 className="mt-5 text-xl font-bold text-primary sm:mt-6 sm:text-2xl">
+                <h3 className="mt-5 text-lg font-bold text-primary sm:mt-6 sm:text-xl lg:text-2xl">
                   {feature.title}
                 </h3>
 
                 {/* Description */}
 
-                <p className="mt-4 text-sm leading-7 text-gray-600 sm:mt-5 sm:text-base sm:leading-8">
+                <p className="mt-3 text-sm leading-6 text-gray-600 sm:mt-4 sm:text-sm lg:text-base lg:leading-7">
                   {feature.description}
                 </p>
 
