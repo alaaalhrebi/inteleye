@@ -8,9 +8,9 @@ export default function Pricing() {
   return (
     <section
       id="pricing"
-      className="py-24 bg-gradient-to-b from-white to-[#F8FAF8]"
+      className="bg-gradient-to-b from-white to-[#F8FAF8] py-20 sm:py-24 lg:py-28"
     >
-      <div className="max-w-6xl mx-auto px-6">
+      <div className="mx-auto max-w-7xl px-5 sm:px-6 lg:px-8">
 
         {/* Header */}
 
@@ -19,34 +19,50 @@ export default function Pricing() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
-          className="text-center max-w-3xl mx-auto"
+          className="mx-auto max-w-3xl text-center"
         >
-          <span className="inline-flex items-center rounded-full bg-[#BABDE2]/40 text-[#374375] px-5 py-2 text-sm font-medium">
+
+          <span className="inline-flex items-center rounded-full bg-[#BABDE2]/40 px-4 sm:px-5 py-2 text-xs sm:text-sm font-medium text-[#374375]">
             الأسعار
           </span>
 
-          <h2 className="mt-8 text-5xl font-bold text-primary leading-tight">
+          <h2 className="mt-6 sm:mt-8 text-3xl sm:text-4xl lg:text-5xl font-bold leading-tight text-primary">
+
             اختر الخطة المناسبة
+
             <br />
+
             لنمو أعمالك
+
           </h2>
 
-          <p className="mt-8 text-lg leading-8 text-gray-600">
+          <p className="mt-6 sm:mt-8 text-base sm:text-lg leading-8 text-gray-600">
+
             جميع الخطط تشمل الذكاء الاصطناعي لتحليل تقييمات العملاء،
-            التقارير الذكية، واقتراح الردود.
+            التقارير الذكية،
+            واقتراح الردود.
+
+            <br className="hidden sm:block" />
+
             اختر الخطة التي تناسب حجم منشأتك.
+
           </p>
+
         </motion.div>
 
-        {/* Cards */}
+        {/* Pricing Cards */}
 
-        <div className="mt-16 grid items-stretch gap-6 lg:grid-cols-3">
+        <div className="mt-14 grid grid-cols-1 gap-6 sm:mt-16 md:grid-cols-2 lg:grid-cols-3 lg:gap-8 xl:mt-20">
+
           {plans.map((plan, index) => (
+
             <PricingCard
               key={index}
               plan={plan}
             />
+
           ))}
+
         </div>
 
       </div>
