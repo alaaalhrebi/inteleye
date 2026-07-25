@@ -90,10 +90,10 @@ export default function Features() {
           </p>
 
         </motion.div>
+                {/* Cards */}
 
-        {/* Cards */}
+        <div className="mt-14 grid grid-cols-1 gap-5 sm:mt-16 sm:grid-cols-2 sm:gap-6 xl:mt-20 xl:grid-cols-3 xl:gap-8">
 
-        <div className="grid lg:grid-cols-3 md:grid-cols-2 gap-8 mt-20">
           {features.map((feature, index) => {
             const Icon = feature.icon;
 
@@ -104,7 +104,7 @@ export default function Features() {
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{
                   duration: 0.5,
-                  delay: index * 0.1,
+                  delay: index * 0.08,
                 }}
                 viewport={{ once: true }}
                 whileHover={{
@@ -113,48 +113,59 @@ export default function Features() {
                 }}
                 className="
                   group
-                  rounded-[30px]
-                  bg-white
-                  p-8
+                  rounded-[24px]
+                  lg:rounded-[30px]
                   border
                   border-gray-100
+                  bg-white
+                  p-5
+                  sm:p-6
+                  lg:p-8
                   shadow-lg
-                  hover:shadow-2xl
                   transition-all
+                  hover:-translate-y-2
+                  hover:shadow-2xl
                 "
               >
+
                 {/* Icon */}
 
-                <div className="w-16 h-16 flex items-center justify-center">
+                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#F7F8FD] transition-all duration-300 group-hover:bg-[#374375]/10 sm:h-16 sm:w-16">
+
                   <Icon
-                    size={34}
+                    size={30}
                     className="
                       text-primary
-                      stroke-[1.8]
                       transition-all
                       duration-300
                       group-hover:scale-110
                       group-hover:text-[#895159]
                     "
                   />
+
                 </div>
 
                 {/* Title */}
 
-                <h3 className="text-2xl font-bold text-primary mt-6">
+                <h3 className="mt-5 text-xl font-bold text-primary sm:mt-6 sm:text-2xl">
                   {feature.title}
                 </h3>
 
                 {/* Description */}
 
-                <p className="text-gray-600 leading-8 mt-5">
+                <p className="mt-4 text-sm leading-7 text-gray-600 sm:mt-5 sm:text-base sm:leading-8">
                   {feature.description}
                 </p>
+
               </motion.div>
             );
           })}
+
         </div>
+
       </div>
     </section>
   );
 }
+
+      
