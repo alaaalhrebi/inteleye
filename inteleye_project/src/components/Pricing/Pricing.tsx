@@ -8,9 +8,9 @@ export default function Pricing() {
   return (
     <section
       id="pricing"
-      className="bg-gradient-to-b from-white to-[#F8FAF8] py-20 sm:py-24 lg:py-28"
+      className="bg-gradient-to-b from-white to-[#F8FAF8] py-16 sm:py-24 lg:py-32"
     >
-      <div className="mx-auto max-w-7xl px-5 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-[1400px] px-4 sm:px-6 lg:px-12">
 
         {/* Header */}
 
@@ -52,7 +52,7 @@ export default function Pricing() {
 
         {/* Pricing Cards */}
 
-        <div className="mt-14 grid grid-cols-1 gap-6 sm:mt-16 md:grid-cols-2 lg:grid-cols-3 lg:gap-8 xl:mt-20">
+        <div className="mt-12 grid grid-cols-1 gap-6 sm:mt-16 md:grid-cols-2 lg:grid-cols-3 lg:gap-6 xl:gap-8 xl:mt-20">
 
           {plans.map((plan, index) => (
 
