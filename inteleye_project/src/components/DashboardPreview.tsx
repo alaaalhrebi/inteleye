@@ -60,13 +60,13 @@ export default function DashboardPreview() {
 
       {/* Dashboard */}
 
-      <div className="grid grid-cols-1 lg:grid-cols-[220px_1fr] min-h-[580px]">
+      <div className="grid grid-cols-1 lg:grid-cols-[220px_1fr] min-h-[500px] lg:min-h-[580px]">
 
         {/* Sidebar */}
 
-        <aside className="border-b lg:border-b-0 lg:border-l border-[#E5E7EB] bg-[#FAFBFD] px-4 sm:px-5 py-5 sm:py-8">
+        <aside className="border-b lg:border-b-0 lg:border-l border-[#E5E7EB] bg-[#FAFBFD] px-4 sm:px-5 py-4 sm:py-8">
 
-          <nav className="grid grid-cols-2 gap-2 sm:flex sm:flex-col sm:space-y-1.5">
+          <nav className="flex flex-wrap lg:flex-col gap-2 sm:gap-1.5">
 
             <button className="flex items-center justify-center gap-2 rounded-xl bg-[#374375] px-3 py-3 text-xs sm:text-sm font-medium text-white">
 
@@ -101,7 +101,7 @@ export default function DashboardPreview() {
         <main className="bg-white p-4 sm:p-6 lg:p-8">
                     {/* Summary Cards */}
 
-          <div className="mb-6 grid grid-cols-2 gap-3 lg:mb-8 lg:grid-cols-4 lg:gap-4">
+          <div className="mb-6 grid grid-cols-2 gap-2 sm:gap-3 lg:mb-8 lg:grid-cols-4 lg:gap-4">
 
             {[
               {
@@ -162,9 +162,9 @@ export default function DashboardPreview() {
 
           {/* Chart */}
 
-          <div className="overflow-x-auto">
+          <div className="overflow-hidden">
 
-            <div className="min-w-[650px] rounded-2xl border border-[#F1F5F9] bg-white p-4 sm:p-6 shadow-sm">
+            <div className="w-full rounded-2xl border border-[#F1F5F9] bg-white p-3 sm:p-6 shadow-sm">
 
               <div className="mb-6 flex items-center justify-between">
 
@@ -191,7 +191,7 @@ export default function DashboardPreview() {
 
                 {/* Y Axis */}
 
-                <div className="flex h-[200px] flex-col justify-between pb-6 text-[10px] font-medium text-gray-400">
+                <div className="flex h-[150px] sm:h-[200px] flex-col justify-between pb-6 text-[10px] font-medium text-gray-400">
 
                   {[5,4,3,2,1].map((n)=>(
                     <span key={n}>{n}</span>
@@ -199,7 +199,7 @@ export default function DashboardPreview() {
 
                 </div>
 
-                <div className="relative h-[240px] flex-1">
+                <div className="relative h-[180px] sm:h-[240px] flex-1">
 
                   <div className="absolute inset-0 flex flex-col justify-between pb-6">
 
@@ -215,7 +215,7 @@ export default function DashboardPreview() {
                   <svg
                     viewBox="0 0 800 200"
                     preserveAspectRatio="none"
-                    className="absolute inset-0 h-[200px] w-full"
+                    className="absolute inset-0 h-[150px] sm:h-[200px] w-full"
                   >
 
                     <defs>
