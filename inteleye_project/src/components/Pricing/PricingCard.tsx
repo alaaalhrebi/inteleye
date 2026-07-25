@@ -49,17 +49,15 @@ export default function PricingCard({ plan }: Props) {
           flex
           h-full
           flex-col
-          rounded-[24px]
+          rounded-[20px] sm:rounded-[24px]
           border
-          p-5
-          sm:p-6
-          lg:p-7
-          shadow-lg
-          transition-all
+          p-5 sm:p-6 lg:p-8
+          shadow-md hover:shadow-xl
+          transition-all duration-300
           ${
             plan.featured
               ? "border-[#374375] bg-[#374375] text-white"
-              : "border-gray-200 bg-white"
+              : "border-gray-100 bg-white"
           }
         `}
       >
@@ -73,7 +71,7 @@ export default function PricingCard({ plan }: Props) {
         {/* Plan Name */}
 
         <h3
-          className={`text-xl sm:text-2xl font-bold break-words ${
+          className={`text-lg sm:text-xl lg:text-2xl font-bold break-words ${
             plan.featured ? "text-white" : "text-primary"
           }`}
         >
@@ -85,7 +83,7 @@ export default function PricingCard({ plan }: Props) {
         <div className="mt-6 flex items-end gap-2">
 
           <span
-            className={`text-4xl sm:text-5xl font-bold ${
+            className={`text-3xl sm:text-4xl lg:text-5xl font-bold ${
               plan.featured ? "text-white" : "text-primary"
             }`}
           >
