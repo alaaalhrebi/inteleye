@@ -66,17 +66,9 @@ export default function CTA() {
 
             <div className="mt-10 sm:mt-12 flex justify-center">
 
-              <PrimaryButton>
-
-                <div className="flex items-center gap-2">
-
-                  ابدأ التجربة المجانية
-
-                  <ArrowRight size={18} />
-
-                </div>
-
-              </PrimaryButton>
+          <PrimaryButton>
+  ابدأ التجربة المجانية
+</PrimaryButton>
 
             </div>
 
