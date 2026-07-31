@@ -90,7 +90,7 @@ export default function SignupClient({ selectedPlan }: SignupClientProps) {
       return;
     }
 
-    router.push(`/checkout?plan=${plan}`);
+    router.push("/onboarding/platforms");
   }
 
   const selectedPlanData = plans[plan];
