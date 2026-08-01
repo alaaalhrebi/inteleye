@@ -15,7 +15,6 @@ export default function AuthCallbackPage() {
 function AuthCallbackHandler() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const plan = searchParams.get("plan") ?? "basic";
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
