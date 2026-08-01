@@ -30,7 +30,7 @@ function AuthCallbackHandler() {
       }
 
       // الجلسة فعّالة الآن — ننتقل مباشرة لإتمام الدفع بنفس الباقة الأصلية
-      router.push(`/checkout?plan=${plan}`);
+      router.replace("/onboarding/platforms");
     });
   }, []);
 
