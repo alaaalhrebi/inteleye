@@ -130,7 +130,7 @@ export default function PlatformsOnboardingPage() {
 
       const { data: client, error: clientError } = await supabase
         .from("clients")
-        .select("id, subscription_status, plan")
+        .select("id, subscription_status, plan, trial_ends_at")
         .eq("user_id", user.id)
         .maybeSingle();
 
@@ -141,8 +141,17 @@ export default function PlatformsOnboardingPage() {
 
       const status = client.subscription_status?.toLowerCase();
 
-      if (status !== "active" && status !== "paid" && status !== "completed") {
-        router.push(`/checkout?plan=${client.plan || "basic"}`);
+      const trialIsActive =
+        status === "trial" &&
+        client.trial_ends_at &&
+        new Date(client.trial_ends_at).getTime() > Date.now();
+      
+      const hasAccess =
+        status === "active" ||
+        Boolean(trialIsActive);
+      
+      if (!hasAccess) {
+        router.replace("/pricing?reason=subscription_required");
         return;
       }
 
