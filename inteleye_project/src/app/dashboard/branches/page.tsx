@@ -34,7 +34,9 @@ export default async function BranchesPage() {
 
   const { data: client } = await supabase
     .from("clients")
-    .select("id, name, plan, subscription_status")
+    .select(
+      "id, name, email, subscription_status, plan, trial_started_at, trial_ends_at"
+    )    
     .eq("user_id", user.id)
     .maybeSingle();
 
@@ -42,8 +44,17 @@ export default async function BranchesPage() {
 
   const status = client.subscription_status?.toLowerCase();
 
-  if (status !== "active" && status !== "paid" && status !== "completed") {
-    redirect(`/checkout?plan=${client.plan || "basic"}`);
+  const trialIsActive =
+    status === "trial" &&
+    client.trial_ends_at &&
+    new Date(client.trial_ends_at).getTime() > Date.now();
+  
+  const hasAccess =
+    status === "active" ||
+    Boolean(trialIsActive);
+  
+  if (!hasAccess) {
+    redirect("/pricing?reason=subscription_required");
   }
 
   const plan = client.plan?.toLowerCase() || "basic";
