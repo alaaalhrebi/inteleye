@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { ArrowRight, Sparkles } from "lucide-react";
+import { ArrowRight, Sparkles, Globe, Instagram, Twitter, Smartphone, Star, MessageSquare } from "lucide-react";
 import DashboardPreview from "./DashboardPreview";
 
 export default function HeroSection() {
@@ -123,58 +123,55 @@ export default function HeroSection() {
 
         </motion.div>
 
-        {/* Stats */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          transition={{ delay: .3 }}
-          viewport={{ once: true }}
-          className="mt-16 sm:mt-20 lg:mt-24 grid w-full max-w-4xl grid-cols-2 gap-4 sm:gap-6 lg:gap-8 md:grid-cols-3"
-        >
-
-          <Stat
-            number="+120K"
-            title="تقييم تم تحليله"
-          />
-
-          <Stat
-            number="98%"
-            title="دقة التحليل"
-          />
-
-          <Stat
-            number="24/7"
-            title="مراقبة مستمرة"
-            className="col-span-2 md:col-span-1"
-          />
-
-        </motion.div>
+        {/* Platforms Marquee */}
+        <div className="mt-16 sm:mt-20 lg:mt-24 w-full overflow-hidden relative">
+          <div className="flex items-center mb-6 justify-center gap-2 text-[#374375]/60">
+            <span className="h-px w-8 bg-current"></span>
+            <span className="text-xs font-bold uppercase tracking-widest">المنصات المدعومة</span>
+            <span className="h-px w-8 bg-current"></span>
+          </div>
+          
+          <div className="flex overflow-hidden [mask-image:linear-gradient(to_right,transparent,black_15%,black_85%,transparent)]">
+            <motion.div 
+              className="flex flex-none gap-12 sm:gap-20 pr-12 sm:pr-20"
+              animate={{ x: ["0%", "-50%"] }}
+              transition={{ 
+                duration: 20, 
+                repeat: Infinity, 
+                ease: "linear" 
+              }}
+            >
+              {[
+                { icon: Globe, name: "Google Maps" },
+                { icon: Instagram, name: "Instagram" },
+                { icon: Twitter, name: "X (Twitter)" },
+                { icon: Smartphone, name: "TikTok" },
+                { icon: Star, name: "Delivery Apps" },
+                { icon: MessageSquare, name: "Specialized Sites" },
+                // Duplicate for infinite effect
+                { icon: Globe, name: "Google Maps" },
+                { icon: Instagram, name: "Instagram" },
+                { icon: Twitter, name: "X (Twitter)" },
+                { icon: Smartphone, name: "TikTok" },
+                { icon: Star, name: "Delivery Apps" },
+                { icon: MessageSquare, name: "Specialized Sites" },
+              ].map((platform, idx) => (
+                <div key={idx} className="flex items-center gap-3 grayscale opacity-70 hover:grayscale-0 hover:opacity-100 transition-all cursor-default">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center rounded-xl bg-[#374375]/5 text-[#374375]">
+                    <platform.icon size={24} />
+                  </div>
+                  <span className="text-[#374375] font-bold text-sm sm:text-base whitespace-nowrap">
+                    {platform.name}
+                  </span>
+                </div>
+              ))}
+            </motion.div>
+          </div>
+        </div>
 
       </div>
     </section>
   );
 }
 
-function Stat({
-  number,
-  title,
-  className = "",
-}: {
-  number: string;
-  title: string;
-  className?: string;
-}) {
-  return (
-    <div className={`text-center ${className}`}>
 
-      <h2 className="mb-2 text-2xl font-bold text-[#374375] sm:text-3xl lg:text-4xl">
-        {number}
-      </h2>
-
-      <p className="text-[10px] font-medium uppercase tracking-wide text-gray-500 sm:text-xs lg:text-sm">
-        {title}
-      </p>
-
-    </div>
-  );
-}
