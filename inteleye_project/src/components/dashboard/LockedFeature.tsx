@@ -1,7 +1,16 @@
 import Link from "next/link";
 import { Lock } from "lucide-react";
 
-export default function LockedFeature() {
+type LockedFeatureProps = {
+  title?: string;
+  description?: string;
+};
+
+export default function LockedFeature({
+  title = "اشترك للتمتع بالمزايا",
+  description =
+    "إدارة الفروع والتقارير المخصصة متاحة ضمن الاشتراكات المدفوعة.",
+}: LockedFeatureProps) {
   return (
     <main
       dir="rtl"
@@ -12,10 +21,10 @@ export default function LockedFeature() {
           <Lock size={30} />
         </div>
         <h1 className="mt-6 text-3xl font-extrabold">
-          اشترك للتمتع بالمزايا
+          {title}
         </h1>
         <p className="mx-auto mt-4 max-w-xl text-lg leading-8 text-gray-500">
-          إدارة الفروع والتقارير المخصصة متاحة ضمن الاشتراكات المدفوعة.
+          {description}
         </p>
         <div className="mt-8 flex flex-wrap justify-center gap-3">
           <Link
