@@ -131,16 +131,17 @@ export default function HeroSection() {
             <span className="h-px w-8 bg-current"></span>
           </div>
           
-          <div className="flex overflow-hidden [mask-image:linear-gradient(to_right,transparent,black_15%,black_85%,transparent)]">
+          <div className="flex overflow-hidden [mask-image:linear-gradient(to_right,transparent,black_10%,black_90%,transparent)]">
             <motion.div 
-              className="flex flex-none gap-12 sm:gap-20 pr-12 sm:pr-20"
+              className="flex flex-none gap-12 sm:gap-20"
               animate={{ x: ["0%", "-50%"] }}
               transition={{ 
-                duration: 20, 
+                duration: 30, 
                 repeat: Infinity, 
                 ease: "linear" 
               }}
             >
+              {/* First Set of Logos */}
               {[
                 { icon: Globe, name: "Google Maps" },
                 { icon: Instagram, name: "Instagram" },
@@ -148,7 +149,19 @@ export default function HeroSection() {
                 { icon: Smartphone, name: "TikTok" },
                 { icon: Star, name: "Delivery Apps" },
                 { icon: MessageSquare, name: "Specialized Sites" },
-                // Duplicate for infinite effect
+              ].map((platform, idx) => (
+                <div key={`first-${idx}`} className="flex items-center gap-3 grayscale opacity-60 hover:grayscale-0 hover:opacity-100 transition-all cursor-default py-2">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center rounded-xl bg-[#374375]/5 text-[#374375]">
+                    <platform.icon size={24} />
+                  </div>
+                  <span className="text-[#374375] font-bold text-sm sm:text-base whitespace-nowrap">
+                    {platform.name}
+                  </span>
+                </div>
+              ))}
+              
+              {/* Duplicate Set for Seamless Loop */}
+              {[
                 { icon: Globe, name: "Google Maps" },
                 { icon: Instagram, name: "Instagram" },
                 { icon: Twitter, name: "X (Twitter)" },
@@ -156,7 +169,7 @@ export default function HeroSection() {
                 { icon: Star, name: "Delivery Apps" },
                 { icon: MessageSquare, name: "Specialized Sites" },
               ].map((platform, idx) => (
-                <div key={idx} className="flex items-center gap-3 grayscale opacity-70 hover:grayscale-0 hover:opacity-100 transition-all cursor-default">
+                <div key={`second-${idx}`} className="flex items-center gap-3 grayscale opacity-60 hover:grayscale-0 hover:opacity-100 transition-all cursor-default py-2">
                   <div className="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center rounded-xl bg-[#374375]/5 text-[#374375]">
                     <platform.icon size={24} />
                   </div>
