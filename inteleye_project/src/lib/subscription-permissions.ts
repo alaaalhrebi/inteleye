@@ -51,7 +51,10 @@ export function getSubscriptionPermissions(
 
   const canAccessDashboard = isTrialActive || hasActiveSubscription;
   const canManageBranches = hasActiveSubscription;
-  const canAccessCustomReports = hasActiveSubscription;
+  const canAccessReports = hasActiveSubscription;
+  const isAdvancedReportsPlan = plan === "pro" || plan === "enterprise";
+  const canCreateCustomReport =
+    hasActiveSubscription && isAdvancedReportsPlan;
 
   const branchLimit = BRANCH_LIMITS[plan] ?? BRANCH_LIMITS.basic;
   const configuredPlatformLimit = Number.isInteger(
@@ -77,7 +80,13 @@ export function getSubscriptionPermissions(
     hasActiveSubscription,
     canAccessDashboard,
     canManageBranches,
-    canAccessCustomReports,
+    canAccessReports,
+    canViewReports: canAccessReports,
+    // الاسم القديم مستخدم في القائمة الجانبية، ويعني الوصول إلى صفحة التقارير.
+    canAccessCustomReports: canAccessReports,
+    canCreateCustomReport,
+    canViewReportPdf: canCreateCustomReport,
+    canDownloadReportPdf: canCreateCustomReport,
     canAddBranch:
       canManageBranches && currentBranchesCount < branchLimit,
     canUsePlatform: canAccessDashboard && platformLimit > 0,
