@@ -23,20 +23,58 @@ function authErrorRedirect(request: NextRequest, reason: string) {
   return NextResponse.redirect(errorUrl);
 }
 
-export async function GET(request: NextRequest) {
-  const code = request.nextUrl.searchParams.get("code");
-  const next = getSafeNext(request.nextUrl.searchParams.get("next"));
-
-  if (!code) {
-    return authErrorRedirect(request, "missing_code");
+function getPkceErrorReason(errorCode?: string) {
+  if (errorCode === "pkce_code_verifier_not_found") {
+    return "pkce_verifier_missing";
   }
 
-  const supabase = createSupabaseServerClient();
-  const { error: exchangeError } =
-    await supabase.auth.exchangeCodeForSession(code);
+  if (errorCode === "bad_code_verifier") {
+    return "pkce_verifier_mismatch";
+  }
 
-  if (exchangeError) {
-    return authErrorRedirect(request, "invalid_code");
+  if (
+    errorCode === "flow_state_not_found" ||
+    errorCode === "flow_state_expired" ||
+    errorCode === "otp_expired"
+  ) {
+    return "pkce_expired";
+  }
+
+  return "pkce_exchange_failed";
+}
+
+export async function GET(request: NextRequest) {
+  const tokenHash = request.nextUrl.searchParams.get("token_hash");
+  const type = request.nextUrl.searchParams.get("type");
+  const code = request.nextUrl.searchParams.get("code");
+  const next = getSafeNext(request.nextUrl.searchParams.get("next"));
+  const supabase = createSupabaseServerClient();
+
+  if (tokenHash) {
+    if (type !== "signup") {
+      return authErrorRedirect(request, "invalid_type");
+    }
+
+    const { error: verificationError } = await supabase.auth.verifyOtp({
+      token_hash: tokenHash,
+      type: "signup",
+    });
+
+    if (verificationError) {
+      return authErrorRedirect(request, "invalid_token");
+    }
+  } else if (code) {
+    const { error: exchangeError } =
+      await supabase.auth.exchangeCodeForSession(code);
+
+    if (exchangeError) {
+      return authErrorRedirect(
+        request,
+        getPkceErrorReason(exchangeError.code)
+      );
+    }
+  } else {
+    return authErrorRedirect(request, "missing_token");
   }
 
   const {

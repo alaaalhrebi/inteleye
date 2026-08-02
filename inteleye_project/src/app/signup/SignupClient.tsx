@@ -49,7 +49,7 @@ export default function SignupClient(_props: SignupClientProps) {
         email: cleanEmail,
         password,
         options: {
-          emailRedirectTo: `${window.location.origin}/auth/callback?next=/dashboard`,
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
           data: {
             // الدالة handle_new_client_signup تقرأ الحقل name.
             name: cleanCompanyName,
