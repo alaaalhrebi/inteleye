@@ -33,8 +33,8 @@ const stats = [
 
 export default function Stats() {
   return (
-    <section className="py-24 bg-[#F5F9F6]">
-      <div className="max-w-7xl mx-auto px-8">
+    <section className="py-16 sm:py-20 lg:py-24 bg-[#F5F9F6]">
+      <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8">
 
         {/* Header */}
 
@@ -43,17 +43,17 @@ export default function Stats() {
           whileInView={{ opacity: 1 }}
           transition={{ duration: .6 }}
           viewport={{ once: true }}
-          className="text-center mb-16"
+          className="text-center mb-16" 
         >
-          <span className="inline-block rounded-full bg-[#BABDE2]/40 text-[#374375] px-5 py-2 mb-6">
+        <span className="inline-block rounded-full bg-[#BABDE2]/40 text-[#374375] px-4 sm:px-5 py-2 mb-6 text-xs sm:text-sm font-medium">
             أرقام تتحدث
           </span>
 
-          <h2 className="text-5xl font-bold text-primary">
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-primary">
             نتائج تساعدك على اتخاذ القرار
           </h2>
 
-          <p className="mt-6 text-gray-600 text-lg max-w-3xl mx-auto leading-9">
+          <p className="mt-6 text-gray-600 text-base sm:text-lg max-w-3xl mx-auto leading-8 sm:leading-9">
             يحول IntelEye آلاف التعليقات إلى مؤشرات ورسوم بيانية
             تساعدك على معرفة مستوى رضا العملاء واتخاذ قرارات مبنية
             على البيانات.
@@ -92,7 +92,8 @@ export default function Stats() {
                   shadow-md
                   hover:shadow-xl
                   transition-all
-                  p-6
+                p-5
+                  sm:p-6
                   text-center
                 "
               >
@@ -114,8 +115,8 @@ export default function Stats() {
 
                 {/* Number */}
 
-                <h3 className="text-4xl font-bold text-primary mt-5">
-                  {item.value}
+<h3 className="text-3xl sm:text-4xl font-bold text-primary mt-5">
+  {item.value}
                 </h3>
 
                 {/* Label */}
