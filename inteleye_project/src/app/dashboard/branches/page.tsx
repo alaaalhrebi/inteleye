@@ -13,15 +13,8 @@ import {
 } from "lucide-react";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 import AddBranchForm from "@/components/AddBranchForm";
-
-function getBranchLimit(plan: string) {
-  const normalizedPlan = plan?.toLowerCase();
-
-  if (normalizedPlan === "enterprise") return 999;
-  if (normalizedPlan === "pro") return 3;
-
-  return 1;
-}
+import LockedFeature from "@/components/dashboard/LockedFeature";
+import { getSubscriptionPermissions } from "@/lib/subscription-permissions";
 
 export default async function BranchesPage() {
   const supabase = createSupabaseServerClient();
@@ -35,38 +28,34 @@ export default async function BranchesPage() {
   const { data: client } = await supabase
     .from("clients")
     .select(
-      "id, name, email, subscription_status, plan, trial_started_at, trial_ends_at"
+      "id, name, email, subscription_status, plan, trial_started_at, trial_ends_at, current_period_end, allowed_platforms_count"
     )    
     .eq("user_id", user.id)
     .maybeSingle();
 
   if (!client) redirect("/signup");
 
-  const status = client.subscription_status?.toLowerCase();
+  const basePermissions = getSubscriptionPermissions(client);
 
-  const trialIsActive =
-    status === "trial" &&
-    client.trial_ends_at &&
-    new Date(client.trial_ends_at).getTime() > Date.now();
-  
-  const hasAccess =
-    status === "active" ||
-    Boolean(trialIsActive);
-  
-  if (!hasAccess) {
+  if (!basePermissions.canAccessDashboard) {
     redirect("/pricing?reason=subscription_required");
   }
 
-  const plan = client.plan?.toLowerCase() || "basic";
-  const branchLimit = getBranchLimit(plan);
+  if (!basePermissions.canManageBranches) {
+    return <LockedFeature />;
+  }
 
   const { data: branches } = await supabase
     .from("branches")
-    .select("id, name, google_maps_url, x_handle")
+    .select("id, name")
     .eq("client_id", client.id);
 
   const currentBranchesCount = branches?.length ?? 0;
-  const canAddBranch = currentBranchesCount < branchLimit;
+  const permissions = getSubscriptionPermissions(client, {
+    currentBranchesCount,
+  });
+  const { branchLimit, canAddBranch } = permissions;
+  const plan = permissions.plan;
 
   const branchIds = (branches ?? []).map((branch) => branch.id);
 
@@ -152,7 +141,7 @@ export default async function BranchesPage() {
           </div>
 
           {canAddBranch ? (
-            <AddBranchForm clientId={client.id} plan={plan} />
+            <AddBranchForm />
           ) : (
             <div className="rounded-3xl bg-[#DFAEA1]/20 p-6 text-center">
               <h3 className="text-lg font-extrabold text-[#895159]">

@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import LogoutButton from "@/components/dashboard/LogoutButton";
 import DashboardFilters from "@/components/dashboard/DashboardFilters";
+import { getSubscriptionPermissions } from "@/lib/subscription-permissions";
 
 export default async function DashboardPage({
   searchParams,
@@ -43,7 +44,7 @@ export default async function DashboardPage({
   const { data: client, error: clientError } = await supabase
     .from("clients")
     .select(
-      "id, name, email, subscription_status, plan, trial_started_at, trial_ends_at"
+      "id, name, email, subscription_status, plan, trial_started_at, trial_ends_at, current_period_end, allowed_platforms_count"
     )
     .eq("user_id", user.id)
     .maybeSingle();
@@ -51,34 +52,37 @@ export default async function DashboardPage({
   if (clientError) redirect("/login");
   if (!client) redirect("/signup");
 
-  const status = client.subscription_status?.toLowerCase();
+  const basePermissions = getSubscriptionPermissions(client);
 
-  const trialIsActive =
-    status === "trial" &&
-    client.trial_ends_at &&
-    new Date(client.trial_ends_at).getTime() > Date.now();
-  
-  const hasAccess =
-    status === "active" ||
-    Boolean(trialIsActive);
-  
-  if (!hasAccess) {
+  if (!basePermissions.canAccessDashboard) {
     redirect("/pricing?reason=subscription_required");
   }
 
-  const { data: platforms, error: platformsError } = await supabase
+  let platformsQuery = supabase
     .from("client_platforms")
     .select("id, platform_name, platform_url, username, business_activity, is_active")
     .eq("client_id", client.id)
     .eq("is_active", true);
 
+  if (basePermissions.isTrialActive) {
+    platformsQuery = platformsQuery.limit(1);
+  }
+
+  const { data: platforms, error: platformsError } = await platformsQuery;
+
   if (platformsError) redirect("/onboarding/platforms");
   if (!platforms || platforms.length === 0) redirect("/onboarding/platforms");
 
-  const { data: branches } = await supabase
+  let branchesQuery = supabase
     .from("branches")
-    .select("id, name, google_maps_url, x_handle")
+    .select("id, name")
     .eq("client_id", client.id);
+
+  if (basePermissions.isTrialActive) {
+    branchesQuery = branchesQuery.limit(1);
+  }
+
+  const { data: branches } = await branchesQuery;
 
   const branchIds = (branches ?? []).map((b) => b.id);
 
@@ -88,7 +92,7 @@ export default async function DashboardPage({
   .from("reports")
   .select("*")
   .eq("client_id", client.id)
-  .order("report_month", { ascending: false });
+  .order("created_at", { ascending: false });
   
   if (selectedBranchId) {
     reportsQuery = reportsQuery.eq("branch_id", Number(selectedBranchId));
@@ -115,12 +119,18 @@ export default async function DashboardPage({
 
   const latestReport = reports?.[0] ?? null;
 
-  const plan = client.plan?.toLowerCase() || "basic";
+  const permissions = getSubscriptionPermissions(client, {
+    currentPlatformsCount: new Set(
+      platforms.map((platform) => platform.platform_name)
+    ).size,
+  });
+  const plan = permissions.plan;
   const isPro = plan === "pro";
   const isEnterprise = plan === "enterprise";
 
-  const canAddPlatforms = isPro || isEnterprise;
-  const canDownloadPdf = isPro || isEnterprise;
+  const canAddPlatforms = permissions.canAddPlatform;
+  const canDownloadPdf =
+    permissions.hasActiveSubscription && (isPro || isEnterprise);
 
   const averageRating = latestReport?.google_rating ?? "—";
   const totalReviews = latestReport?.total_reviews ?? 0;
@@ -152,12 +162,12 @@ export default async function DashboardPage({
     <DashboardHeader clientName={client.name} plan={client.plan} />
     <div className="mx-auto flex max-w-7xl flex-col gap-6 px-6 py-6 lg:flex-row">
         <DashboardSideMenu
-          clientName={client.name}
-          plan={client.plan}
           platforms={platforms}
           branches={branches ?? []}
           canAddPlatforms={canAddPlatforms}
           canDownloadPdf={canDownloadPdf}
+          canManageBranches={permissions.canManageBranches}
+          canAccessCustomReports={permissions.canAccessCustomReports}
         />
 
         <main className="min-w-0 flex-1 pb-10">
@@ -257,19 +267,19 @@ function DashboardHeader({
   );
 }
 function DashboardSideMenu({
-  clientName,
-  plan,
   platforms,
   branches,
   canAddPlatforms,
   canDownloadPdf,
+  canManageBranches,
+  canAccessCustomReports,
 }: {
-  clientName: string;
-  plan: string;
   platforms: any[];
   branches: any[];
   canAddPlatforms: boolean;
   canDownloadPdf: boolean;
+  canManageBranches: boolean;
+  canAccessCustomReports: boolean;
 }) {
   return (
     <aside className="w-full shrink-0 rounded-[2rem] border border-[#BABDE2]/40 bg-white p-5 shadow-sm lg:sticky lg:top-24 lg:w-[300px]">
@@ -301,21 +311,25 @@ function DashboardSideMenu({
           </div>
         )}
 
-        <Link
-          href="/dashboard/reports"
-          className="flex w-full items-center justify-center gap-2 rounded-2xl border border-[#BABDE2]/60 bg-[#F8F7F3] px-5 py-3 text-sm font-bold text-[#374375] transition hover:bg-[#BABDE2]/30"
-        >
-          <FileText size={18} />
-          عرض التقارير
-        </Link>
+        {canAccessCustomReports && (
+          <Link
+            href="/dashboard/reports"
+            className="flex w-full items-center justify-center gap-2 rounded-2xl border border-[#BABDE2]/60 bg-[#F8F7F3] px-5 py-3 text-sm font-bold text-[#374375] transition hover:bg-[#BABDE2]/30"
+          >
+            <FileText size={18} />
+            التقارير المخصصة
+          </Link>
+        )}
 
-        <Link
-          href="/dashboard/branches"
-          className="flex w-full items-center justify-center gap-2 rounded-2xl border border-[#BABDE2]/60 bg-[#F8F7F3] px-5 py-3 text-sm font-bold text-[#374375] transition hover:bg-[#BABDE2]/30"
-        >
-          <Building2 size={18} />
-          إدارة الفروع
-        </Link>
+        {canManageBranches && (
+          <Link
+            href="/dashboard/branches"
+            className="flex w-full items-center justify-center gap-2 rounded-2xl border border-[#BABDE2]/60 bg-[#F8F7F3] px-5 py-3 text-sm font-bold text-[#374375] transition hover:bg-[#BABDE2]/30"
+          >
+            <Building2 size={18} />
+            إدارة الفروع
+          </Link>
+        )}
 
       </div>
     </aside>

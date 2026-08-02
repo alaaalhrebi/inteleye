@@ -15,6 +15,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { createSupabaseBrowserClient } from "@/lib/supabase-browser";
+import { getSubscriptionPermissions } from "@/lib/subscription-permissions";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -53,7 +54,9 @@ export default function LoginPage() {
 
   const { data: client, error: clientError } = await supabase
     .from("clients")
-    .select("id, subscription_status, plan, trial_ends_at")
+    .select(
+      "id, subscription_status, plan, trial_ends_at, current_period_end, allowed_platforms_count"
+    )
     .eq("user_id", userId)
     .maybeSingle();
 
@@ -69,18 +72,9 @@ export default function LoginPage() {
     return;
   }
 
-  const status = client.subscription_status?.toLowerCase();
+const permissions = getSubscriptionPermissions(client);
 
-const trialIsActive =
-  status === "trial" &&
-  client.trial_ends_at &&
-  new Date(client.trial_ends_at).getTime() > Date.now();
-
-const hasAccess =
-  status === "active" ||
-  Boolean(trialIsActive);
-
-if (!hasAccess) {
+if (!permissions.canAccessDashboard) {
   setLoading(false);
   router.replace("/pricing?reason=subscription_required");
   return;

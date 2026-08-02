@@ -11,12 +11,6 @@ import {
   Music2,
   Plus,
 } from "lucide-react";
-import { createSupabaseBrowserClient } from "@/lib/supabase-browser";
-
-type AddBranchFormProps = {
-  clientId: number;
-  plan?: string;
-};
 
 const platformOptions = [
   {
@@ -44,15 +38,6 @@ const platformOptions = [
     icon: Instagram,
   },
 ];
-
-function getPlatformLimit(plan: string) {
-  const normalizedPlan = plan?.toLowerCase();
-
-  if (normalizedPlan === "enterprise") return 20;
-  if (normalizedPlan === "pro") return 2;
-
-  return 1;
-}
 
 function getPlatformInputConfig(platform: string) {
   if (platform === "google_maps") {
@@ -98,12 +83,7 @@ function normalizeUsername(value: string) {
   return value.trim().replace(/^@/, "");
 }
 
-export default function AddBranchForm({
-  clientId,
-  plan = "basic",
-}: AddBranchFormProps) {
-  const supabase = createSupabaseBrowserClient();
-
+export default function AddBranchForm() {
   const [branchName, setBranchName] = useState("");
   const [selectedPlatform, setSelectedPlatform] = useState("google_maps");
   const [platformValue, setPlatformValue] = useState("");
@@ -140,87 +120,25 @@ export default function AddBranchForm({
     setSaving(true);
     setMessage("");
 
-    const { data: activePlatforms, error: activePlatformsError } =
-      await supabase
-        .from("client_platforms")
-        .select("platform_name")
-        .eq("client_id", clientId)
-        .eq("is_active", true);
-
-    if (activePlatformsError) {
-      setMessage("حدث خطأ أثناء التحقق من المنصات الحالية");
-      setSaving(false);
-      return;
-    }
-
-    const usedPlatformNames = new Set(
-      (activePlatforms ?? []).map((item) => item.platform_name)
-    );
-
-    const platformLimit = getPlatformLimit(plan);
-    const isNewPlatformType = !usedPlatformNames.has(selectedPlatform);
-
-    if (isNewPlatformType && usedPlatformNames.size >= platformLimit) {
-      setMessage(
-        `باقتك الحالية تسمح بعدد ${platformLimit} منصة فقط. للزيادة يمكنك الترقية إلى باقة أعلى.`
-      );
-      setSaving(false);
-      return;
-    }
-
-    const cleanUsername =
-      selectedPlatform === "x" ? normalizeUsername(platformValue) : "";
-
-    const finalPlatformUrl =
-      selectedPlatform === "x"
-        ? `https://x.com/${cleanUsername}`
-        : platformValue.trim();
-
-    const finalUsername = selectedPlatform === "x" ? cleanUsername : null;
-
-    const { data: branch, error: branchError } = await supabase
-      .from("branches")
-      .insert({
-        client_id: clientId,
+    const response = await fetch("/api/branches", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
         name: branchName.trim(),
-        google_maps_url:
-          selectedPlatform === "google_maps" ? finalPlatformUrl : null,
-        x_handle: selectedPlatform === "x" ? cleanUsername : null,
-      })
-      .select("id")
-      .single();
+        platformName: selectedPlatform,
+        platformValue:
+          selectedPlatform === "x"
+            ? normalizeUsername(platformValue)
+            : platformValue.trim(),
+        businessActivity: businessActivity.trim(),
+      }),
+    });
 
-    if (branchError || !branch) {
-      setMessage("حدث خطأ أثناء حفظ الفرع");
-      setSaving(false);
-      return;
-    }
-
-    const { error: platformError } = await supabase
-      .from("client_platforms")
-      .insert({
-        client_id: clientId,
-        branch_id: branch.id,
-        platform_name: selectedPlatform,
-        platform_url: finalPlatformUrl,
-        username: finalUsername,
-        business_activity: businessActivity.trim(),
-        is_active: true,
-      });
-
-    if (platformError) {
-      await supabase
-        .from("branches")
-        .delete()
-        .eq("id", branch.id)
-        .eq("client_id", clientId);
-
-      if (platformError.code === "23505") {
-        setMessage("هذه المنصة مضافة مسبقًا لهذا الفرع");
-      } else {
-        setMessage(`حدث خطأ أثناء ربط المنصة: ${platformError.message}`);
-      }
-
+    if (!response.ok) {
+      const result = (await response.json().catch(() => null)) as
+        | { message?: string }
+        | null;
+      setMessage(result?.message || "حدث خطأ أثناء حفظ الفرع");
       setSaving(false);
       return;
     }

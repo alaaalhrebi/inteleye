@@ -11,6 +11,8 @@ import {
   Lock,
 } from "lucide-react";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
+import LockedFeature from "@/components/dashboard/LockedFeature";
+import { getSubscriptionPermissions } from "@/lib/subscription-permissions";
 
 type ReportsPageProps = {
   searchParams?: {
@@ -36,19 +38,25 @@ export default async function ReportsPage({ searchParams }: ReportsPageProps) {
 
   const { data: client } = await supabase
     .from("clients")
-    .select("id, name, plan, subscription_status")
+    .select(
+      "id, name, plan, subscription_status, trial_ends_at, current_period_end, allowed_platforms_count"
+    )
     .eq("user_id", user.id)
     .maybeSingle();
 
   if (!client) redirect("/signup");
 
-  const status = client.subscription_status?.toLowerCase();
+  const permissions = getSubscriptionPermissions(client);
 
-  if (status !== "active" && status !== "paid" && status !== "completed") {
-    redirect(`/checkout?plan=${client.plan || "basic"}`);
+  if (!permissions.canAccessDashboard) {
+    redirect("/pricing?reason=subscription_required");
   }
 
-  const plan = client.plan?.toLowerCase() || "basic";
+  if (!permissions.canAccessCustomReports) {
+    return <LockedFeature />;
+  }
+
+  const plan = permissions.plan;
   const canDownloadPdf = plan === "pro" || plan === "enterprise";
 
   const selectedPlatform = getParam(searchParams?.platform) || "all";

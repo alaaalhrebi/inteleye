@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 
 import { createSupabaseBrowserClient } from "@/lib/supabase-browser";
+import { getSubscriptionPermissions } from "@/lib/subscription-permissions";
 
 const platforms = [
   {
@@ -42,15 +43,6 @@ const platforms = [
     icon: Instagram,
   },
 ];
-
-function getPlatformLimit(plan: string) {
-  const normalizedPlan = plan?.toLowerCase();
-
-  if (normalizedPlan === "enterprise") return 20;
-  if (normalizedPlan === "pro") return 2;
-
-  return 1;
-}
 
 function getPlatformInputConfig(selectedPlatform: string) {
   if (selectedPlatform === "google_maps") {
@@ -104,7 +96,7 @@ export default function PlatformsOnboardingPage() {
   const supabase = useMemo(() => createSupabaseBrowserClient(), []);
 
   const [clientId, setClientId] = useState<number | null>(null);
-  const [clientPlan, setClientPlan] = useState("basic");
+  const [platformLimit, setPlatformLimit] = useState(1);
   const [existingPlatformsCount, setExistingPlatformsCount] = useState(0);
 
   const [selectedPlatform, setSelectedPlatform] = useState("google_maps");
@@ -130,7 +122,9 @@ export default function PlatformsOnboardingPage() {
 
       const { data: client, error: clientError } = await supabase
         .from("clients")
-        .select("id, subscription_status, plan, trial_ends_at")
+        .select(
+          "id, subscription_status, plan, trial_ends_at, current_period_end, allowed_platforms_count"
+        )
         .eq("user_id", user.id)
         .maybeSingle();
 
@@ -139,18 +133,9 @@ export default function PlatformsOnboardingPage() {
         return;
       }
 
-      const status = client.subscription_status?.toLowerCase();
+      const permissions = getSubscriptionPermissions(client);
 
-      const trialIsActive =
-        status === "trial" &&
-        client.trial_ends_at &&
-        new Date(client.trial_ends_at).getTime() > Date.now();
-      
-      const hasAccess =
-        status === "active" ||
-        Boolean(trialIsActive);
-      
-      if (!hasAccess) {
+      if (!permissions.canAccessDashboard || !permissions.canUsePlatform) {
         router.replace("/pricing?reason=subscription_required");
         return;
       }
@@ -167,11 +152,10 @@ export default function PlatformsOnboardingPage() {
         return;
       }
 
-      const plan = client.plan || "basic";
       const count = currentPlatforms?.length ?? 0;
 
       setClientId(client.id);
-      setClientPlan(plan);
+      setPlatformLimit(permissions.platformLimit);
       setExistingPlatformsCount(count);
 
 
@@ -220,9 +204,7 @@ export default function PlatformsOnboardingPage() {
       return;
     }
 
-    const limit = getPlatformLimit(clientPlan);
-
-    if (existingPlatformsCount >= limit) {
+    if (existingPlatformsCount >= platformLimit) {
       setMessage("وصلت للحد الأعلى من المنصات في باقتك الحالية");
       return;
     }
