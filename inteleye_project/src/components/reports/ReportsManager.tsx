@@ -414,7 +414,7 @@ function ReportCard({ report, onView }: { report: ReportListItem; onView: () => 
           ) : report.status === "no_data" ? (
             <p className="mt-3 text-sm font-bold text-gray-500">لا توجد تعليقات أو تقييمات خلال الفترة المحددة.</p>
           ) : report.status === "failed" ? (
-            <p className="mt-3 text-sm font-bold text-red-700">تعذر إكمال التقرير. لم تتم إتاحة إعادة المحاولة لأن Workflow لا يوفر مسارًا آمنًا لها حاليًا.</p>
+            <p className="mt-3 text-sm font-bold text-red-700">تعذر إكمال التقرير. يرجى المحاولة مرة أخرى لاحقًا.</p>
           ) : null}
         </div>
         <div className="flex flex-wrap gap-2">
