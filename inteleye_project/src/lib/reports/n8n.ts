@@ -1,6 +1,10 @@
 import type { ReportRequestPayload } from "@/lib/reports/types";
 
-type LegacyWorkflowInput = ReportRequestPayload & {
+type LegacyWorkflowInput = Omit<
+  ReportRequestPayload,
+  "branchId"
+> & {
+  branchId: number | null;
   clientId: number;
   requestedBy: string;
 };
