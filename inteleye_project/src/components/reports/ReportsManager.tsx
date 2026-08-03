@@ -105,7 +105,13 @@ export default function ReportsManager({
     () =>
       snapshot.reports.filter((report) => {
         const query = search.trim().toLowerCase();
-        if (branch !== "all" && report.branchId !== Number(branch)) return false;
+        if (
+          branch !== "all" &&
+          report.branchId !== null &&
+          report.branchId !== Number(branch)
+        ) {
+          return false;
+        }
         if (platform !== "all" && report.platformId !== Number(platform)) return false;
         if (type !== "all" && report.reportType !== type) return false;
         if (status !== "all") {
@@ -230,9 +236,21 @@ export default function ReportsManager({
             </FilterSelect>
             <FilterSelect value={platform} onChange={setPlatform} label="المنصة">
               <option value="all">كل المنصات</option>
-              {snapshot.platforms.map((item) => (
-                <option key={item.id} value={item.id}>{formatPlatform(item.name)}</option>
-              ))}
+              {snapshot.platforms
+                .filter(
+                  (item) =>
+                    branch === "all" ||
+                    item.branchId === null ||
+                    item.branchId === Number(branch)
+                )
+                .map((item) => (
+                  <option key={item.id} value={item.id}>
+                    {formatPlatform(item.name)}
+                    {item.branchId === null
+                      ? " — عامة لكل الفروع"
+                      : ""}
+                  </option>
+                ))}
             </FilterSelect>
             <FilterSelect value={type} onChange={setType} label="نوع التقرير">
               <option value="all">كل الأنواع</option>
@@ -311,8 +329,11 @@ export default function ReportsManager({
           onAccepted={(result) => {
             setNotice(result.message);
             const branchName =
-              snapshot.branches.find((item) => item.id === result.branchId)?.name ||
-              "فرع";
+              result.branchId === null
+                ? "كل الفروع"
+                : snapshot.branches.find(
+                    (item) => item.id === result.branchId
+                  )?.name || "فرع";
             const platformName =
               snapshot.platforms.find((item) => item.id === result.platformId)?.name ||
               "منصة";
