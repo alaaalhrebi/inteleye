@@ -43,15 +43,29 @@ export default async function DashboardPage({
 
   const { data: client, error: clientError } = await supabase
     .from("clients")
-    .select(
-      "id, branch_id, platform_name, platform_url, username, business_activity, is_active"
-    )
+    .select(`
+      id,
+      name,
+      email,
+      subscription_status,
+      plan,
+      trial_started_at,
+      trial_ends_at,
+      current_period_end,
+      allowed_platforms_count
+    `)
     .eq("user_id", user.id)
     .maybeSingle();
-
-  if (clientError) redirect("/login");
-  if (!client) redirect("/signup");
-
+  
+  if (clientError) {
+    console.error("Failed to load client:", clientError.message);
+    redirect("/login");
+  }
+  
+  if (!client) {
+    redirect("/signup");
+  }
+  
   const basePermissions = getSubscriptionPermissions(client);
 
   if (!basePermissions.canAccessDashboard) {
