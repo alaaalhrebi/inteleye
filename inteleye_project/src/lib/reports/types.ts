@@ -35,7 +35,6 @@ export type ReportListItem = {
   updatedAt: string | null;
   status: ReportStatus;
   totalFeedback: number;
-  pdfAvailable: boolean;
   stats: JsonRecord | null;
   aiSummary: JsonRecord | null;
 };

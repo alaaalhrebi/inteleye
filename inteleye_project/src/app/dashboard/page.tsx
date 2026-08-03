@@ -6,7 +6,6 @@ import {
   BarChart3,
   Building2,
   CheckCircle2,
-  Download,
   FileText,
   Lightbulb,
   MessageSquareText,
@@ -18,6 +17,7 @@ import {
 } from "lucide-react";
 import LogoutButton from "@/components/dashboard/LogoutButton";
 import DashboardFilters from "@/components/dashboard/DashboardFilters";
+import PrintDashboardButton from "@/components/dashboard/PrintDashboardButton";
 import { getSubscriptionPermissions } from "@/lib/subscription-permissions";
 
 export default async function DashboardPage({
@@ -125,12 +125,8 @@ export default async function DashboardPage({
     ).size,
   });
   const plan = permissions.plan;
-  const isPro = plan === "pro";
-  const isEnterprise = plan === "enterprise";
 
   const canAddPlatforms = permissions.canAddPlatform;
-  const canDownloadPdf =
-    permissions.hasActiveSubscription && (isPro || isEnterprise);
 
   const averageRating = latestReport?.google_rating ?? "—";
   const totalReviews = latestReport?.total_reviews ?? 0;
@@ -158,14 +154,13 @@ export default async function DashboardPage({
         ];
 
   return (
-  <div dir="rtl" className="min-h-screen bg-[#F8F7F3] text-[#374375]">
+  <div dir="rtl" className="dashboard-print-root min-h-screen bg-[#F8F7F3] text-[#374375]">
     <DashboardHeader clientName={client.name} plan={client.plan} />
     <div className="mx-auto flex max-w-7xl flex-col gap-6 px-6 py-6 lg:flex-row">
         <DashboardSideMenu
           platforms={platforms}
           branches={branches ?? []}
           canAddPlatforms={canAddPlatforms}
-          canDownloadPdf={canDownloadPdf}
           canManageBranches={permissions.canManageBranches}
           canAccessCustomReports={permissions.canAccessCustomReports}
         />
@@ -261,7 +256,10 @@ function DashboardHeader({
           </div>
         </div>
 
-        <LogoutButton />
+        <div className="no-print flex items-center gap-3">
+          <PrintDashboardButton />
+          <LogoutButton />
+        </div>
       </div>
     </header>
   );
@@ -270,33 +268,20 @@ function DashboardSideMenu({
   platforms,
   branches,
   canAddPlatforms,
-  canDownloadPdf,
   canManageBranches,
   canAccessCustomReports,
 }: {
   platforms: any[];
   branches: any[];
   canAddPlatforms: boolean;
-  canDownloadPdf: boolean;
   canManageBranches: boolean;
   canAccessCustomReports: boolean;
 }) {
   return (
-    <aside className="w-full shrink-0 rounded-[2rem] border border-[#BABDE2]/40 bg-white p-5 shadow-sm lg:sticky lg:top-24 lg:w-[300px]">
+    <aside className="no-print w-full shrink-0 rounded-[2rem] border border-[#BABDE2]/40 bg-white p-5 shadow-sm lg:sticky lg:top-24 lg:w-[300px]">
       <DashboardFilters branches={branches} platforms={platforms} />
 
       <div className="mt-6 space-y-3">
-        {canDownloadPdf ? (
-          <button className="flex w-full items-center justify-center gap-2 rounded-2xl border border-[#374375] bg-white px-5 py-3 text-sm font-bold text-[#374375] transition hover:bg-[#374375] hover:text-white">
-            <Download size={18} />
-            تحميل التقرير PDF
-          </button>
-        ) : (
-          <div className="rounded-2xl bg-[#DFAEA1]/20 p-4 text-sm font-bold leading-7 text-[#895159]">
-            تحميل PDF متاح في باقة Pro و Enterprise.
-          </div>
-        )}
-
         {canAddPlatforms ? (
           <Link
             href="/onboarding/platforms"

@@ -42,8 +42,6 @@ export default async function ReportsPage() {
     <ReportsManager
       initialSnapshot={snapshot}
       canCreateCustomReport={permissions.canCreateCustomReport}
-      canViewPdf={permissions.canViewReportPdf}
-      canDownloadPdf={permissions.canDownloadReportPdf}
     />
   );
 }

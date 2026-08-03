@@ -8,7 +8,6 @@ import {
   CalendarDays,
   CheckCircle2,
   Clock3,
-  Download,
   Eye,
   FilePlus2,
   FileText,
@@ -30,8 +29,6 @@ import type {
 type ReportsManagerProps = {
   initialSnapshot: ReportsSnapshot;
   canCreateCustomReport: boolean;
-  canViewPdf: boolean;
-  canDownloadPdf: boolean;
 };
 
 const ACTIVE_STATUSES = new Set<ReportStatus>([
@@ -43,8 +40,6 @@ const ACTIVE_STATUSES = new Set<ReportStatus>([
 export default function ReportsManager({
   initialSnapshot,
   canCreateCustomReport,
-  canViewPdf,
-  canDownloadPdf,
 }: ReportsManagerProps) {
   const [snapshot, setSnapshot] = useState(initialSnapshot);
   const [showCreate, setShowCreate] = useState(false);
@@ -292,8 +287,6 @@ export default function ReportsManager({
                 <ReportCard
                   key={report.key}
                   report={report}
-                  canViewPdf={canViewPdf}
-                  canDownloadPdf={canDownloadPdf}
                   onView={() => setSelectedReport(report)}
                 />
               ))}
@@ -342,7 +335,6 @@ export default function ReportsManager({
                   updatedAt: null,
                   status: "processing",
                   totalFeedback: 0,
-                  pdfAvailable: false,
                   stats: null,
                   aiSummary: null,
                 },
@@ -399,7 +391,7 @@ function DateFilter({ label, value, onChange }: { label: string; value: string; 
   );
 }
 
-function ReportCard({ report, canViewPdf, canDownloadPdf, onView }: { report: ReportListItem; canViewPdf: boolean; canDownloadPdf: boolean; onView: () => void }) {
+function ReportCard({ report, onView }: { report: ReportListItem; onView: () => void }) {
   const active = ACTIVE_STATUSES.has(report.status);
   return (
     <article className="rounded-3xl border border-[#BABDE2]/35 bg-[#F8F7F3] p-5">
@@ -430,15 +422,6 @@ function ReportCard({ report, canViewPdf, canDownloadPdf, onView }: { report: Re
             <button type="button" onClick={onView} className="inline-flex flex-1 items-center justify-center gap-2 rounded-full bg-[#374375] px-5 py-2.5 text-sm font-bold text-white sm:flex-none">
               <Eye size={17} />عرض التقرير
             </button>
-          ) : null}
-          {report.status === "completed" && report.reportId && report.pdfAvailable && canViewPdf ? (
-            <a href={`/api/reports/${report.reportId}/view`} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-full border border-[#374375] px-4 py-2.5 text-sm font-bold"><Eye size={17} />عرض PDF</a>
-          ) : null}
-          {report.status === "completed" && report.reportId && report.pdfAvailable && canDownloadPdf ? (
-            <a href={`/api/reports/${report.reportId}/download`} className="inline-flex items-center gap-2 rounded-full border border-[#374375] px-4 py-2.5 text-sm font-bold"><Download size={17} />تحميل</a>
-          ) : null}
-          {report.status === "completed" && !report.pdfAvailable ? (
-            <span className="w-full text-sm font-bold text-gray-400 sm:w-auto">ملف PDF غير متوفر لهذا التقرير.</span>
           ) : null}
         </div>
       </div>
