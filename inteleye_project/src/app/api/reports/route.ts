@@ -1,33 +1,197 @@
 import { NextResponse } from "next/server";
 
 import { getReportsAccess } from "@/lib/reports/access";
-import { loadReportsSnapshot } from "@/lib/reports/data";
+import {
+  ReportWorkflowError,
+  requestReportFromWorkflow,
+} from "@/lib/reports/n8n";
+import { validateReportRequest } from "@/lib/reports/request-validation";
 
-export const dynamic = "force-dynamic";
-
-export async function GET() {
+export async function POST(request: Request) {
   const access = await getReportsAccess();
+
   if (!access.ok) {
     return NextResponse.json(
-      { message: access.status === 401 ? "يجب تسجيل الدخول أولًا" : "غير مصرح" },
+      {
+        message:
+          access.status === 401
+            ? "يجب تسجيل الدخول أولًا"
+            : "غير مصرح",
+      },
       { status: access.status }
     );
   }
-  if (!access.permissions.canViewReports) {
+
+  if (!access.permissions.canCreateCustomReport) {
     return NextResponse.json(
-      { message: "عرض التقارير متاح ضمن الاشتراكات المدفوعة" },
+      {
+        message:
+          "إنشاء التقارير المخصصة متاح لباقتي Pro وEnterprise فقط",
+      },
       { status: 403 }
     );
   }
 
+  let body: Record<string, unknown>;
+
   try {
-    const snapshot = await loadReportsSnapshot(access.supabase, access.client.id);
-    return NextResponse.json(snapshot, {
-      headers: { "Cache-Control": "no-store" },
-    });
+    body =
+      (await request.json()) as Record<
+        string,
+        unknown
+      >;
   } catch {
     return NextResponse.json(
-      { message: "تعذر تحديث قائمة التقارير" },
+      { message: "بيانات الطلب غير صالحة" },
+      { status: 400 }
+    );
+  }
+
+  const validation = validateReportRequest(body);
+
+  if (!validation.ok) {
+    return NextResponse.json(
+      { message: validation.message },
+      { status: validation.status }
+    );
+  }
+
+  const selectedBranchId =
+    validation.value.branchId;
+
+  const platformId =
+    validation.value.platformIds[0];
+
+  const [
+    { data: branch, error: branchError },
+    { data: platform, error: platformError },
+  ] = await Promise.all([
+    access.supabase
+      .from("branches")
+      .select("id")
+      .eq("id", selectedBranchId)
+      .eq("client_id", access.client.id)
+      .eq("is_active", true)
+      .maybeSingle(),
+
+    access.supabase
+      .from("client_platforms")
+      .select(
+        "id, branch_id, platform_name, is_active"
+      )
+      .eq("id", platformId)
+      .eq("client_id", access.client.id)
+      .eq("is_active", true)
+      .maybeSingle(),
+  ]);
+
+  if (branchError || !branch) {
+    return NextResponse.json(
+      {
+        message:
+          "الفرع المحدد غير موجود أو لا ينتمي إلى حسابك",
+      },
+      { status: 403 }
+    );
+  }
+
+  if (platformError || !platform) {
+    return NextResponse.json(
+      {
+        message:
+          "المنصة المحددة غير موجودة أو غير مفعلة",
+      },
+      { status: 403 }
+    );
+  }
+
+  const platformBranchId =
+    platform.branch_id === null ||
+    platform.branch_id === undefined
+      ? null
+      : Number(platform.branch_id);
+
+  const isGlobalPlatform =
+    platformBranchId === null;
+
+  const platformMatchesBranch =
+    isGlobalPlatform ||
+    platformBranchId === selectedBranchId;
+
+  if (!platformMatchesBranch) {
+    return NextResponse.json(
+      {
+        message:
+          "المنصة المحددة مرتبطة بفرع آخر",
+      },
+      { status: 403 }
+    );
+  }
+
+  /*
+   * المنصة العامة تُرسل إلى n8n بدون branch_id،
+   * لأن تعليقاتها على مستوى المنشأة وليست خاصة
+   * بالفرع الذي اختاره المستخدم.
+   */
+  const workflowBranchId =
+    isGlobalPlatform
+      ? null
+      : selectedBranchId;
+
+  try {
+    const workflow =
+      await requestReportFromWorkflow({
+        ...validation.value,
+        branchId: workflowBranchId,
+        clientId: access.client.id,
+        requestedBy: access.user.id,
+      });
+
+    return NextResponse.json(
+      {
+        request_id: workflow.requestId,
+        status: workflow.status,
+        branch_id: workflowBranchId,
+        platform_id: platformId,
+        platform_scope: isGlobalPlatform
+          ? "global"
+          : "branch",
+        message:
+          "تم استلام طلب التقرير وبدأت معالجته.",
+      },
+      { status: 202 }
+    );
+  } catch (error) {
+    if (error instanceof ReportWorkflowError) {
+      console.error(
+        "Report workflow request failed",
+        {
+          code: error.code,
+          status: error.status,
+        }
+      );
+
+      return NextResponse.json(
+        {
+          message: error.message,
+          code: error.code,
+        },
+        { status: error.status }
+      );
+    }
+
+    console.error(
+      "Unexpected report request failure",
+      {
+        error:
+          error instanceof Error
+            ? error.message
+            : "unknown",
+      }
+    );
+
+    return NextResponse.json(
+      { message: "تعذر إنشاء طلب التقرير" },
       { status: 500 }
     );
   }
