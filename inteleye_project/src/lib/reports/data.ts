@@ -49,10 +49,6 @@ function titleForReport(report: Record<string, unknown>) {
   );
 }
 
-function hasStorageFile(report: Record<string, unknown>) {
-  return Boolean(stringValue(report.storage_path));
-}
-
 export async function loadReportsSnapshot(
   supabase: SupabaseClientLike,
   clientId: number
@@ -147,7 +143,6 @@ export async function loadReportsSnapshot(
         updatedAt: stringValue(raw.updated_at),
         status: normalizedStatus(raw.status),
         totalFeedback: numberValue(raw.total_feedback),
-        pdfAvailable: hasStorageFile(raw),
         stats: objectValue(raw.stats),
         aiSummary: objectValue(raw.ai_summary),
       };
@@ -179,7 +174,6 @@ export async function loadReportsSnapshot(
       updatedAt: stringValue(raw.updated_at),
       status: normalizedStatus(raw.status),
       totalFeedback: 0,
-      pdfAvailable: false,
       stats: null,
       aiSummary: null,
     });

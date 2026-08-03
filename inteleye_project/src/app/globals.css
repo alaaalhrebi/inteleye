@@ -36,3 +36,35 @@ body {
   background: var(--accent);
   color: white;
 }
+
+@media print {
+  @page {
+    size: A4;
+    margin: 12mm;
+  }
+
+  html,
+  body,
+  .dashboard-print-root {
+    background: white !important;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  .dashboard-print-root {
+    min-height: auto !important;
+  }
+
+  .dashboard-print-root header {
+    position: static !important;
+    background: white !important;
+    backdrop-filter: none !important;
+  }
+
+  .dashboard-print-root section,
+  .dashboard-print-root article {
+    break-inside: avoid;
+  }
+}

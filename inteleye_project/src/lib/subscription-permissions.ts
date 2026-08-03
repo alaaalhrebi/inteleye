@@ -86,8 +86,6 @@ export function getSubscriptionPermissions(
     // الاسم القديم مستخدم في القائمة الجانبية، ويعني الوصول إلى صفحة التقارير.
     canAccessCustomReports: canAccessReports,
     canCreateCustomReport,
-    canViewReportPdf: canCreateCustomReport,
-    canDownloadReportPdf: canCreateCustomReport,
     canAddBranch:
       canManageBranches && currentBranchesCount < branchLimit,
     canUsePlatform: canAccessDashboard && platformLimit > 0,

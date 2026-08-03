@@ -46,14 +46,13 @@ test("Basic السارية تعرض التقارير ولا تنشئ تقرير�
   assert.equal(value.canCreateCustomReport, false);
 });
 
-test("Pro السارية تعرض وتنشئ وتصل إلى PDF", () => {
+test("Pro السارية تعرض وتنشئ تقريرًا مخصصًا", () => {
   const value = getSubscriptionPermissions(
     { subscription_status: "active", plan: "pro" },
     { now }
   );
+  assert.equal(value.canViewReports, true);
   assert.equal(value.canCreateCustomReport, true);
-  assert.equal(value.canViewReportPdf, true);
-  assert.equal(value.canDownloadReportPdf, true);
 });
 
 test("Enterprise السارية تعرض وتنشئ تقريرًا مخصصًا", () => {
