@@ -22,13 +22,23 @@ type CreateReportModalProps = {
 const FIELD_CLASS =
   "w-full rounded-2xl border border-[#BABDE2]/50 bg-[#F8F7F3] px-4 py-3 text-sm font-bold text-[#374375] outline-none transition focus:border-[#374375] focus:ring-4 focus:ring-[#BABDE2]/30";
 
+function localDateValue(date: Date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+}
+
 function todayValue() {
-  const today = new Date();
-  return new Date(
-    Date.UTC(today.getFullYear(), today.getMonth(), today.getDate())
-  )
-    .toISOString()
-    .slice(0, 10);
+  return localDateValue(new Date());
+}
+
+function daysAgoValue(days: number) {
+  const date = new Date();
+  date.setDate(date.getDate() - days);
+
+  return localDateValue(date);
 }
 
 export default function CreateReportModal({
@@ -37,14 +47,39 @@ export default function CreateReportModal({
   onClose,
   onAccepted,
 }: CreateReportModalProps) {
-  const [branchId, setBranchId] = useState("");
-  const [platformId, setPlatformId] = useState("");
-  const [periodStart, setPeriodStart] = useState("");
-  const [periodEnd, setPeriodEnd] = useState("");
+  const initialBranchId =
+  branches.length === 1 ? String(branches[0].id) : "";
+
+  const initialBranchPlatforms = platforms.filter(
+    (platform) =>
+      platform.branchId === Number(initialBranchId)
+  );
+  
+  const initialPlatformId =
+    initialBranchPlatforms.length === 1
+      ? String(initialBranchPlatforms[0].id)
+      : "";
+  
+  const [branchId, setBranchId] = useState(initialBranchId);
+  const [platformId, setPlatformId] =
+    useState(initialPlatformId);
+  
+  const [periodStart, setPeriodStart] = useState(() =>
+    daysAgoValue(6)
+  );
+  
+  const [periodEnd, setPeriodEnd] = useState(() =>
+    todayValue()
+  );
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const today = todayValue();
-
+  const formReady = Boolean(
+  branchId &&
+    platformId &&
+    periodStart &&
+    periodEnd
+);
   const branchPlatforms = useMemo(
     () =>
       platforms.filter(
@@ -152,20 +187,6 @@ export default function CreateReportModal({
         </div>
 
         <form onSubmit={submit} className="mt-7 space-y-5">
-          <div>
-            <label className="mb-2 block text-sm font-bold text-[#374375]">
-              اسم التقرير (اختياري)
-            </label>
-            <input
-              disabled
-              value=""
-              placeholder="غير مدعوم في خدمة الإنشاء الحالية"
-              className="w-full cursor-not-allowed rounded-2xl border border-gray-200 bg-gray-100 px-4 py-3 text-gray-500"
-            />
-            <p className="mt-2 text-xs leading-5 text-gray-500">
-              لا يحتوي الجدول أو Workflow الحالي على حقل للاسم، لذلك لن نتجاهله بصمت أو نرسله.
-            </p>
-          </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label="الفرع">
@@ -173,8 +194,20 @@ export default function CreateReportModal({
                 required
                 value={branchId}
                 onChange={(event) => {
-                  setBranchId(event.target.value);
-                  setPlatformId("");
+                  const nextBranchId = event.target.value;
+                
+                  setBranchId(nextBranchId);
+                
+                  const matchingPlatforms = platforms.filter(
+                    (platform) =>
+                      platform.branchId === Number(nextBranchId)
+                  );
+                
+                  setPlatformId(
+                    matchingPlatforms.length === 1
+                      ? String(matchingPlatforms[0].id)
+                      : ""
+                  );
                 }}
                 className={FIELD_CLASS}
               >
@@ -213,17 +246,7 @@ export default function CreateReportModal({
             </p>
           ) : null}
 
-          <div>
-            <label className="mb-2 block text-sm font-bold text-[#374375]">
-              نوع التقرير
-            </label>
-            <div className="rounded-2xl border border-[#BABDE2]/50 bg-[#F8F7F3] px-4 py-3 font-bold text-[#374375]">
-              تقرير مخصص حسب الفترة
-            </div>
-            <p className="mt-2 text-xs text-gray-500">
-              المقارنة بين فترتين غير مدعومة في Workflow الحالي.
-            </p>
-          </div>
+        
 
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label="من تاريخ" icon={<CalendarDays size={16} />}>
@@ -248,7 +271,11 @@ export default function CreateReportModal({
               />
             </Field>
           </div>
-
+          {!formReady && !error ? (
+            <p className="rounded-2xl bg-[#F8F7F3] px-4 py-3 text-sm font-bold text-gray-500">
+              اختر الفرع والمنصة والفترة لتفعيل زر إنشاء التقرير.
+            </p>
+          ) : null}
           {error ? (
             <p role="alert" className="rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold text-red-700">
               {error}
@@ -266,7 +293,7 @@ export default function CreateReportModal({
             </button>
             <button
               type="submit"
-              disabled={submitting || !branchId || !platformId}
+              disabled={submitting || !formReady}
               className="inline-flex items-center justify-center gap-2 rounded-full bg-[#374375] px-7 py-3 font-bold text-white transition hover:bg-[#895159] disabled:cursor-not-allowed disabled:opacity-50"
             >
               {submitting ? <Loader2 className="animate-spin" size={18} /> : null}
