@@ -44,7 +44,7 @@ export default async function DashboardPage({
   const { data: client, error: clientError } = await supabase
     .from("clients")
     .select(
-      "id, name, email, subscription_status, plan, trial_started_at, trial_ends_at, current_period_end, allowed_platforms_count"
+      "id, branch_id, platform_name, platform_url, username, business_activity, is_active"
     )
     .eq("user_id", user.id)
     .maybeSingle();
@@ -96,12 +96,20 @@ export default async function DashboardPage({
   .order("created_at", { ascending: false });
   
   if (selectedBranchId) {
-    reportsQuery = reportsQuery.eq("branch_id", Number(selectedBranchId));
-  } else {
-    reportsQuery = reportsQuery.in(
-      "branch_id",
-      branchIds.length > 0 ? branchIds : [-1]
+    const branchId = Number(selectedBranchId);
+  
+    reportsQuery = reportsQuery.or(
+      `branch_id.eq.${branchId},branch_id.is.null`
     );
+  } else if (branchIds.length > 0) {
+    reportsQuery = reportsQuery.or(
+      `branch_id.in.(${branchIds.join(
+        ","
+      )}),branch_id.is.null`
+    );
+  } else {
+    reportsQuery =
+      reportsQuery.is("branch_id", null);
   }
   
   if (selectedPlatformId) {
