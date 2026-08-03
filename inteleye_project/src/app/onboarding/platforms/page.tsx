@@ -142,7 +142,7 @@ export default function PlatformsOnboardingPage() {
 
       const { data: currentPlatforms, error: platformsError } = await supabase
         .from("client_platforms")
-        .select("id, platform_name")
+        .select("id, platform_name, branch_id")
         .eq("client_id", client.id)
         .eq("is_active", true);
 
@@ -152,8 +152,16 @@ export default function PlatformsOnboardingPage() {
         return;
       }
 
-      const count = currentPlatforms?.length ?? 0;
-
+      const uniquePlatformNames =
+        new Set(
+          (currentPlatforms ?? []).map(
+            (platform) =>
+              platform.platform_name
+          )
+        );
+      
+      const count =
+        uniquePlatformNames.size;
       setClientId(client.id);
       setPlatformLimit(permissions.platformLimit);
       setExistingPlatformsCount(count);
@@ -212,13 +220,17 @@ export default function PlatformsOnboardingPage() {
     setSaving(true);
     setMessage("");
 
-    const { data: existingPlatform, error: existingError } = await supabase
-      .from("client_platforms")
-      .select("id")
-      .eq("client_id", clientId)
-      .eq("platform_name", selectedPlatform)
-      .eq("is_active", true)
-      .maybeSingle();
+   const {
+    data: existingPlatform,
+    error: existingError,
+  } = await supabase
+    .from("client_platforms")
+    .select("id")
+    .eq("client_id", clientId)
+    .eq("platform_name", selectedPlatform)
+    .is("branch_id", null)
+    .eq("is_active", true)
+    .maybeSingle();
 
     if (existingError) {
       console.error("Check existing platform error:", existingError);
@@ -245,14 +257,19 @@ export default function PlatformsOnboardingPage() {
     const finalUsername =
       selectedPlatform === "x" ? cleanUsername : username.trim() || null;
 
-    const { error: insertError } = await supabase.from("client_platforms").insert({
-      client_id: clientId,
-      platform_name: selectedPlatform,
-      platform_url: finalPlatformUrl,
-      username: finalUsername,
-      business_activity: businessActivity.trim(),
-      is_active: true,
-    });
+    const { error: insertError } =
+      await supabase
+        .from("client_platforms")
+        .insert({
+          client_id: clientId,
+          branch_id: null,
+          platform_name: selectedPlatform,
+          platform_url: finalPlatformUrl,
+          username: finalUsername,
+          business_activity:
+            businessActivity.trim(),
+          is_active: true,
+        });
 
     if (insertError) {
       console.error("Save platform error:", insertError);
