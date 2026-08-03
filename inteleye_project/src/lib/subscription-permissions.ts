@@ -57,10 +57,11 @@ export function getSubscriptionPermissions(
     hasActiveSubscription && isAdvancedReportsPlan;
 
   const branchLimit = BRANCH_LIMITS[plan] ?? BRANCH_LIMITS.basic;
-  const configuredPlatformLimit = Number.isInteger(
-    client.allowed_platforms_count
-  )
-    ? Math.max(client.allowed_platforms_count ?? 0, 0)
+  const savedPlatformLimit = Number(client.allowed_platforms_count);
+
+  const configuredPlatformLimit =
+    Number.isInteger(savedPlatformLimit) && savedPlatformLimit > 0
+      ? savedPlatformLimit
     : LEGACY_PLATFORM_LIMITS[plan] ?? LEGACY_PLATFORM_LIMITS.basic;
   const platformLimit = isTrialActive ? 1 : configuredPlatformLimit;
 
