@@ -6,7 +6,6 @@ import {
   BarChart3,
   Building2,
   CheckCircle2,
-  Download,
   FileText,
   Lightbulb,
   MessageSquareText,
@@ -88,10 +87,11 @@ export default async function DashboardPage({
 
 
   
-  let reportsQuery = supabase
+ let reportsQuery = supabase
   .from("reports")
   .select("*")
   .eq("client_id", client.id)
+  .in("status", ["completed", "no_data"])
   .order("created_at", { ascending: false });
   
   if (selectedBranchId) {
@@ -119,43 +119,98 @@ export default async function DashboardPage({
 
   const latestReport = reports?.[0] ?? null;
 
-  const permissions = getSubscriptionPermissions(client, {
-    currentPlatformsCount: new Set(
-      platforms.map((platform) => platform.platform_name)
-    ).size,
-  });
-  const plan = permissions.plan;
-  const isPro = plan === "pro";
-  const isEnterprise = plan === "enterprise";
+ const currentPlatformsCount = new Set(
+  platforms.map((platform) => platform.platform_name)
+).size;
 
-  const canAddPlatforms = permissions.canAddPlatform;
-  const canDownloadPdf =
-    permissions.hasActiveSubscription && (isPro || isEnterprise);
+const permissions = getSubscriptionPermissions(client, {
+  currentPlatformsCount,
+});
 
-  const averageRating = latestReport?.google_rating ?? "—";
-  const totalReviews = latestReport?.total_reviews ?? 0;
-  const negativePct = latestReport?.negative_pct ?? 0;
-  const positivePct = latestReport?.positive_pct ?? 0;
+const plan = permissions.plan;
+const canAddPlatforms = permissions.canAddPlatform;
 
-  const topIssues =
-    latestReport?.negative_topics?.length > 0
-      ? latestReport.negative_topics
-      : [
-          { label: "بطء الخدمة", count: 0 },
-          { label: "تأخر الطلبات", count: 0 },
-          { label: "تعامل الموظفين", count: 0 },
-          { label: "النظافة", count: 0 },
-        ];
+const stats = asObject(latestReport?.stats);
+const aiSummary = asObject(latestReport?.ai_summary);
+const sentiment = asObject(stats.sentiment);
 
-  const recommendations =
-    latestReport?.recommendations?.length > 0
-      ? latestReport.recommendations
-      : [
-          {
-            title: "ابدئي بأول تحليل للتعليقات",
-            text: "بعد تشغيل السحب الأولي عبر n8n ستظهر هنا توصيات مبنية على بيانات العملاء.",
-          },
-        ];
+const averageRatingSource =
+  stats.average_rating ?? latestReport?.google_rating;
+
+const averageRating =
+  averageRatingSource === null ||
+  averageRatingSource === undefined ||
+  averageRatingSource === ""
+    ? "—"
+    : asNumber(averageRatingSource);
+
+const totalReviews = asNumber(
+  latestReport?.total_feedback ??
+    stats.total_feedback ??
+    latestReport?.total_reviews
+);
+
+const negativePct = asNumber(
+  latestReport?.negative_pct ??
+    sentiment.negative_percentage
+);
+
+const positivePct = asNumber(
+  latestReport?.positive_pct ??
+    sentiment.positive_percentage
+);
+
+const urgentCount = asNumber(
+  stats.urgent_cases_count ??
+    latestReport?.urgent_count
+);
+
+const suggestedRepliesCount = asNumber(
+  stats.needs_reply_count ??
+    latestReport?.suggested_replies_count
+);
+
+const aiIssues = asObjectArray(aiSummary.top_issues);
+const statisticalIssues = asObjectArray(stats.top_issues);
+
+const topIssues = (
+  aiIssues.length > 0 ? aiIssues : statisticalIssues
+).map((issue) => ({
+  label: String(
+    issue.title ??
+      issue.name ??
+      issue.label ??
+      "ملاحظة"
+  ),
+  count: asNumber(issue.count),
+}));
+
+const reportRecommendations = asObjectArray(
+  aiSummary.recommendations
+);
+
+const recommendations =
+  reportRecommendations.length > 0
+    ? reportRecommendations.map((item) => ({
+        title: String(item.title ?? "توصية"),
+        text: [
+          item.description,
+          item.suggested_action,
+          item.text,
+        ]
+          .filter(
+            (value): value is string =>
+              typeof value === "string" &&
+              value.trim().length > 0
+          )
+          .join(" — "),
+      }))
+    : [
+        {
+          title: "لا توجد توصيات بعد",
+          text: "ستظهر التوصيات بعد توفر تقرير مكتمل يحتوي على بيانات كافية.",
+        },
+      ];
 
   return (
   <div dir="rtl" className="min-h-screen bg-[#F8F7F3] text-[#374375]">
@@ -165,7 +220,8 @@ export default async function DashboardPage({
           platforms={platforms}
           branches={branches ?? []}
           canAddPlatforms={canAddPlatforms}
-          canDownloadPdf={canDownloadPdf}
+          currentPlatformsCount={currentPlatformsCount}
+          platformLimit={permissions.platformLimit}
           canManageBranches={permissions.canManageBranches}
           canAccessCustomReports={permissions.canAccessCustomReports}
         />
@@ -192,19 +248,19 @@ export default async function DashboardPage({
             />
             <KpiCard
               title="رضا العملاء"
-              value={positivePct ? `${positivePct}%` : "—"}
+              value={`${positivePct}%`}
               icon={<CheckCircle2 size={22} />}
               tone="good"
             />
             <KpiCard
               title="تحتاج تدخل سريع"
-              value={latestReport?.urgent_count ?? 0}
+              value={urgentCount}
               icon={<AlertTriangle size={22} />}
               tone="warn"
             />
             <KpiCard
               title="ردود مقترحة"
-              value={latestReport?.suggested_replies_count ?? 0}
+              value={suggestedRepliesCount}
               icon={<Repeat2 size={22} />}
             />
           </section>
@@ -229,8 +285,10 @@ export default async function DashboardPage({
               platforms={platforms}
               canAddPlatforms={canAddPlatforms}
               plan={plan}
+              currentPlatformsCount={currentPlatformsCount}
+              platformLimit={permissions.platformLimit}
             />
-          </section>
+            </section>
         </main>
       </div>
     </div>
@@ -270,14 +328,16 @@ function DashboardSideMenu({
   platforms,
   branches,
   canAddPlatforms,
-  canDownloadPdf,
+  currentPlatformsCount,
+  platformLimit,
   canManageBranches,
   canAccessCustomReports,
 }: {
   platforms: any[];
   branches: any[];
   canAddPlatforms: boolean;
-  canDownloadPdf: boolean;
+  currentPlatformsCount: number;
+  platformLimit: number;
   canManageBranches: boolean;
   canAccessCustomReports: boolean;
 }) {
@@ -286,17 +346,6 @@ function DashboardSideMenu({
       <DashboardFilters branches={branches} platforms={platforms} />
 
       <div className="mt-6 space-y-3">
-        {canDownloadPdf ? (
-          <button className="flex w-full items-center justify-center gap-2 rounded-2xl border border-[#374375] bg-white px-5 py-3 text-sm font-bold text-[#374375] transition hover:bg-[#374375] hover:text-white">
-            <Download size={18} />
-            تحميل التقرير PDF
-          </button>
-        ) : (
-          <div className="rounded-2xl bg-[#DFAEA1]/20 p-4 text-sm font-bold leading-7 text-[#895159]">
-            تحميل PDF متاح في باقة Pro و Enterprise.
-          </div>
-        )}
-
         {canAddPlatforms ? (
           <Link
             href="/onboarding/platforms"
@@ -307,8 +356,11 @@ function DashboardSideMenu({
           </Link>
         ) : (
           <div className="rounded-2xl bg-[#F8F7F3] p-4 text-sm font-bold leading-7 text-gray-500">
-            إضافة منصة أخرى متاحة في Pro أو Enterprise.
-          </div>
+          وصلت إلى الحد المسموح من المنصات في باقتك الحالية.
+          <span className="mt-1 block text-xs">
+            تستخدم حاليًا {currentPlatformsCount} من أصل {platformLimit}.
+          </span>
+        </div>
         )}
 
         {canAccessCustomReports && (
@@ -425,26 +477,41 @@ function TopIssues({ issues }: { issues: any[] }) {
       title="أكثر المشاكل تكرارًا هذا الأسبوع"
       icon={<AlertTriangle size={22} />}
     >
-      <div className="space-y-4">
-        {issues.map((issue, index) => {
-          const width = issue.count ? Math.min(100, issue.count * 6) : 8;
+      {issues.length === 0 ? (
+        <div className="rounded-2xl bg-[#F8F7F3] p-6 text-center text-sm font-bold text-gray-500">
+          لا توجد مشاكل متكررة مسجلة في التقرير الحالي.
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {issues.map((issue, index) => {
+            const width =
+              issue.count > 0
+                ? Math.min(100, Math.max(8, issue.count * 6))
+                : 0;
 
-          return (
-            <div key={index}>
-              <div className="mb-2 flex items-center justify-between text-sm">
-                <span className="font-bold text-[#374375]">{issue.label}</span>
-                <span className="text-gray-400">{issue.count} مرة</span>
+            return (
+              <div key={`${issue.label}-${index}`}>
+                <div className="mb-2 flex items-center justify-between text-sm">
+                  <span className="font-bold text-[#374375]">
+                    {issue.label}
+                  </span>
+
+                  <span className="text-gray-400">
+                    {issue.count} مرة
+                  </span>
+                </div>
+
+                <div className="h-3 rounded-full bg-[#F8F7F3]">
+                  <div
+                    className="h-3 rounded-full bg-[#895159]"
+                    style={{ width: `${width}%` }}
+                  />
+                </div>
               </div>
-              <div className="h-3 rounded-full bg-[#F8F7F3]">
-                <div
-                  className="h-3 rounded-full bg-[#895159]"
-                  style={{ width: `${width}%` }}
-                />
-              </div>
-            </div>
-          );
-        })}
-      </div>
+            );
+          })}
+        </div>
+      )}
     </Panel>
   );
 }
@@ -508,10 +575,14 @@ function PlatformsSection({
   platforms,
   canAddPlatforms,
   plan,
+  currentPlatformsCount,
+  platformLimit,
 }: {
   platforms: any[];
   canAddPlatforms: boolean;
   plan: string;
+  currentPlatformsCount: number;
+  platformLimit: number;
 }) {
   return (
     <Panel eyebrow="المنصات المرتبطة" title="المنصات المفعّلة" icon={<BarChart3 size={22} />}>
@@ -541,7 +612,12 @@ function PlatformsSection({
 
         {!canAddPlatforms && (
           <div className="rounded-3xl bg-[#DFAEA1]/20 p-5 text-sm font-bold text-[#895159]">
-            باقة {formatPlan(plan)} تدعم منصة واحدة فقط. إضافة منصات أخرى متاحة في Pro أو Enterprise.
+          <>
+            وصلت إلى الحد المسموح في باقة {formatPlan(plan)}.
+            <span className="mt-1 block text-xs">
+              تستخدم حاليًا {currentPlatformsCount} من أصل {platformLimit} منصة.
+            </span>
+          </>          
           </div>
         )}
       </div>
@@ -632,4 +708,32 @@ function formatPlatform(platform: string) {
   if (platform === "tiktok") return "TikTok";
   if (platform === "instagram") return "Instagram";
   return platform;
+}
+
+function asObject(value: unknown): Record<string, any> {
+  if (
+    value &&
+    typeof value === "object" &&
+    !Array.isArray(value)
+  ) {
+    return value as Record<string, any>;
+  }
+
+  return {};
+}
+
+function asObjectArray(value: unknown): Record<string, any>[] {
+  if (!Array.isArray(value)) return [];
+
+  return value.filter(
+    (item): item is Record<string, any> =>
+      Boolean(item) &&
+      typeof item === "object" &&
+      !Array.isArray(item)
+  );
+}
+
+function asNumber(value: unknown): number {
+  const number = Number(value);
+  return Number.isFinite(number) ? number : 0;
 }
