@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import Marquee from "react-fast-marquee";
 import { ArrowRight, Sparkles, Globe, Instagram, Twitter, Smartphone, Star, MessageSquare } from "lucide-react";
 import DashboardPreview from "./DashboardPreview";
 export default function HeroSection() {
@@ -132,9 +133,10 @@ export default function HeroSection() {
 
         </motion.div>
 
-        {/* Platforms Marquee */}
-<div className="mt-16 sm:mt-20 lg:mt-24 w-full overflow-hidden">
-  <div className="flex items-center mb-6 justify-center gap-2 text-[#374375]/60">
+{/* Platforms Marquee */}
+<div className="mt-16 sm:mt-20 lg:mt-24 w-full">
+
+  <div className="mb-6 flex items-center justify-center gap-2 text-[#374375]/60">
     <span className="h-px w-8 bg-current"></span>
     <span className="text-xs font-bold uppercase tracking-widest">
       المنصات المدعومة
@@ -142,26 +144,31 @@ export default function HeroSection() {
     <span className="h-px w-8 bg-current"></span>
   </div>
 
-  <div className="relative overflow-hidden [mask-image:linear-gradient(to_right,transparent,black_10%,black_90%,transparent)]">
- <div className="marquee gap-8">
-      {Array.from({ length: 8 }).flatMap(() => platforms).map(
-        (platform, index) => (
-          <div
-            key={index}
-            className="mx-8 flex items-center gap-3 whitespace-nowrap"
-          >
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#374375]/5 text-[#374375]">
-              <platform.icon size={24} />
-            </div>
+<Marquee
+  autoFill
+  speed={22}
+  direction="right"
+  pauseOnHover
+  gradient
+  gradientColor="#ffffff"
+  gradientWidth={80}
+>
+    {platforms.map((platform, index) => (
+      <div
+        key={index}
+        className="mx-14 flex items-center gap-4 select-none"
+      >
+        <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-[#E5E7EB] bg-white shadow-sm text-[#374375]">
+          <platform.icon size={24} />
+        </div>
 
-            <span className="font-bold text-[#374375]">
-              {platform.name}
-            </span>
-          </div>
-        )
-      )}
-    </div>
-  </div>
+        <span className="whitespace-nowrap font-bold text-[#374375]">
+          {platform.name}
+        </span>
+      </div>
+    ))}
+  </Marquee>
+
 </div>
              
 
