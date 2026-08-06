@@ -3,8 +3,17 @@
 import { motion } from "framer-motion";
 import { ArrowRight, Sparkles, Globe, Instagram, Twitter, Smartphone, Star, MessageSquare } from "lucide-react";
 import DashboardPreview from "./DashboardPreview";
-
 export default function HeroSection() {
+
+  const platforms = [
+    { icon: Globe, name: "Google Maps" },
+    { icon: Instagram, name: "Instagram" },
+    { icon: Twitter, name: "X (Twitter)" },
+    { icon: Smartphone, name: "TikTok" },
+    { icon: Star, name: "Delivery Apps" },
+    { icon: MessageSquare, name: "Specialized Sites" },
+  ];
+
   return (
     <section className="relative overflow-hidden bg-white pt-36 md:pt-44 lg:pt-48 pb-16 md:pb-20">
 
@@ -124,63 +133,47 @@ export default function HeroSection() {
         </motion.div>
 
         {/* Platforms Marquee */}
-        <div className="mt-16 sm:mt-20 lg:mt-24 w-full overflow-hidden relative">
-          <div className="flex items-center mb-6 justify-center gap-2 text-[#374375]/60">
-            <span className="h-px w-8 bg-current"></span>
-            <span className="text-xs font-bold uppercase tracking-widest">المنصات المدعومة</span>
-            <span className="h-px w-8 bg-current"></span>
+<div className="mt-16 sm:mt-20 lg:mt-24 w-full overflow-hidden">
+  <div className="flex items-center mb-6 justify-center gap-2 text-[#374375]/60">
+    <span className="h-px w-8 bg-current"></span>
+    <span className="text-xs font-bold uppercase tracking-widest">
+      المنصات المدعومة
+    </span>
+    <span className="h-px w-8 bg-current"></span>
+  </div>
+
+  <div className="relative overflow-hidden [mask-image:linear-gradient(to_right,transparent,black_10%,black_90%,transparent)]">
+    <motion.div
+      className="flex w-max gap-8"
+      animate={{
+        x: ["0%", "-50%"],
+      }}
+      transition={{
+        duration: 20,
+        repeat: Infinity,
+        ease: "linear",
+      }}
+    >
+      {Array.from({ length: 8 }).flatMap(() => platforms).map(
+        (platform, index) => (
+          <div
+            key={index}
+            className="mx-8 flex items-center gap-3 whitespace-nowrap"
+          >
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#374375]/5 text-[#374375]">
+              <platform.icon size={24} />
+            </div>
+
+            <span className="font-bold text-[#374375]">
+              {platform.name}
+            </span>
           </div>
-          
-          <div className="flex overflow-hidden [mask-image:linear-gradient(to_right,transparent,black_10%,black_90%,transparent)]">
-            <motion.div 
-              className="flex flex-none gap-12 sm:gap-20"
-              animate={{ x: ["0%", "-50%"] }}
-              transition={{ 
-                duration: 30, 
-                repeat: Infinity, 
-                ease: "linear" 
-              }}
-            >
-              {/* First Set of Logos */}
-              {[
-                { icon: Globe, name: "Google Maps" },
-                { icon: Instagram, name: "Instagram" },
-                { icon: Twitter, name: "X (Twitter)" },
-                { icon: Smartphone, name: "TikTok" },
-                { icon: Star, name: "Delivery Apps" },
-                { icon: MessageSquare, name: "Specialized Sites" },
-              ].map((platform, idx) => (
-                <div key={`first-${idx}`} className="flex items-center gap-3 grayscale opacity-60 hover:grayscale-0 hover:opacity-100 transition-all cursor-default py-2">
-                  <div className="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center rounded-xl bg-[#374375]/5 text-[#374375]">
-                    <platform.icon size={24} />
-                  </div>
-                  <span className="text-[#374375] font-bold text-sm sm:text-base whitespace-nowrap">
-                    {platform.name}
-                  </span>
-                </div>
-              ))}
-              
-              {/* Duplicate Set for Seamless Loop */}
-              {[
-                { icon: Globe, name: "Google Maps" },
-                { icon: Instagram, name: "Instagram" },
-                { icon: Twitter, name: "X (Twitter)" },
-                { icon: Smartphone, name: "TikTok" },
-                { icon: Star, name: "Delivery Apps" },
-                { icon: MessageSquare, name: "Specialized Sites" },
-              ].map((platform, idx) => (
-                <div key={`second-${idx}`} className="flex items-center gap-3 grayscale opacity-60 hover:grayscale-0 hover:opacity-100 transition-all cursor-default py-2">
-                  <div className="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center rounded-xl bg-[#374375]/5 text-[#374375]">
-                    <platform.icon size={24} />
-                  </div>
-                  <span className="text-[#374375] font-bold text-sm sm:text-base whitespace-nowrap">
-                    {platform.name}
-                  </span>
-                </div>
-              ))}
-            </motion.div>
-          </div>
-        </div>
+        )
+      )}
+    </motion.div>
+  </div>
+</div>
+             
 
       </div>
     </section>
