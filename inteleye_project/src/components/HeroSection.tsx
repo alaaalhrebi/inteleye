@@ -143,17 +143,7 @@ export default function HeroSection() {
   </div>
 
   <div className="relative overflow-hidden [mask-image:linear-gradient(to_right,transparent,black_10%,black_90%,transparent)]">
-    <motion.div
-      className="flex w-max gap-8"
-      animate={{
-        x: ["0%", "-50%"],
-      }}
-      transition={{
-        duration: 20,
-        repeat: Infinity,
-        ease: "linear",
-      }}
-    >
+ <div className="marquee gap-8">
       {Array.from({ length: 8 }).flatMap(() => platforms).map(
         (platform, index) => (
           <div
@@ -170,7 +160,7 @@ export default function HeroSection() {
           </div>
         )
       )}
-    </motion.div>
+    </div>
   </div>
 </div>
              
