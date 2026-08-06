@@ -417,15 +417,12 @@ function DashboardSideMenu({
 
 function HeroSummary({ clientName }: { clientName: string }) {
   return (
-    <section className="rounded-[2.5rem] border border-[#BABDE2]/30 bg-white p-8 shadow-sm">
+   <section className="rounded-[2rem] sm:rounded-[2.5rem] border border-[#BABDE2]/30 bg-white p-5 sm:p-6 lg:p-8 shadow-sm">
       <p className="text-sm text-gray-400">لوحة التحكم</p>
-      <h2 className="mt-2 text-4xl font-extrabold text-[#374375]">
+      <h2 className="mt-2 text-2xl sm:text-3xl lg:text-4xl font-extrabold text-[#374375]">
         مرحبًا، {clientName}
       </h2>
-      <p className="mt-4 max-w-3xl text-lg leading-8 text-gray-500">
-        هنا ملخص أداء منصاتك، الفروع، التقارير، التنبيهات الذكية، التوصيات،
-        واقتراحات الردود بناءً على تحليل تقييمات العملاء.
-      </p>
+      <p className="mt-4 max-w-3xl text-base sm:text-lg leading-7 sm:leading-8 text-gray-500">
     </section>
   );
 }
@@ -665,14 +662,14 @@ function Panel({
   children: React.ReactNode;
 }) {
   return (
-    <section className="rounded-[2rem] border border-[#BABDE2]/40 bg-white p-6 shadow-sm">
+   <section className="rounded-[2rem] border border-[#BABDE2]/40 bg-white p-4 sm:p-6 shadow-sm">
       <div className="mb-6 flex items-center gap-3">
-        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#BABDE2]/30 text-[#374375]">
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#BABDE2]/30 text-[#374375]">
           {icon}
         </div>
-        <div>
+        <div className="min-w-0">
           <p className="text-xs text-gray-400">{eyebrow}</p>
-          <h2 className="text-xl font-extrabold text-[#374375]">{title}</h2>
+          <h2 className="text-lg sm:text-xl font-extrabold text-[#374375]">{title}</h2>
         </div>
       </div>
 
