@@ -68,3 +68,27 @@ body {
     break-inside: avoid;
   }
 }
+/* ========================= */
+/* Infinite Marquee */
+/* ========================= */
+
+@keyframes infinite-marquee {
+  from {
+    transform: translateX(0);
+  }
+
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.marquee {
+  display: flex;
+  width: max-content;
+  animation: infinite-marquee 35s linear infinite;
+  will-change: transform;
+}
+
+.marquee:hover {
+  animation-play-state: paused;
+}
