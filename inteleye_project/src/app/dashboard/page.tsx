@@ -155,7 +155,7 @@ const canAddPlatforms = permissions.canAddPlatform;
 
 const stats = asObject(latestReport?.stats);
 const aiSummary = asObject(latestReport?.ai_summary);
-const sentiment = asObject(stats.sentiment);
+const sentiment = asObject(sentiment in stats ? stats.sentiment : {});
 
 const averageRatingSource =
   stats.average_rating ?? latestReport?.google_rating;
@@ -238,8 +238,8 @@ const recommendations =
   return (
   <div dir="rtl" className="dashboard-print-root min-h-screen bg-[#F8F7F3] text-[#374375]">
     <DashboardHeader clientName={client.name} plan={client.plan} />
-<div className="mx-auto flex max-w-7xl flex-col gap-6 px-4 py-6 sm:px-6 lg:flex-row">
-  <DashboardSideMenu
+    <div className="mx-auto flex max-w-[1400px] flex-col gap-4 px-4 py-4 sm:px-6 sm:py-6 lg:flex-row lg:gap-6">
+    <DashboardSideMenu
           platforms={platforms}
           branches={branches ?? []}
           canAddPlatforms={canAddPlatforms}
@@ -252,8 +252,8 @@ const recommendations =
         <main className="min-w-0 flex-1 pb-10">
           <HeroSummary clientName={client.name} />
 
-<section className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-6">
-  <KpiCard
+          <section className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+            <KpiCard
               title="متوسط التقييم"
               value={averageRating}
               icon={<Star size={22} />}
@@ -317,6 +317,7 @@ const recommendations =
     </div>
   );
 }
+
 function DashboardHeader({
   clientName,
   plan,
@@ -350,6 +351,7 @@ function DashboardHeader({
     </header>
   );
 }
+
 function DashboardSideMenu({
   platforms,
   branches,
@@ -368,7 +370,7 @@ function DashboardSideMenu({
   canAccessCustomReports: boolean;
 }) {
   return (
-    <aside className="no-print w-full shrink-0 rounded-[2rem] border border-[#BABDE2]/40 bg-white p-5 shadow-sm lg:sticky lg:top-24 lg:w-[300px]">
+    <aside className="no-print w-full shrink-0 rounded-[1.5rem] border border-[#BABDE2]/40 bg-white p-4 shadow-sm lg:sticky lg:top-24 lg:w-[260px] xl:w-[300px]">
       <DashboardFilters branches={branches} platforms={platforms} />
 
       <div className="mt-6 space-y-3">
@@ -417,12 +419,15 @@ function DashboardSideMenu({
 
 function HeroSummary({ clientName }: { clientName: string }) {
   return (
-   <section className="rounded-[2rem] sm:rounded-[2.5rem] border border-[#BABDE2]/30 bg-white p-5 sm:p-6 lg:p-8 shadow-sm">
-      <p className="text-sm text-gray-400">لوحة التحكم</p>
+   <section className="rounded-[1.5rem] sm:rounded-[2rem] border border-[#BABDE2]/30 bg-white p-6 sm:p-8 shadow-sm">
+      <p className="text-xs sm:text-sm text-gray-400">لوحة التحكم</p>
       <h2 className="mt-2 text-2xl sm:text-3xl lg:text-4xl font-extrabold text-[#374375]">
         مرحبًا، {clientName}
       </h2>
-      <p className="mt-4 max-w-3xl text-base sm:text-lg leading-7 sm:leading-8 text-gray-500">
+      <p className="mt-3 sm:mt-4 max-w-3xl text-sm sm:text-base lg:text-lg leading-relaxed text-gray-500">
+        هنا ملخص أداء منصاتك، الفروع، التقارير، التنبيهات الذكية، التوصيات،
+        واقتراحات الردود بناءً على تحليل تقييمات العملاء.
+      </p>
     </section>
   );
 }
@@ -448,12 +453,12 @@ function KpiCard({
       : "text-[#374375] bg-[#BABDE2]/30";
 
   return (
-    <div className="rounded-[1.7rem] border border-[#BABDE2]/30 bg-white p-5 shadow-sm">
-      <div className={`mb-5 flex h-12 w-12 items-center justify-center rounded-2xl ${toneClass}`}>
-        {icon}
+    <div className="rounded-[1.2rem] border border-[#BABDE2]/30 bg-white p-4 sm:p-5 shadow-sm transition-all hover:shadow-md">
+      <div className={`mb-3 sm:mb-5 flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-xl sm:rounded-2xl ${toneClass}`}>
+        <div className="scale-90 sm:scale-100">{icon}</div>
       </div>
-      <p className="text-sm text-gray-400">{title}</p>
-      <p className="mt-3 text-3xl font-extrabold text-[#374375]">{value}</p>
+      <p className="text-xs sm:text-sm text-gray-400 truncate">{title}</p>
+      <p className="mt-1 sm:mt-3 text-xl sm:text-2xl lg:text-3xl font-extrabold text-[#374375]">{value}</p>
     </div>
   );
 }
@@ -662,18 +667,20 @@ function Panel({
   children: React.ReactNode;
 }) {
   return (
-   <section className="rounded-[2rem] border border-[#BABDE2]/40 bg-white p-4 sm:p-6 shadow-sm">
-      <div className="mb-6 flex items-center gap-3">
-        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#BABDE2]/30 text-[#374375]">
-          {icon}
+   <section className="rounded-[1.2rem] sm:rounded-[1.5rem] border border-[#BABDE2]/40 bg-white p-4 sm:p-6 shadow-sm">
+      <div className="mb-4 sm:mb-6 flex items-center gap-3">
+        <div className="flex h-9 w-9 sm:h-11 sm:w-11 shrink-0 items-center justify-center rounded-xl sm:rounded-2xl bg-[#BABDE2]/30 text-[#374375]">
+          <div className="scale-90 sm:scale-100">{icon}</div>
         </div>
         <div className="min-w-0">
-          <p className="text-xs text-gray-400">{eyebrow}</p>
-          <h2 className="text-lg sm:text-xl font-extrabold text-[#374375]">{title}</h2>
+          <p className="text-[10px] sm:text-xs text-gray-400">{eyebrow}</p>
+          <h2 className="text-base sm:text-lg lg:text-xl font-extrabold text-[#374375]">{title}</h2>
         </div>
       </div>
 
-      {children}
+      <div className="text-sm sm:text-base">
+        {children}
+      </div>
     </section>
   );
 }
