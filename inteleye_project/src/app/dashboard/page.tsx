@@ -238,8 +238,8 @@ const recommendations =
   return (
   <div dir="rtl" className="dashboard-print-root min-h-screen bg-[#F8F7F3] text-[#374375]">
     <DashboardHeader clientName={client.name} plan={client.plan} />
-    <div className="mx-auto flex max-w-7xl flex-col gap-6 px-6 py-6 lg:flex-row">
-        <DashboardSideMenu
+<div className="mx-auto flex max-w-7xl flex-col gap-6 px-4 py-6 sm:px-6 lg:flex-row">
+  <DashboardSideMenu
           platforms={platforms}
           branches={branches ?? []}
           canAddPlatforms={canAddPlatforms}
@@ -252,8 +252,8 @@ const recommendations =
         <main className="min-w-0 flex-1 pb-10">
           <HeroSummary clientName={client.name} />
 
-          <section className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-6">
-            <KpiCard
+<section className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-6">
+  <KpiCard
               title="متوسط التقييم"
               value={averageRating}
               icon={<Star size={22} />}
