@@ -155,8 +155,7 @@ const canAddPlatforms = permissions.canAddPlatform;
 
 const stats = asObject(latestReport?.stats);
 const aiSummary = asObject(latestReport?.ai_summary);
-const sentiment = asObject(sentiment in stats ? stats.sentiment : {});
-
+const sentiment = asObject("sentiment" in stats ? stats.sentiment : {});
 const averageRatingSource =
   stats.average_rating ?? latestReport?.google_rating;
 
