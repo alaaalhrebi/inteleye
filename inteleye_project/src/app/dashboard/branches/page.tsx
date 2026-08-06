@@ -82,13 +82,13 @@ export default async function BranchesPage() {
   return (
     <main
       dir="rtl"
-      className="min-h-screen bg-[#F8F7F3] px-6 py-8 text-[#374375]"
+            className="min-h-screen bg-[#F8F7F3] px-4 py-6 sm:px-6 sm:py-8 text-[#374375]"
     >
       <div className="mx-auto max-w-7xl">
         <header className="mb-8 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
 
-            <h1 className="mt-2 text-4xl font-extrabold text-[#374375]">
+            <h1 className="mt-2 text-2xl sm:text-3xl lg:text-4xl font-extrabold text-[#374375]">
               إدارة الفروع
             </h1>
 
@@ -126,9 +126,9 @@ export default async function BranchesPage() {
           />
         </section>
 
-        <section className="mb-8 rounded-[2rem] border border-[#BABDE2]/40 bg-white p-6 shadow-sm">
+      <section className="mb-8 rounded-[2rem] border border-[#BABDE2]/40 bg-white p-4 sm:p-6 shadow-sm">
           <div className="mb-6 flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#BABDE2]/30 text-[#374375]">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#BABDE2]/30 text-[#374375]">
               <Plus size={22} />
             </div>
 
@@ -155,7 +155,7 @@ export default async function BranchesPage() {
           )}
         </section>
 
-        <section className="rounded-[2rem] border border-[#BABDE2]/40 bg-white p-6 shadow-sm">
+<section className="rounded-[2rem] border border-[#BABDE2]/40 bg-white p-4 sm:p-6 shadow-sm">
           <div className="mb-6 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
             <div>
               <p className="text-xs font-bold text-gray-400">الفروع المسجلة</p>
