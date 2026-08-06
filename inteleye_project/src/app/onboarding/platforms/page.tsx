@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
@@ -299,7 +298,7 @@ export default function PlatformsOnboardingPage() {
   return (
     <main
       dir="rtl"
-      className="relative min-h-screen overflow-hidden bg-[#FFFCF5] px-6 py-12 text-[#374375]"
+      className="relative min-h-screen overflow-hidden bg-[#FFFCF5] px-4 py-8 sm:px-6 sm:py-12 text-[#374375]"
     >
       <div className="absolute right-[-120px] top-[-120px] h-[360px] w-[360px] rounded-full bg-[#BABDE2]/50 blur-[120px]" />
       <div className="absolute bottom-[-120px] left-[-120px] h-[360px] w-[360px] rounded-full bg-[#DFAEA1]/40 blur-[120px]" />
@@ -319,21 +318,21 @@ export default function PlatformsOnboardingPage() {
             إعداد حسابك
           </div>
 
-          <h1 className="text-4xl font-extrabold">
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold">
             اختر المنصة التي تريد تحليلها
           </h1>
 
-          <p className="mt-4 text-lg text-gray-500">
+          <p className="mt-4 text-base sm:text-lg text-gray-500">
             أدخلي بيانات المنصة حسب نوعها، وسيتم استخدامها في السحب والتحليل لاحقًا.
           </p>
         </div>
 
         <form
           onSubmit={handleSave}
-          className="mx-auto max-w-5xl rounded-[2rem] border border-[#BABDE2]/40 bg-white/90 p-8 shadow-2xl"
+          className="mx-auto max-w-5xl rounded-[2rem] border border-[#BABDE2]/40 bg-white/90 p-4 sm:p-6 lg:p-8 shadow-2xl"
         >
-<div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-  {platforms.map((platform) => {
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {platforms.map((platform) => {
               const Icon = platform.icon;
               const active = selectedPlatform === platform.key;
 
