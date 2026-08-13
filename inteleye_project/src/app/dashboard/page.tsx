@@ -10,7 +10,9 @@ import {
   Lightbulb,
   MessageSquareText,
   Plus,
+  RadioTower,
   Repeat2,
+  Settings,
   Star,
   TrendingDown,
   TrendingUp,
@@ -410,8 +412,49 @@ function DashboardSideMenu({
           </Link>
         )}
 
+        <div className="border-t border-[#BABDE2]/30 pt-3">
+          <p className="mb-2 px-2 text-xs font-bold text-gray-400">إدارة الحساب</p>
+          <div className="space-y-2">
+            <DashboardMenuLink
+              href="/dashboard/platforms"
+              label="حالة المنصات"
+              icon={<RadioTower size={18} />}
+            />
+            <DashboardMenuLink
+              href="/dashboard/replies"
+              label="مركز الردود"
+              icon={<Repeat2 size={18} />}
+            />
+            <DashboardMenuLink
+              href="/dashboard/settings"
+              label="الإعدادات"
+              icon={<Settings size={18} />}
+            />
+          </div>
+        </div>
+
       </div>
     </aside>
+  );
+}
+
+function DashboardMenuLink({
+  href,
+  label,
+  icon,
+}: {
+  href: string;
+  label: string;
+  icon: React.ReactNode;
+}) {
+  return (
+    <Link
+      href={href}
+      className="flex w-full items-center gap-3 rounded-2xl px-4 py-2.5 text-sm font-bold text-gray-500 transition hover:bg-[#BABDE2]/25 hover:text-[#374375]"
+    >
+      {icon}
+      {label}
+    </Link>
   );
 }
 
