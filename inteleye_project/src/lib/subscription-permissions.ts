@@ -15,10 +15,10 @@ type PermissionContext = {
 const BRANCH_LIMITS: Record<string, number> = {
   basic: 1,
   pro: 3,
-  enterprise: 999,
+  enterprise: 20,
 };
 
-const LEGACY_PLATFORM_LIMITS: Record<string, number> = {
+const PLATFORM_LIMITS: Record<string, number> = {
   basic: 1,
   pro: 2,
   enterprise: 4,
@@ -58,11 +58,13 @@ export function getSubscriptionPermissions(
 
   const branchLimit = BRANCH_LIMITS[plan] ?? BRANCH_LIMITS.basic;
   const savedPlatformLimit = Number(client.allowed_platforms_count);
+  const planPlatformLimit = PLATFORM_LIMITS[plan];
 
   const configuredPlatformLimit =
-    Number.isInteger(savedPlatformLimit) && savedPlatformLimit > 0
+    planPlatformLimit ??
+    (Number.isInteger(savedPlatformLimit) && savedPlatformLimit > 0
       ? savedPlatformLimit
-    : LEGACY_PLATFORM_LIMITS[plan] ?? LEGACY_PLATFORM_LIMITS.basic;
+      : PLATFORM_LIMITS.basic);
   const platformLimit = isTrialActive ? 1 : configuredPlatformLimit;
 
   const currentBranchesCount = Math.max(

@@ -44,6 +44,8 @@ test("Basic السارية تعرض التقارير ولا تنشئ تقرير�
   );
   assert.equal(value.canViewReports, true);
   assert.equal(value.canCreateCustomReport, false);
+  assert.equal(value.branchLimit, 1);
+  assert.equal(value.platformLimit, 1);
 });
 
 test("Pro السارية تعرض وتنشئ تقريرًا مخصصًا", () => {
@@ -53,15 +55,32 @@ test("Pro السارية تعرض وتنشئ تقريرًا مخصصًا", () =>
   );
   assert.equal(value.canViewReports, true);
   assert.equal(value.canCreateCustomReport, true);
+  assert.equal(value.branchLimit, 3);
+  assert.equal(value.platformLimit, 2);
 });
 
 test("Enterprise السارية تعرض وتنشئ تقريرًا مخصصًا", () => {
   const value = getSubscriptionPermissions(
-    { subscription_status: "active", plan: "enterprise" },
-    { now }
+    {
+      subscription_status: "active",
+      plan: "enterprise",
+      // تحمي الواجهة من قيمة قديمة حتى تنتهي مزامنة قاعدة البيانات.
+      allowed_platforms_count: 1,
+    },
+    { now, currentBranchesCount: 19, currentPlatformsCount: 3 }
   );
   assert.equal(value.canViewReports, true);
   assert.equal(value.canCreateCustomReport, true);
+  assert.equal(value.branchLimit, 20);
+  assert.equal(value.platformLimit, 4);
+  assert.equal(value.canAddBranch, true);
+  assert.equal(value.canAddPlatform, true);
+
+  const atBranchLimit = getSubscriptionPermissions(
+    { subscription_status: "active", plan: "enterprise" },
+    { now, currentBranchesCount: 20 }
+  );
+  assert.equal(atBranchLimit.canAddBranch, false);
 });
 
 test("الاشتراك المدفوع المنتهي لا يصل إلى التقارير", () => {
