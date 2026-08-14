@@ -1,4 +1,5 @@
 import SignupClient from "./SignupClient";
+import { normalizePlan } from "@/lib/plans";
 
 type SignupPageProps = {
   searchParams?: {
@@ -7,12 +8,12 @@ type SignupPageProps = {
 };
 
 export default function SignupPage({ searchParams }: SignupPageProps) {
-  const plan =
+  const requestedPlan =
     typeof searchParams?.plan === "string"
       ? searchParams.plan
       : Array.isArray(searchParams?.plan)
       ? searchParams.plan[0]
       : "basic";
 
-  return <SignupClient selectedPlan={plan} />;
+  return <SignupClient selectedPlan={normalizePlan(requestedPlan)} />;
 }

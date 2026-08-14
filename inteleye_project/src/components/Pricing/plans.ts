@@ -1,3 +1,5 @@
+import { PLAN_DETAILS } from "@/lib/plans";
+
 export type Feature = {
   text: string;
 };
@@ -14,7 +16,7 @@ export const plans: Plan[] = [
   {
     name: "Basic",
 
-    price: "199",
+    price: String(PLAN_DETAILS.basic.priceHalalas / 100),
 
     description:
       "مثالية للمنشآت الصغيرة التي ترغب في متابعة تقييمات العملاء وتحليلها بالذكاء الاصطناعي.",
@@ -34,7 +36,7 @@ export const plans: Plan[] = [
   {
     name: "Pro",
 
-    price: "499",
+    price: String(PLAN_DETAILS.pro.priceHalalas / 100),
 
     featured: true,
 
@@ -56,7 +58,7 @@ export const plans: Plan[] = [
   {
     name: "Enterprise",
 
-    price: "999",
+    price: String(PLAN_DETAILS.enterprise.priceHalalas / 100),
 
     description:
       "حلول مخصصة للمؤسسات الكبيرة مع تكاملات API ولوحات معلومات مخصصة ودعم كامل.",

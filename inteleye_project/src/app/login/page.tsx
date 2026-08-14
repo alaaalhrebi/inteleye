@@ -15,7 +15,33 @@ import {
   Sparkles,
 } from "lucide-react";
 import { createSupabaseBrowserClient } from "@/lib/supabase-browser";
+import { PLAN_IDS, type PlanId } from "@/lib/plans";
 import { getSubscriptionPermissions } from "@/lib/subscription-permissions";
+
+function getSafeCheckoutNext() {
+  if (typeof window === "undefined") return null;
+
+  const rawNext = new URLSearchParams(window.location.search).get("next");
+  if (!rawNext) return null;
+
+  try {
+    const nextUrl = new URL(rawNext, window.location.origin);
+    const plan = nextUrl.searchParams.get("plan")?.toLowerCase();
+
+    if (
+      nextUrl.origin !== window.location.origin ||
+      nextUrl.pathname !== "/checkout" ||
+      !plan ||
+      !PLAN_IDS.includes(plan as PlanId)
+    ) {
+      return null;
+    }
+
+    return `/checkout?plan=${plan}`;
+  } catch {
+    return null;
+  }
+}
 
 export default function LoginPage() {
   const router = useRouter();
@@ -27,81 +53,87 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
 
- async function handleLogin(e: React.FormEvent<HTMLFormElement>) {
-  e.preventDefault();
+  async function handleLogin(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
 
-  setLoading(true);
-  setMessage("");
+    setLoading(true);
+    setMessage("");
 
-  const { data, error } = await supabase.auth.signInWithPassword({
-    email,
-    password,
-  });
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
 
-  if (error) {
-    setLoading(false);
-    setMessage("البريد الإلكتروني أو كلمة المرور غير صحيحة");
-    return;
-  }
-
-  const userId = data.user?.id;
-
-  if (!userId) {
-    setLoading(false);
-    setMessage("لم يتم العثور على بيانات المستخدم");
-    return;
-  }
-
-  const { data: client, error: clientError } = await supabase
-    .from("clients")
-    .select(
-      "id, subscription_status, plan, trial_ends_at, current_period_end, allowed_platforms_count"
-    )
-    .eq("user_id", userId)
-    .maybeSingle();
-
-  if (clientError) {
-    setLoading(false);
-    setMessage("حدث خطأ أثناء التحقق من بيانات العميل");
-    return;
-  }
-
-  if (!client) {
-    setLoading(false);
-    router.push("/signup");
-    return;
-  }
-
-const permissions = getSubscriptionPermissions(client);
-
-if (!permissions.canAccessDashboard) {
-  setLoading(false);
-  router.replace("/pricing?reason=subscription_required");
-  return;
-}
-   
-
-  const { data: platforms, error: platformsError } = await supabase
-    .from("client_platforms")
-    .select("id")
-    .eq("client_id", client.id)
-    .limit(1);
-
-  setLoading(false);
-
-  if (platformsError) {
-    setMessage("حدث خطأ أثناء التحقق من المنصات");
-    return;
-  }
-
-  if (!platforms || platforms.length === 0) {
-    router.push("/onboarding/platforms");
-    return;
+    if (error) {
+      setLoading(false);
+      setMessage("البريد الإلكتروني أو كلمة المرور غير صحيحة");
+      return;
     }
 
-  router.push("/dashboard");
+    const userId = data.user?.id;
+
+    if (!userId) {
+      setLoading(false);
+      setMessage("لم يتم العثور على بيانات المستخدم");
+      return;
+    }
+
+    const { data: client, error: clientError } = await supabase
+      .from("clients")
+      .select(
+        "id, subscription_status, plan, trial_ends_at, current_period_end, allowed_platforms_count"
+      )
+      .eq("user_id", userId)
+      .maybeSingle();
+
+    if (clientError) {
+      setLoading(false);
+      setMessage("حدث خطأ أثناء التحقق من بيانات العميل");
+      return;
+    }
+
+    if (!client) {
+      setLoading(false);
+      router.push("/signup");
+      return;
+    }
+
+    const checkoutNext = getSafeCheckoutNext();
+    if (checkoutNext) {
+      setLoading(false);
+      router.replace(checkoutNext);
+      return;
+    }
+
+    const permissions = getSubscriptionPermissions(client);
+
+    if (!permissions.canAccessDashboard) {
+      setLoading(false);
+      router.replace("/pricing?reason=subscription_required");
+      return;
+    }
+
+    const { data: platforms, error: platformsError } = await supabase
+      .from("client_platforms")
+      .select("id")
+      .eq("client_id", client.id)
+      .limit(1);
+
+    setLoading(false);
+
+    if (platformsError) {
+      setMessage("حدث خطأ أثناء التحقق من المنصات");
+      return;
+    }
+
+    if (!platforms || platforms.length === 0) {
+      router.push("/onboarding/platforms");
+      return;
+    }
+
+    router.push("/dashboard");
   }
-  
+
   return (
     <main
       dir="rtl"
