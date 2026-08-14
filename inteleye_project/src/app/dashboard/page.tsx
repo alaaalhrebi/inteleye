@@ -378,7 +378,7 @@ function DashboardSideMenu({
         {canAddPlatforms ? (
           <Link
             href="/onboarding/platforms"
-            className="flex w-full items-center justify-center gap-2 rounded-2xl bg-[#374375] px-5 py-3 text-sm font-bold text-white transition hover:bg-[#895159]"
+            className="flex w-full items-center justify-center gap-2 rounded-2xl border border-[#BABDE2]/60 bg-[#F8F7F3] px-5 py-3 text-sm font-bold text-[#374375] transition hover:bg-[#BABDE2]/30"
           >
             <Plus size={18} />
             إضافة منصة
@@ -394,7 +394,7 @@ function DashboardSideMenu({
 
         <Link
           href="/dashboard/replies"
-          className="flex w-full items-center justify-center gap-2 rounded-2xl bg-[#374375] px-5 py-3 text-sm font-bold text-white transition hover:bg-[#895159]"
+          className="flex w-full items-center justify-center gap-2 rounded-2xl border border-[#BABDE2]/60 bg-[#F8F7F3] px-5 py-3 text-sm font-bold text-[#374375] transition hover:bg-[#BABDE2]/30"
         >
           <Repeat2 size={18} />
           مركز الردود
