@@ -219,17 +219,14 @@ export default function PlatformsOnboardingPage() {
     setSaving(true);
     setMessage("");
 
-   const {
-    data: existingPlatform,
-    error: existingError,
-  } = await supabase
-    .from("client_platforms")
-    .select("id")
-    .eq("client_id", clientId)
-    .eq("platform_name", selectedPlatform)
-    .is("branch_id", null)
-    .eq("is_active", true)
-    .maybeSingle();
+    const { data: existingPlatform, error: existingError } = await supabase
+      .from("client_platforms")
+      .select("id")
+      .eq("client_id", clientId)
+      .eq("platform_name", selectedPlatform)
+      .eq("is_active", true)
+      .limit(1)
+      .maybeSingle();
 
     if (existingError) {
       console.error("Check existing platform error:", existingError);
@@ -243,8 +240,6 @@ export default function PlatformsOnboardingPage() {
       setSaving(false);
       return;
     }
-
-    
     const cleanUsername =
       selectedPlatform === "x" ? normalizeXUsername(username) : username.trim();
 
@@ -256,17 +251,28 @@ export default function PlatformsOnboardingPage() {
     const finalUsername =
       selectedPlatform === "x" ? cleanUsername : username.trim() || null;
 
+    const { data: onboardingBranchId, error: branchError } = await supabase.rpc(
+      "ensure_onboarding_main_branch"
+    );
+    const branchId = Number(onboardingBranchId);
+
+    if (branchError || !Number.isSafeInteger(branchId) || branchId <= 0) {
+      console.error("Create onboarding branch error:", branchError);
+      setMessage("حدث خطأ أثناء تجهيز الفرع الرئيسي");
+      setSaving(false);
+      return;
+    }
+
     const { error: insertError } =
       await supabase
         .from("client_platforms")
         .insert({
           client_id: clientId,
-          branch_id: null,
+          branch_id: branchId,
           platform_name: selectedPlatform,
           platform_url: finalPlatformUrl,
           username: finalUsername,
-          business_activity:
-            businessActivity.trim(),
+          business_activity: businessActivity.trim(),
           is_active: true,
         });
 
