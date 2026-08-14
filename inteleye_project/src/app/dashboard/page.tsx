@@ -392,6 +392,14 @@ function DashboardSideMenu({
         </div>
         )}
 
+        <Link
+          href="/dashboard/replies"
+          className="flex w-full items-center justify-center gap-2 rounded-2xl bg-[#374375] px-5 py-3 text-sm font-bold text-white transition hover:bg-[#895159]"
+        >
+          <Repeat2 size={18} />
+          مركز الردود
+        </Link>
+
         {canAccessCustomReports && (
           <Link
             href="/dashboard/reports"
@@ -419,11 +427,6 @@ function DashboardSideMenu({
               href="/dashboard/platforms"
               label="حالة المنصات"
               icon={<RadioTower size={18} />}
-            />
-            <DashboardMenuLink
-              href="/dashboard/replies"
-              label="مركز الردود"
-              icon={<Repeat2 size={18} />}
             />
             <DashboardMenuLink
               href="/dashboard/settings"

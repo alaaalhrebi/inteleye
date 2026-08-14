@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   AlertCircle,
+  ArrowRight,
   BarChart3,
   CalendarDays,
   CheckCircle2,
@@ -166,6 +167,14 @@ export default function ReportsManager({
             </p>
           </div>
           <div className="flex flex-wrap gap-3">
+            <Link
+              href="/dashboard"
+              className="inline-flex flex-1 items-center justify-center gap-2 rounded-full border border-[#374375] bg-white px-5 py-3 text-sm font-bold text-[#374375] transition hover:bg-[#374375] hover:text-white sm:flex-none"
+            >
+              <ArrowRight size={18} />
+              الرجوع للداشبورد
+            </Link>
+
             {canCreateCustomReport ? (
               <button
                 type="button"
