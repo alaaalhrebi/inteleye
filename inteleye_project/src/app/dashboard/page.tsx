@@ -21,6 +21,16 @@ import LogoutButton from "@/components/dashboard/LogoutButton";
 import DashboardFilters from "@/components/dashboard/DashboardFilters";
 import PrintDashboardButton from "@/components/dashboard/PrintDashboardButton";
 import { getSubscriptionPermissions } from "@/lib/subscription-permissions";
+import {
+  buildRatingTrend,
+  calculateDashboardMetrics,
+  getDashboardPeriodRange,
+  normalizeDashboardPeriod,
+  summarizeTopIssues,
+  type DashboardFeedbackRow,
+  type DashboardMetrics,
+  type RatingTrendPoint,
+} from "@/lib/dashboard-analytics";
 
 export default async function DashboardPage({
   searchParams,
@@ -33,7 +43,7 @@ export default async function DashboardPage({
 }) {
   const selectedPlatformId = searchParams?.platform;
   const selectedBranchId = searchParams?.branch;
-  const selectedPeriod = searchParams?.period || "this_week";
+  const selectedPeriod = normalizeDashboardPeriod(searchParams?.period);
   
   const supabase = createSupabaseServerClient();
 
@@ -76,7 +86,7 @@ export default async function DashboardPage({
 
   let platformsQuery = supabase
     .from("client_platforms")
-    .select("id, platform_name, platform_url, username, business_activity, is_active")
+    .select("id, branch_id, platform_name, platform_url, username, business_activity, is_active")
     .eq("client_id", client.id)
     .eq("is_active", true);
 
@@ -102,47 +112,64 @@ export default async function DashboardPage({
 
   const branchIds = (branches ?? []).map((b) => b.id);
 
+  const requestedBranchId = Number(selectedBranchId);
+  const selectedBranch = branchIds.includes(requestedBranchId)
+    ? requestedBranchId
+    : null;
+  const requestedPlatformId = Number(selectedPlatformId);
+  const selectedPlatform = platforms.some(
+    (platform) => platform.id === requestedPlatformId
+  )
+    ? requestedPlatformId
+    : null;
+  const periodRange = getDashboardPeriodRange(selectedPeriod);
+  const dataScope = {
+    clientId: client.id,
+    branchId: selectedBranch,
+    platformId: selectedPlatform,
+  };
 
-  
- let reportsQuery = supabase
-  .from("reports")
-  .select("*")
-  .eq("client_id", client.id)
-  .in("status", ["completed", "no_data"])
-  .order("created_at", { ascending: false });
-  
-  if (selectedBranchId) {
-    const branchId = Number(selectedBranchId);
-  
-    reportsQuery = reportsQuery.or(
-      `branch_id.eq.${branchId},branch_id.is.null`
-    );
-  } else if (branchIds.length > 0) {
-    reportsQuery = reportsQuery.or(
-      `branch_id.in.(${branchIds.join(
-        ","
-      )}),branch_id.is.null`
-    );
-  } else {
-    reportsQuery =
-      reportsQuery.is("branch_id", null);
-  }
-  
-  if (selectedPlatformId) {
-    reportsQuery = reportsQuery.eq("platform_id", Number(selectedPlatformId));
-  }
-  
-  if (selectedPeriod === "this_week") {
-    reportsQuery = reportsQuery.eq("report_type", "weekly");
-  }
-  
-  if (selectedPeriod === "this_month") {
-    reportsQuery = reportsQuery.eq("report_type", "monthly");
-  }
-  
-  const { data: reports } = await reportsQuery;
+  const [
+    currentFeedbackResult,
+    comparisonFeedbackResult,
+    reportsResult,
+    alertsResult,
+  ] = await Promise.all([
+    loadDashboardFeedback(supabase, {
+      ...dataScope,
+      start: periodRange.start,
+      end: periodRange.end,
+    }),
+    loadDashboardFeedback(supabase, {
+      ...dataScope,
+      start: periodRange.comparisonStart,
+      end: periodRange.comparisonEnd,
+    }),
+    loadDashboardReports(supabase, dataScope),
+    loadDashboardAlerts(supabase, dataScope),
+  ]);
 
-  const latestReport = reports?.[0] ?? null;
+  const dashboardErrors = [
+    currentFeedbackResult.error,
+    comparisonFeedbackResult.error,
+    reportsResult.error,
+    alertsResult.error,
+  ].filter(Boolean);
+
+  if (dashboardErrors.length > 0) {
+    console.error(
+      "Failed to load some dashboard data:",
+      dashboardErrors.map((error) => error?.message).join(" | ")
+    );
+  }
+
+  const currentFeedback = currentFeedbackResult.data;
+  const comparisonFeedback = comparisonFeedbackResult.data;
+  const reports = reportsResult.data;
+  const alerts = alertsResult.data;
+  const currentMetrics = calculateDashboardMetrics(currentFeedback);
+  const comparisonMetrics = calculateDashboardMetrics(comparisonFeedback);
+  const ratingTrend = buildRatingTrend(currentFeedback);
 
  const currentPlatformsCount = new Set(
   platforms.map((platform) => platform.platform_name)
@@ -154,87 +181,27 @@ const permissions = getSubscriptionPermissions(client, {
 
 const plan = permissions.plan;
 const canAddPlatforms = permissions.canAddPlatform;
-
-const stats = asObject(latestReport?.stats);
-const aiSummary = asObject(latestReport?.ai_summary);
-const sentiment = asObject("sentiment" in stats ? stats.sentiment : {});
-const averageRatingSource =
-  stats.average_rating ?? latestReport?.google_rating;
-
-const averageRating =
-  averageRatingSource === null ||
-  averageRatingSource === undefined ||
-  averageRatingSource === ""
-    ? "—"
-    : asNumber(averageRatingSource);
-
-const totalReviews = asNumber(
-  latestReport?.total_feedback ??
-    stats.total_feedback ??
-    latestReport?.total_reviews
+const reportIssues = extractReportIssues(reports);
+const liveIssues = summarizeTopIssues(currentFeedback);
+const topIssues = liveIssues.length > 0 ? liveIssues : reportIssues;
+const recommendations = extractRecommendations(reports);
+const branchNames = new Map(
+  (branches ?? []).map((branch) => [branch.id, branch.name])
 );
-
-const negativePct = asNumber(
-  latestReport?.negative_pct ??
-    sentiment.negative_percentage
-);
-
-const positivePct = asNumber(
-  latestReport?.positive_pct ??
-    sentiment.positive_percentage
-);
-
-const urgentCount = asNumber(
-  stats.urgent_cases_count ??
-    latestReport?.urgent_count
-);
-
-const suggestedRepliesCount = asNumber(
-  stats.needs_reply_count ??
-    latestReport?.suggested_replies_count
-);
-
-const aiIssues = asObjectArray(aiSummary.top_issues);
-const statisticalIssues = asObjectArray(stats.top_issues);
-
-const topIssues = (
-  aiIssues.length > 0 ? aiIssues : statisticalIssues
-).map((issue) => ({
-  label: String(
-    issue.title ??
-      issue.name ??
-      issue.label ??
-      "ملاحظة"
-  ),
-  count: asNumber(issue.count),
-}));
-
-const reportRecommendations = asObjectArray(
-  aiSummary.recommendations
-);
-
-const recommendations =
-  reportRecommendations.length > 0
-    ? reportRecommendations.map((item) => ({
-        title: String(item.title ?? "توصية"),
-        text: [
-          item.description,
-          item.suggested_action,
-          item.text,
-        ]
-          .filter(
-            (value): value is string =>
-              typeof value === "string" &&
-              value.trim().length > 0
-          )
-          .join(" — "),
-      }))
-    : [
-        {
-          title: "لا توجد توصيات بعد",
-          text: "ستظهر التوصيات بعد توفر تقرير مكتمل يحتوي على بيانات كافية.",
-        },
-      ];
+const suggestedReplies = currentFeedback
+  .filter(
+    (row) => row.needs_reply === true && Boolean(row.suggested_reply?.trim())
+  )
+  .slice(0, 3)
+  .map((row) => ({
+    id: `${row.source_table ?? "feedback"}-${row.source_record_id}`,
+    branchName:
+      (row.branch_id !== null ? branchNames.get(row.branch_id) : null) ??
+      "على مستوى المنشأة",
+    platformName: formatPlatform(row.platform_name ?? ""),
+    feedbackText: row.feedback_text?.trim() || "لا يتوفر نص للتعليق.",
+    suggestedReply: row.suggested_reply?.trim() || "",
+  }));
 
   return (
   <div dir="rtl" className="dashboard-print-root min-h-screen bg-[#F8F7F3] text-[#374375]">
@@ -253,54 +220,63 @@ const recommendations =
         <main className="min-w-0 flex-1 pb-10">
           <HeroSummary clientName={client.name} />
 
+          <PeriodSummary
+            start={periodRange.start}
+            end={periodRange.end}
+            hasError={dashboardErrors.length > 0}
+          />
+
           <section className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
             <KpiCard
               title="متوسط التقييم"
-              value={averageRating}
+              value={currentMetrics.averageRating ?? "—"}
               icon={<Star size={22} />}
             />
             <KpiCard
-              title="تعليقات هذا الأسبوع"
-              value={totalReviews}
+              title="تعليقات الفترة"
+              value={currentMetrics.totalFeedback}
               icon={<MessageSquareText size={22} />}
             />
             <KpiCard
               title="نسبة السلبي"
-              value={`${negativePct}%`}
+              value={`${currentMetrics.negativePct}%`}
               icon={<TrendingDown size={22} />}
               tone="bad"
             />
             <KpiCard
               title="رضا العملاء"
-              value={`${positivePct}%`}
+              value={`${currentMetrics.positivePct}%`}
               icon={<CheckCircle2 size={22} />}
               tone="good"
             />
             <KpiCard
               title="تحتاج تدخل سريع"
-              value={urgentCount}
+              value={currentMetrics.urgentCount}
               icon={<AlertTriangle size={22} />}
               tone="warn"
             />
             <KpiCard
               title="ردود مقترحة"
-              value={suggestedRepliesCount}
+              value={currentMetrics.needsReplyCount}
               icon={<Repeat2 size={22} />}
             />
           </section>
 
           <section className="mt-8 grid gap-6 xl:grid-cols-2">
-            <WeeklyComparison />
-            <RatingTrend />
+            <WeeklyComparison
+              current={currentMetrics}
+              previous={comparisonMetrics}
+            />
+            <RatingTrend points={ratingTrend} />
           </section>
 
           <section className="mt-8 grid gap-6 xl:grid-cols-2">
             <TopIssues issues={topIssues} />
-            <SmartAlerts />
+            <SmartAlerts alerts={alerts} />
           </section>
 
           <section className="mt-8 grid gap-6 xl:grid-cols-2">
-            <SuggestedReplies />
+            <SuggestedReplies replies={suggestedReplies} />
             <AiRecommendations recommendations={recommendations} />
           </section>
 
@@ -477,6 +453,37 @@ function HeroSummary({ clientName }: { clientName: string }) {
   );
 }
 
+function PeriodSummary({
+  start,
+  end,
+  hasError,
+}: {
+  start: Date;
+  end: Date;
+  hasError: boolean;
+}) {
+  const formatter = new Intl.DateTimeFormat("ar-SA", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+    timeZone: "UTC",
+  });
+
+  return (
+    <div
+      className={`mt-4 rounded-2xl border px-4 py-3 text-sm font-bold leading-7 ${
+        hasError
+          ? "border-amber-200 bg-amber-50 text-amber-800"
+          : "border-[#BABDE2]/35 bg-white text-gray-500"
+      }`}
+    >
+      {hasError
+        ? "تعذر تحميل بعض أقسام اللوحة. أعد المحاولة، وستبقى البيانات المتاحة ظاهرة."
+        : `البيانات المعروضة من ${formatter.format(start)} إلى ${formatter.format(end)}.`}
+    </div>
+  );
+}
+
 function KpiCard({
   title,
   value,
@@ -508,37 +515,81 @@ function KpiCard({
   );
 }
 
-function WeeklyComparison() {
+function WeeklyComparison({
+  current,
+  previous,
+}: {
+  current: DashboardMetrics;
+  previous: DashboardMetrics;
+}) {
   return (
     <Panel
       eyebrow="مقارنة الأداء"
-      title="الأسبوع الحالي مقارنة بالأسبوع الماضي"
+      title="الفترة الحالية مقارنة بالفترة السابقة"
       icon={<TrendingUp size={22} />}
     >
       <div className="space-y-4">
-        <ComparisonRow label="متوسط التقييم" current="—" previous="—" change="بانتظار أول تقرير" />
-        <ComparisonRow label="عدد التعليقات" current="0" previous="0" change="لا توجد بيانات بعد" />
-        <ComparisonRow label="نسبة السلبي" current="0%" previous="0%" change="سيظهر التحسن لاحقًا" />
+        <ComparisonRow
+          label="متوسط التقييم"
+          current={current.averageRating ?? "—"}
+          previous={previous.averageRating ?? "—"}
+          change={formatMetricChange(
+            current.averageRating,
+            previous.averageRating,
+            "نقطة"
+          )}
+        />
+        <ComparisonRow
+          label="عدد التعليقات"
+          current={current.totalFeedback}
+          previous={previous.totalFeedback}
+          change={formatMetricChange(
+            current.totalFeedback,
+            previous.totalFeedback,
+            "تعليق"
+          )}
+        />
+        <ComparisonRow
+          label="نسبة السلبي"
+          current={`${current.negativePct}%`}
+          previous={`${previous.negativePct}%`}
+          change={formatMetricChange(
+            current.negativePct,
+            previous.negativePct,
+            "نقطة مئوية",
+            true
+          )}
+        />
       </div>
     </Panel>
   );
 }
 
-function RatingTrend() {
+function RatingTrend({ points }: { points: RatingTrendPoint[] }) {
   return (
-    <Panel eyebrow="الاتجاه العام" title="رسم مبسط للتقييمات" icon={<BarChart3 size={22} />}>
-      <div className="flex h-52 items-end gap-3 rounded-3xl bg-[#F8F7F3] p-5">
-        {[35, 45, 40, 60, 55, 75, 68].map((height, index) => (
-          <div
-            key={index}
-            className="flex-1 rounded-t-2xl bg-[#BABDE2]"
-            style={{ height: `${height}%` }}
-          />
-        ))}
-      </div>
-      <p className="mt-4 text-sm text-gray-500">
-        سيعكس الرسم بيانات التقارير الأسبوعية بعد تشغيل n8n.
-      </p>
+    <Panel eyebrow="الاتجاه العام" title="اتجاه التقييمات خلال الفترة" icon={<BarChart3 size={22} />}>
+      {points.length === 0 ? (
+        <div className="rounded-2xl bg-[#F8F7F3] p-8 text-center text-sm font-bold text-gray-500">
+          لا توجد تقييمات رقمية ضمن الفترة والفلاتر المحددة.
+        </div>
+      ) : (
+        <div className="flex h-56 items-end gap-2 rounded-3xl bg-[#F8F7F3] p-4 sm:gap-3 sm:p-5">
+          {points.map((point) => (
+            <div key={point.date} className="flex h-full min-w-0 flex-1 flex-col justify-end text-center">
+              <span className="mb-2 text-xs font-extrabold text-[#374375]">
+                {point.value}
+              </span>
+              <div
+                className="mx-auto w-full max-w-12 rounded-t-xl bg-[#BABDE2]"
+                style={{ height: `${Math.max(8, (point.value / 5) * 78)}%` }}
+              />
+              <span className="mt-2 truncate text-[10px] text-gray-400">
+                {point.label}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
     </Panel>
   );
 }
@@ -589,40 +640,81 @@ function TopIssues({ issues }: { issues: any[] }) {
   );
 }
 
-function SmartAlerts() {
+function SmartAlerts({
+  alerts,
+}: {
+  alerts: {
+    id: number;
+    title: string | null;
+    message: string | null;
+    priority: string | null;
+  }[];
+}) {
   return (
     <Panel eyebrow="تنبيهات ذكية" title="تنبيهات تحتاج انتباهك" icon={<Lightbulb size={22} />}>
-      <div className="space-y-3">
-        <AlertItem text="ستظهر التنبيهات بعد أول تحليل للتعليقات." />
-        <AlertItem text="سيتم تنبيهك عند ارتفاع مشكلة متكررة مثل بطء الخدمة." />
-        <AlertItem text="سيظهر هنا أي فرع يحصل على تقييم منخفض." />
-      </div>
+      {alerts.length === 0 ? (
+        <div className="rounded-2xl bg-[#F8F7F3] p-6 text-center text-sm font-bold text-gray-500">
+          لا توجد تنبيهات مفتوحة تحتاج إلى متابعة.
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {alerts.map((alert) => (
+            <AlertItem
+              key={alert.id}
+              title={alert.title || "تنبيه يحتاج متابعة"}
+              text={alert.message || "راجع الحالة من مركز الردود."}
+              priority={alert.priority}
+            />
+          ))}
+        </div>
+      )}
     </Panel>
   );
 }
 
-function SuggestedReplies() {
+function SuggestedReplies({
+  replies,
+}: {
+  replies: {
+    id: string;
+    branchName: string;
+    platformName: string;
+    feedbackText: string;
+    suggestedReply: string;
+  }[];
+}) {
   return (
     <Panel eyebrow="اقتراح الردود" title="ردود مقترحة جاهزة" icon={<MessageSquareText size={22} />}>
-      <div className="rounded-3xl bg-[#F8F7F3] p-5">
-        <p className="text-sm text-gray-400">تعليق</p>
-        <p className="mt-2 font-bold text-[#374375]">
-          ستظهر هنا التعليقات التي تحتاج رد بعد التحليل.
-        </p>
-
-        <div className="mt-5 rounded-2xl border border-[#BABDE2]/40 bg-white p-4">
-          <p className="text-sm text-gray-400">رد مقترح</p>
-          <p className="mt-2 leading-7 text-gray-600">
-            نشكر لك ملاحظتك، ونعتذر عن التجربة التي واجهتها. تم تمرير الملاحظة للفريق المختص لتحسين جودة الخدمة.
-          </p>
+      {replies.length === 0 ? (
+        <div className="rounded-2xl bg-[#F8F7F3] p-6 text-center text-sm font-bold text-gray-500">
+          لا توجد ردود مقترحة ضمن الفترة والفلاتر المحددة.
         </div>
-
-        <div className="mt-5 flex flex-wrap gap-3">
-          <SmallButton>نسخ</SmallButton>
-          <SmallButton>اعتماد</SmallButton>
-          <SmallButton>تعديل</SmallButton>
+      ) : (
+        <div className="space-y-4">
+          {replies.map((reply) => (
+            <article key={reply.id} className="rounded-3xl bg-[#F8F7F3] p-5">
+              <p className="text-xs font-bold text-gray-400">
+                {reply.branchName} · {reply.platformName}
+              </p>
+              <p className="mt-2 line-clamp-2 font-bold leading-7 text-[#374375]">
+                {reply.feedbackText}
+              </p>
+              <div className="mt-4 rounded-2xl border border-[#BABDE2]/40 bg-white p-4">
+                <p className="text-xs font-bold text-gray-400">الرد المقترح</p>
+                <p className="mt-2 line-clamp-3 leading-7 text-gray-600">
+                  {reply.suggestedReply}
+                </p>
+              </div>
+            </article>
+          ))}
+          <Link
+            href="/dashboard/replies"
+            className="inline-flex rounded-full bg-[#374375] px-5 py-2.5 text-sm font-bold text-white transition hover:bg-[#895159]"
+          >
+            عرض مركز الردود
+          </Link>
         </div>
-      </div>
+      )}
     </Panel>
   );
 }
@@ -755,20 +847,30 @@ function ComparisonRow({
   );
 }
 
-function AlertItem({ text }: { text: string }) {
+function AlertItem({
+  title,
+  text,
+  priority,
+}: {
+  title: string;
+  text: string;
+  priority: string | null;
+}) {
   return (
     <div className="flex items-start gap-3 rounded-2xl bg-[#F8F7F3] p-4">
       <AlertTriangle size={18} className="mt-1 text-[#895159]" />
-      <p className="leading-7 text-gray-600">{text}</p>
+      <div className="min-w-0">
+        <div className="flex flex-wrap items-center gap-2">
+          <p className="font-extrabold text-[#374375]">{title}</p>
+          {priority && (
+            <span className="rounded-full bg-[#DFAEA1]/25 px-2.5 py-1 text-[10px] font-bold text-[#895159]">
+              {formatPriority(priority)}
+            </span>
+          )}
+        </div>
+        <p className="mt-1 whitespace-pre-line leading-7 text-gray-600">{text}</p>
+      </div>
     </div>
-  );
-}
-
-function SmallButton({ children }: { children: React.ReactNode }) {
-  return (
-    <button className="rounded-full border border-[#BABDE2]/60 bg-white px-4 py-2 text-sm font-bold text-[#374375] transition hover:bg-[#374375] hover:text-white">
-      {children}
-    </button>
   );
 }
 
@@ -811,4 +913,226 @@ function asObjectArray(value: unknown): Record<string, any>[] {
 function asNumber(value: unknown): number {
   const number = Number(value);
   return Number.isFinite(number) ? number : 0;
+}
+
+type DashboardQueryScope = {
+  clientId: number;
+  branchId: number | null;
+  platformId: number | null;
+};
+
+type DashboardFeedbackScope = DashboardQueryScope & {
+  start: Date;
+  end: Date;
+};
+
+type QueryError = { message: string } | null;
+
+async function loadDashboardFeedback(
+  supabase: ReturnType<typeof createSupabaseServerClient>,
+  scope: DashboardFeedbackScope
+): Promise<{ data: DashboardFeedbackRow[]; error: QueryError }> {
+  const pageSize = 1000;
+  const rows: DashboardFeedbackRow[] = [];
+
+  for (let from = 0; ; from += pageSize) {
+    let query = supabase
+      .from("unified_feedback")
+      .select(
+        "source_table, source_record_id, branch_id, platform_id, platform_name, feedback_text, rating, published_at, sentiment, category, severity, needs_reply, is_complaint, suggested_reply"
+      )
+      .eq("client_id", scope.clientId)
+      .gte("published_at", scope.start.toISOString())
+      .lte("published_at", scope.end.toISOString())
+      .order("published_at", { ascending: false });
+
+    if (scope.branchId !== null) {
+      query = query.or(
+        `branch_id.eq.${scope.branchId},branch_id.is.null`
+      );
+    }
+
+    if (scope.platformId !== null) {
+      query = query.eq("platform_id", scope.platformId);
+    }
+
+    const { data, error } = await query.range(from, from + pageSize - 1);
+
+    if (error) {
+      return { data: rows, error: { message: error.message } };
+    }
+
+    const page = (data ?? []) as DashboardFeedbackRow[];
+    rows.push(...page);
+
+    if (page.length < pageSize) {
+      return { data: rows, error: null };
+    }
+  }
+}
+
+async function loadDashboardReports(
+  supabase: ReturnType<typeof createSupabaseServerClient>,
+  scope: DashboardQueryScope
+): Promise<{ data: any[]; error: QueryError }> {
+  let query = supabase
+    .from("reports")
+    .select(
+      "id, branch_id, platform_id, report_type, period_start, period_end, stats, ai_summary, created_at"
+    )
+    .eq("client_id", scope.clientId)
+    .eq("status", "completed")
+    .order("created_at", { ascending: false })
+    .limit(30);
+
+  if (scope.branchId !== null) {
+    query = query.or(`branch_id.eq.${scope.branchId},branch_id.is.null`);
+  }
+
+  if (scope.platformId !== null) {
+    query = query.eq("platform_id", scope.platformId);
+  }
+
+  const { data, error } = await query;
+  return {
+    data: data ?? [],
+    error: error ? { message: error.message } : null,
+  };
+}
+
+async function loadDashboardAlerts(
+  supabase: ReturnType<typeof createSupabaseServerClient>,
+  scope: DashboardQueryScope
+): Promise<{
+  data: {
+    id: number;
+    title: string | null;
+    message: string | null;
+    priority: string | null;
+  }[];
+  error: QueryError;
+}> {
+  let query = supabase
+    .from("alerts")
+    .select("id, title, message, priority")
+    .eq("client_id", scope.clientId)
+    .in("status", ["new", "sent"])
+    .order("created_at", { ascending: false })
+    .limit(5);
+
+  if (scope.branchId !== null) {
+    query = query.or(`branch_id.eq.${scope.branchId},branch_id.is.null`);
+  }
+
+  if (scope.platformId !== null) {
+    query = query.eq("platform_id", scope.platformId);
+  }
+
+  const { data, error } = await query;
+  return {
+    data: data ?? [],
+    error: error ? { message: error.message } : null,
+  };
+}
+
+function latestReportsByPlatform(reports: any[]) {
+  const seen = new Set<string>();
+
+  return reports.filter((report) => {
+    const key = `${report.platform_id ?? "all"}:${report.branch_id ?? "all"}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+function extractReportIssues(reports: any[]) {
+  const counts = new Map<string, number>();
+
+  for (const report of latestReportsByPlatform(reports)) {
+    const aiSummary = asObject(report.ai_summary);
+    const stats = asObject(report.stats);
+    const issues = [
+      ...asObjectArray(aiSummary.top_issues),
+      ...asObjectArray(stats.top_issues),
+    ];
+
+    for (const issue of issues) {
+      const label = String(
+        issue.title ?? issue.name ?? issue.label ?? ""
+      ).trim();
+      if (!label) continue;
+      counts.set(label, (counts.get(label) ?? 0) + asNumber(issue.count || 1));
+    }
+  }
+
+  return Array.from(counts, ([label, count]) => ({ label, count }))
+    .sort((left, right) => right.count - left.count)
+    .slice(0, 5);
+}
+
+function extractRecommendations(reports: any[]) {
+  const recommendations: { title: string; text: string }[] = [];
+  const seen = new Set<string>();
+
+  for (const report of latestReportsByPlatform(reports)) {
+    const aiSummary = asObject(report.ai_summary);
+    const values = Array.isArray(aiSummary.recommendations)
+      ? aiSummary.recommendations
+      : [];
+
+    for (const value of values) {
+      const item = asObject(value);
+      const text =
+        typeof value === "string"
+          ? value.trim()
+          : [item.description, item.suggested_action, item.text]
+              .filter(
+                (part): part is string =>
+                  typeof part === "string" && part.trim().length > 0
+              )
+              .join(" — ");
+      if (!text || seen.has(text)) continue;
+
+      seen.add(text);
+      recommendations.push({
+        title:
+          typeof value === "string"
+            ? "توصية"
+            : String(item.title ?? "توصية"),
+        text,
+      });
+    }
+  }
+
+  return recommendations.length > 0
+    ? recommendations.slice(0, 5)
+    : [
+        {
+          title: "لا توجد توصيات بعد",
+          text: "ستظهر التوصيات بعد توفر تقرير مكتمل يحتوي على بيانات كافية.",
+        },
+      ];
+}
+
+function formatMetricChange(
+  current: number | null,
+  previous: number | null,
+  unit: string,
+  lowerIsBetter = false
+) {
+  if (current === null || previous === null) return "لا توجد مقارنة كافية";
+
+  const difference = Math.round((current - previous) * 10) / 10;
+  if (difference === 0) return "دون تغيير";
+
+  const improved = lowerIsBetter ? difference < 0 : difference > 0;
+  return `${improved ? "تحسن" : "تراجع"} ${Math.abs(difference)} ${unit}`;
+}
+
+function formatPriority(priority: string) {
+  if (priority.toLowerCase() === "high") return "أولوية مرتفعة";
+  if (priority.toLowerCase() === "medium") return "أولوية متوسطة";
+  if (priority.toLowerCase() === "low") return "أولوية منخفضة";
+  return priority;
 }
