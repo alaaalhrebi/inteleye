@@ -5,31 +5,22 @@ import {
   AlertTriangle,
   BarChart3,
   Building2,
-  CheckCircle2,
   FileText,
   Lightbulb,
-  MessageSquareText,
   Plus,
   RadioTower,
   Repeat2,
   Settings,
-  Star,
-  TrendingDown,
-  TrendingUp,
 } from "lucide-react";
 import LogoutButton from "@/components/dashboard/LogoutButton";
 import DashboardFilters from "@/components/dashboard/DashboardFilters";
 import PrintDashboardButton from "@/components/dashboard/PrintDashboardButton";
+import InteractiveDashboard from "@/components/dashboard/InteractiveDashboard";
 import { getSubscriptionPermissions } from "@/lib/subscription-permissions";
 import {
-  buildRatingTrend,
-  calculateDashboardMetrics,
   getDashboardPeriodRange,
   normalizeDashboardPeriod,
-  summarizeTopIssues,
   type DashboardFeedbackRow,
-  type DashboardMetrics,
-  type RatingTrendPoint,
 } from "@/lib/dashboard-analytics";
 
 export default async function DashboardPage({
@@ -167,9 +158,6 @@ export default async function DashboardPage({
   const comparisonFeedback = comparisonFeedbackResult.data;
   const reports = reportsResult.data;
   const alerts = alertsResult.data;
-  const currentMetrics = calculateDashboardMetrics(currentFeedback);
-  const comparisonMetrics = calculateDashboardMetrics(comparisonFeedback);
-  const ratingTrend = buildRatingTrend(currentFeedback);
 
  const currentPlatformsCount = new Set(
   platforms.map((platform) => platform.platform_name)
@@ -181,27 +169,18 @@ const permissions = getSubscriptionPermissions(client, {
 
 const plan = permissions.plan;
 const canAddPlatforms = permissions.canAddPlatform;
-const reportIssues = extractReportIssues(reports);
-const liveIssues = summarizeTopIssues(currentFeedback);
-const topIssues = liveIssues.length > 0 ? liveIssues : reportIssues;
 const recommendations = extractRecommendations(reports);
-const branchNames = new Map(
-  (branches ?? []).map((branch) => [branch.id, branch.name])
+const branchNames = Object.fromEntries(
+  (branches ?? []).map((branch) => [String(branch.id), branch.name])
 );
-const suggestedReplies = currentFeedback
-  .filter(
-    (row) => row.needs_reply === true && Boolean(row.suggested_reply?.trim())
-  )
-  .slice(0, 3)
-  .map((row) => ({
-    id: `${row.source_table ?? "feedback"}-${row.source_record_id}`,
-    branchName:
-      (row.branch_id !== null ? branchNames.get(row.branch_id) : null) ??
-      "على مستوى المنشأة",
-    platformName: formatPlatform(row.platform_name ?? ""),
-    feedbackText: row.feedback_text?.trim() || "لا يتوفر نص للتعليق.",
-    suggestedReply: row.suggested_reply?.trim() || "",
-  }));
+const selectedPlatformName =
+  selectedPlatform === null
+    ? null
+    : platforms.find((platform) => platform.id === selectedPlatform)
+        ?.platform_name ?? null;
+const activePlatforms = Array.from(
+  new Set(platforms.map((platform) => platform.platform_name).filter(Boolean))
+);
 
   return (
   <div dir="rtl" className="dashboard-print-root min-h-screen bg-[#F8F7F3] text-[#374375]">
@@ -218,69 +197,24 @@ const suggestedReplies = currentFeedback
         />
 
         <main className="min-w-0 flex-1 pb-10">
-          <HeroSummary clientName={client.name} />
-
-          <PeriodSummary
-            start={periodRange.start}
-            end={periodRange.end}
+          <InteractiveDashboard
+            clientName={client.name}
+            feedback={currentFeedback}
+            comparisonFeedback={comparisonFeedback}
+            selectedPlatformName={selectedPlatformName}
+            activePlatforms={activePlatforms}
+            branchNames={branchNames}
+            periodStart={periodRange.start.toISOString()}
+            periodEnd={periodRange.end.toISOString()}
             hasError={dashboardErrors.length > 0}
           />
 
-          <section className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
-            <KpiCard
-              title="متوسط التقييم"
-              value={currentMetrics.averageRating ?? "—"}
-              icon={<Star size={22} />}
-            />
-            <KpiCard
-              title="تعليقات الفترة"
-              value={currentMetrics.totalFeedback}
-              icon={<MessageSquareText size={22} />}
-            />
-            <KpiCard
-              title="نسبة السلبي"
-              value={`${currentMetrics.negativePct}%`}
-              icon={<TrendingDown size={22} />}
-              tone="bad"
-            />
-            <KpiCard
-              title="رضا العملاء"
-              value={`${currentMetrics.positivePct}%`}
-              icon={<CheckCircle2 size={22} />}
-              tone="good"
-            />
-            <KpiCard
-              title="تحتاج تدخل سريع"
-              value={currentMetrics.urgentCount}
-              icon={<AlertTriangle size={22} />}
-              tone="warn"
-            />
-            <KpiCard
-              title="ردود مقترحة"
-              value={currentMetrics.needsReplyCount}
-              icon={<Repeat2 size={22} />}
-            />
-          </section>
-
-          <section className="mt-8 grid gap-6 xl:grid-cols-2">
-            <WeeklyComparison
-              current={currentMetrics}
-              previous={comparisonMetrics}
-            />
-            <RatingTrend points={ratingTrend} />
-          </section>
-
-          <section className="mt-8 grid gap-6 xl:grid-cols-2">
-            <TopIssues issues={topIssues} />
+          <section className="mt-6 grid gap-6 xl:grid-cols-2">
             <SmartAlerts alerts={alerts} />
-          </section>
-
-          <section className="mt-8 grid gap-6 xl:grid-cols-2">
-            <SuggestedReplies replies={suggestedReplies} />
             <AiRecommendations recommendations={recommendations} />
           </section>
 
-          <section className="mt-8">
+          <section className="mt-6">
             <PlatformsSection
               platforms={platforms}
               canAddPlatforms={canAddPlatforms}
@@ -438,208 +372,6 @@ function DashboardMenuLink({
 }
 
 
-function HeroSummary({ clientName }: { clientName: string }) {
-  return (
-   <section className="rounded-[1.5rem] sm:rounded-[2rem] border border-[#BABDE2]/30 bg-white p-6 sm:p-8 shadow-sm">
-      <p className="text-xs sm:text-sm text-gray-400">لوحة التحكم</p>
-      <h2 className="mt-2 text-2xl sm:text-3xl lg:text-4xl font-extrabold text-[#374375]">
-        مرحبًا، {clientName}
-      </h2>
-      <p className="mt-3 sm:mt-4 max-w-3xl text-sm sm:text-base lg:text-lg leading-relaxed text-gray-500">
-        هنا ملخص أداء منصاتك، الفروع، التقارير، التنبيهات الذكية، التوصيات،
-        واقتراحات الردود بناءً على تحليل تقييمات العملاء.
-      </p>
-    </section>
-  );
-}
-
-function PeriodSummary({
-  start,
-  end,
-  hasError,
-}: {
-  start: Date;
-  end: Date;
-  hasError: boolean;
-}) {
-  const formatter = new Intl.DateTimeFormat("ar-SA", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-    timeZone: "UTC",
-  });
-
-  return (
-    <div
-      className={`mt-4 rounded-2xl border px-4 py-3 text-sm font-bold leading-7 ${
-        hasError
-          ? "border-amber-200 bg-amber-50 text-amber-800"
-          : "border-[#BABDE2]/35 bg-white text-gray-500"
-      }`}
-    >
-      {hasError
-        ? "تعذر تحميل بعض أقسام اللوحة. أعد المحاولة، وستبقى البيانات المتاحة ظاهرة."
-        : `البيانات المعروضة من ${formatter.format(start)} إلى ${formatter.format(end)}.`}
-    </div>
-  );
-}
-
-function KpiCard({
-  title,
-  value,
-  icon,
-  tone,
-}: {
-  title: string;
-  value: any;
-  icon: React.ReactNode;
-  tone?: "good" | "bad" | "warn";
-}) {
-  const toneClass =
-    tone === "bad"
-      ? "text-red-600 bg-red-50"
-      : tone === "warn"
-      ? "text-amber-700 bg-amber-50"
-      : tone === "good"
-      ? "text-[#895159] bg-[#DFAEA1]/25"
-      : "text-[#374375] bg-[#BABDE2]/30";
-
-  return (
-    <div className="rounded-[1.2rem] border border-[#BABDE2]/30 bg-white p-4 sm:p-5 shadow-sm transition-all hover:shadow-md">
-      <div className={`mb-3 sm:mb-5 flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-xl sm:rounded-2xl ${toneClass}`}>
-        <div className="scale-90 sm:scale-100">{icon}</div>
-      </div>
-      <p className="text-xs sm:text-sm text-gray-400 truncate">{title}</p>
-      <p className="mt-1 sm:mt-3 text-xl sm:text-2xl lg:text-3xl font-extrabold text-[#374375]">{value}</p>
-    </div>
-  );
-}
-
-function WeeklyComparison({
-  current,
-  previous,
-}: {
-  current: DashboardMetrics;
-  previous: DashboardMetrics;
-}) {
-  return (
-    <Panel
-      eyebrow="مقارنة الأداء"
-      title="الفترة الحالية مقارنة بالفترة السابقة"
-      icon={<TrendingUp size={22} />}
-    >
-      <div className="space-y-4">
-        <ComparisonRow
-          label="متوسط التقييم"
-          current={current.averageRating ?? "—"}
-          previous={previous.averageRating ?? "—"}
-          change={formatMetricChange(
-            current.averageRating,
-            previous.averageRating,
-            "نقطة"
-          )}
-        />
-        <ComparisonRow
-          label="عدد التعليقات"
-          current={current.totalFeedback}
-          previous={previous.totalFeedback}
-          change={formatMetricChange(
-            current.totalFeedback,
-            previous.totalFeedback,
-            "تعليق"
-          )}
-        />
-        <ComparisonRow
-          label="نسبة السلبي"
-          current={`${current.negativePct}%`}
-          previous={`${previous.negativePct}%`}
-          change={formatMetricChange(
-            current.negativePct,
-            previous.negativePct,
-            "نقطة مئوية",
-            true
-          )}
-        />
-      </div>
-    </Panel>
-  );
-}
-
-function RatingTrend({ points }: { points: RatingTrendPoint[] }) {
-  return (
-    <Panel eyebrow="الاتجاه العام" title="اتجاه التقييمات خلال الفترة" icon={<BarChart3 size={22} />}>
-      {points.length === 0 ? (
-        <div className="rounded-2xl bg-[#F8F7F3] p-8 text-center text-sm font-bold text-gray-500">
-          لا توجد تقييمات رقمية ضمن الفترة والفلاتر المحددة.
-        </div>
-      ) : (
-        <div className="flex h-56 items-end gap-2 rounded-3xl bg-[#F8F7F3] p-4 sm:gap-3 sm:p-5">
-          {points.map((point) => (
-            <div key={point.date} className="flex h-full min-w-0 flex-1 flex-col justify-end text-center">
-              <span className="mb-2 text-xs font-extrabold text-[#374375]">
-                {point.value}
-              </span>
-              <div
-                className="mx-auto w-full max-w-12 rounded-t-xl bg-[#BABDE2]"
-                style={{ height: `${Math.max(8, (point.value / 5) * 78)}%` }}
-              />
-              <span className="mt-2 truncate text-[10px] text-gray-400">
-                {point.label}
-              </span>
-            </div>
-          ))}
-        </div>
-      )}
-    </Panel>
-  );
-}
-
-function TopIssues({ issues }: { issues: any[] }) {
-  return (
-    <Panel
-      eyebrow="المشاكل المتكررة"
-      title="أكثر المشاكل تكرارًا هذا الأسبوع"
-      icon={<AlertTriangle size={22} />}
-    >
-      {issues.length === 0 ? (
-        <div className="rounded-2xl bg-[#F8F7F3] p-6 text-center text-sm font-bold text-gray-500">
-          لا توجد مشاكل متكررة مسجلة في التقرير الحالي.
-        </div>
-      ) : (
-        <div className="space-y-4">
-          {issues.map((issue, index) => {
-            const width =
-              issue.count > 0
-                ? Math.min(100, Math.max(8, issue.count * 6))
-                : 0;
-
-            return (
-              <div key={`${issue.label}-${index}`}>
-                <div className="mb-2 flex items-center justify-between text-sm">
-                  <span className="font-bold text-[#374375]">
-                    {issue.label}
-                  </span>
-
-                  <span className="text-gray-400">
-                    {issue.count} مرة
-                  </span>
-                </div>
-
-                <div className="h-3 rounded-full bg-[#F8F7F3]">
-                  <div
-                    className="h-3 rounded-full bg-[#895159]"
-                    style={{ width: `${width}%` }}
-                  />
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
-    </Panel>
-  );
-}
-
 function SmartAlerts({
   alerts,
 }: {
@@ -666,53 +398,6 @@ function SmartAlerts({
               priority={alert.priority}
             />
           ))}
-        </div>
-      )}
-    </Panel>
-  );
-}
-
-function SuggestedReplies({
-  replies,
-}: {
-  replies: {
-    id: string;
-    branchName: string;
-    platformName: string;
-    feedbackText: string;
-    suggestedReply: string;
-  }[];
-}) {
-  return (
-    <Panel eyebrow="اقتراح الردود" title="ردود مقترحة جاهزة" icon={<MessageSquareText size={22} />}>
-      {replies.length === 0 ? (
-        <div className="rounded-2xl bg-[#F8F7F3] p-6 text-center text-sm font-bold text-gray-500">
-          لا توجد ردود مقترحة ضمن الفترة والفلاتر المحددة.
-        </div>
-      ) : (
-        <div className="space-y-4">
-          {replies.map((reply) => (
-            <article key={reply.id} className="rounded-3xl bg-[#F8F7F3] p-5">
-              <p className="text-xs font-bold text-gray-400">
-                {reply.branchName} · {reply.platformName}
-              </p>
-              <p className="mt-2 line-clamp-2 font-bold leading-7 text-[#374375]">
-                {reply.feedbackText}
-              </p>
-              <div className="mt-4 rounded-2xl border border-[#BABDE2]/40 bg-white p-4">
-                <p className="text-xs font-bold text-gray-400">الرد المقترح</p>
-                <p className="mt-2 line-clamp-3 leading-7 text-gray-600">
-                  {reply.suggestedReply}
-                </p>
-              </div>
-            </article>
-          ))}
-          <Link
-            href="/dashboard/replies"
-            className="inline-flex rounded-full bg-[#374375] px-5 py-2.5 text-sm font-bold text-white transition hover:bg-[#895159]"
-          >
-            عرض مركز الردود
-          </Link>
         </div>
       )}
     </Panel>
@@ -822,31 +507,6 @@ function Panel({
   );
 }
 
-function ComparisonRow({
-  label,
-  current,
-  previous,
-  change,
-}: {
-  label: string;
-  current: any;
-  previous: any;
-  change: string;
-}) {
-  return (
-    <div className="rounded-2xl bg-[#F8F7F3] p-4">
-      <div className="flex items-center justify-between">
-        <span className="font-bold text-[#374375]">{label}</span>
-        <span className="text-sm text-gray-400">{change}</span>
-      </div>
-      <div className="mt-3 flex items-center gap-5 text-sm text-gray-500">
-        <span>الحالي: {current}</span>
-        <span>السابق: {previous}</span>
-      </div>
-    </div>
-  );
-}
-
 function AlertItem({
   title,
   text,
@@ -897,22 +557,6 @@ function asObject(value: unknown): Record<string, any> {
   }
 
   return {};
-}
-
-function asObjectArray(value: unknown): Record<string, any>[] {
-  if (!Array.isArray(value)) return [];
-
-  return value.filter(
-    (item): item is Record<string, any> =>
-      Boolean(item) &&
-      typeof item === "object" &&
-      !Array.isArray(item)
-  );
-}
-
-function asNumber(value: unknown): number {
-  const number = Number(value);
-  return Number.isFinite(number) ? number : 0;
 }
 
 type DashboardQueryScope = {
@@ -1046,31 +690,6 @@ function latestReportsByPlatform(reports: any[]) {
   });
 }
 
-function extractReportIssues(reports: any[]) {
-  const counts = new Map<string, number>();
-
-  for (const report of latestReportsByPlatform(reports)) {
-    const aiSummary = asObject(report.ai_summary);
-    const stats = asObject(report.stats);
-    const issues = [
-      ...asObjectArray(aiSummary.top_issues),
-      ...asObjectArray(stats.top_issues),
-    ];
-
-    for (const issue of issues) {
-      const label = String(
-        issue.title ?? issue.name ?? issue.label ?? ""
-      ).trim();
-      if (!label) continue;
-      counts.set(label, (counts.get(label) ?? 0) + asNumber(issue.count || 1));
-    }
-  }
-
-  return Array.from(counts, ([label, count]) => ({ label, count }))
-    .sort((left, right) => right.count - left.count)
-    .slice(0, 5);
-}
-
 function extractRecommendations(reports: any[]) {
   const recommendations: { title: string; text: string }[] = [];
   const seen = new Set<string>();
@@ -1113,21 +732,6 @@ function extractRecommendations(reports: any[]) {
           text: "ستظهر التوصيات بعد توفر تقرير مكتمل يحتوي على بيانات كافية.",
         },
       ];
-}
-
-function formatMetricChange(
-  current: number | null,
-  previous: number | null,
-  unit: string,
-  lowerIsBetter = false
-) {
-  if (current === null || previous === null) return "لا توجد مقارنة كافية";
-
-  const difference = Math.round((current - previous) * 10) / 10;
-  if (difference === 0) return "دون تغيير";
-
-  const improved = lowerIsBetter ? difference < 0 : difference > 0;
-  return `${improved ? "تحسن" : "تراجع"} ${Math.abs(difference)} ${unit}`;
 }
 
 function formatPriority(priority: string) {
