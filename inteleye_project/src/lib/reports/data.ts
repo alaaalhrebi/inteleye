@@ -5,6 +5,7 @@ import type {
   ReportListItem,
   ReportsSnapshot,
   ReportStatus,
+  ReportUrgentCase,
 } from "@/lib/reports/types";
 
 type SupabaseClientLike = {
@@ -53,7 +54,13 @@ export async function loadReportsSnapshot(
   supabase: SupabaseClientLike,
   clientId: number
 ): Promise<ReportsSnapshot> {
-  const [reportsResult, requestsResult, branchesResult, platformsResult] =
+  const [
+    reportsResult,
+    requestsResult,
+    branchesResult,
+    platformsResult,
+    urgentFeedbackResult,
+  ] =
     await Promise.all([
       supabase
         .from("reports")
@@ -78,6 +85,15 @@ export async function loadReportsSnapshot(
         .eq("client_id", clientId)
         .eq("is_active", true)
         .order("created_at", { ascending: true }),
+      supabase
+        .from("unified_feedback")
+        .select(
+          "source_table, source_record_id, branch_id, platform_id, platform_name, feedback_text, rating, published_at, sentiment, category, severity, needs_reply"
+        )
+        .eq("client_id", clientId)
+        .in("severity", ["high", "critical"])
+        .order("published_at", { ascending: false })
+        .limit(1000),
     ]);
 
   const firstError = [
@@ -111,6 +127,10 @@ export async function loadReportsSnapshot(
     platforms.map((platform) => [platform.id, platform.name])
   );
   const coveredRequestIds = new Set<string>();
+  const urgentFeedback = (urgentFeedbackResult.data ?? []) as Record<
+    string,
+    unknown
+  >[];
 
   const reports: ReportListItem[] = (reportsResult.data ?? []).map(
     (raw: Record<string, unknown>) => {
@@ -145,6 +165,12 @@ export async function loadReportsSnapshot(
         totalFeedback: numberValue(raw.total_feedback),
         stats: objectValue(raw.stats),
         aiSummary: objectValue(raw.ai_summary),
+        urgentCases: urgentCasesForReport(urgentFeedback, {
+          branchId,
+          platformId,
+          periodStart: stringValue(raw.period_start),
+          periodEnd: stringValue(raw.period_end),
+        }),
       };
     }
   );
@@ -176,6 +202,7 @@ export async function loadReportsSnapshot(
       totalFeedback: 0,
       stats: null,
       aiSummary: null,
+      urgentCases: [],
     });
   }
 
@@ -185,4 +212,70 @@ export async function loadReportsSnapshot(
   );
 
   return { reports, branches, platforms };
+}
+
+function urgentCasesForReport(
+  feedback: Record<string, unknown>[],
+  scope: {
+    branchId: number | null;
+    platformId: number | null;
+    periodStart: string | null;
+    periodEnd: string | null;
+  }
+): ReportUrgentCase[] {
+  return feedback
+    .filter((row) => {
+      const publishedDate = stringValue(row.published_at)?.slice(0, 10);
+      if (!publishedDate) return false;
+      if (scope.periodStart && publishedDate < scope.periodStart.slice(0, 10)) {
+        return false;
+      }
+      if (scope.periodEnd && publishedDate > scope.periodEnd.slice(0, 10)) {
+        return false;
+      }
+
+      const rowPlatformId =
+        typeof row.platform_id === "number" ? row.platform_id : null;
+      if (
+        scope.platformId !== null &&
+        rowPlatformId !== scope.platformId
+      ) {
+        return false;
+      }
+
+      const rowBranchId =
+        typeof row.branch_id === "number" ? row.branch_id : null;
+      if (
+        scope.platformId === null &&
+        scope.branchId !== null &&
+        rowBranchId !== null &&
+        rowBranchId !== scope.branchId
+      ) {
+        return false;
+      }
+
+      return Boolean(stringValue(row.feedback_text));
+    })
+    .slice(0, 10)
+    .map((row) => ({
+      key: `${stringValue(row.source_table) || "feedback"}-${String(
+        row.source_record_id ?? "unknown"
+      )}`,
+      text: stringValue(row.feedback_text) || "",
+      platformName: stringValue(row.platform_name) || "منصة",
+      publishedAt: stringValue(row.published_at),
+      sentiment: stringValue(row.sentiment),
+      severity: stringValue(row.severity),
+      categories: Array.isArray(row.category)
+        ? row.category.filter(
+            (value): value is string =>
+              typeof value === "string" && value.trim().length > 0
+          )
+        : [],
+      rating:
+        typeof row.rating === "number" && Number.isFinite(row.rating)
+          ? row.rating
+          : null,
+      needsReply: row.needs_reply === true,
+    }));
 }

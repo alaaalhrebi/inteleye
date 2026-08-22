@@ -19,6 +19,18 @@ export type ReportStatus =
   | "no_data"
   | "failed";
 
+export type ReportUrgentCase = {
+  key: string;
+  text: string;
+  platformName: string;
+  publishedAt: string | null;
+  sentiment: string | null;
+  severity: string | null;
+  categories: string[];
+  rating: number | null;
+  needsReply: boolean;
+};
+
 export type ReportListItem = {
   key: string;
   reportId: number | null;
@@ -37,6 +49,7 @@ export type ReportListItem = {
   totalFeedback: number;
   stats: JsonRecord | null;
   aiSummary: JsonRecord | null;
+  urgentCases: ReportUrgentCase[];
 };
 
 export type ReportsSnapshot = {

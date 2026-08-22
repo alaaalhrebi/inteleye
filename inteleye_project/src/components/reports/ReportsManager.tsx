@@ -367,6 +367,7 @@ export default function ReportsManager({
                   totalFeedback: 0,
                   stats: null,
                   aiSummary: null,
+                  urgentCases: [],
                 },
                 ...current.reports.filter(
                   (item) => item.requestId !== result.requestId
