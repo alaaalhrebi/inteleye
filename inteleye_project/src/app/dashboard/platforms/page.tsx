@@ -214,11 +214,11 @@ export default async function PlatformsPage() {
             </p>
           </div>
           <Link
-            href={permissions.canAddPlatform ? "/onboarding/platforms" : "/pricing"}
+            href={permissions.canUsePlatform ? "/onboarding/platforms" : "/pricing"}
             className="inline-flex shrink-0 items-center justify-center gap-2 rounded-full bg-white px-6 py-3 text-sm font-bold text-[#374375] transition hover:bg-[#DFAEA1]"
           >
-            {permissions.canAddPlatform ? <Plus size={18} /> : <LockKeyhole size={18} />}
-            {permissions.canAddPlatform ? "ربط منصة" : "عرض الباقات"}
+            {permissions.canUsePlatform ? <Plus size={18} /> : <LockKeyhole size={18} />}
+            {permissions.canUsePlatform ? "إضافة أو ربط منصة" : "عرض الباقات"}
           </Link>
         </section>
       </main>

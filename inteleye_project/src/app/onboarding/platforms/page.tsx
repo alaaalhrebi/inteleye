@@ -1,15 +1,18 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import type { FormEvent } from "react";
+import type { FormEvent, ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
+  Building2,
   CheckCircle2,
+  Globe2,
   MapPin,
   MessageCircle,
   Music2,
   Instagram,
+  Plus,
   Sparkles,
 } from "lucide-react";
 
@@ -86,17 +89,21 @@ function getPlatformInputConfig(selectedPlatform: string) {
     helpText: "",
   };
 }
-function normalizeXUsername(value: string) {
-  return value.trim().replace(/^@/, "");
-}
+type BranchOption = { id: number; name: string };
+type PlatformScope = "" | "global" | "existing_branch" | "new_branch";
 
 export default function PlatformsOnboardingPage() {
   const router = useRouter();
   const supabase = useMemo(() => createSupabaseBrowserClient(), []);
 
-  const [clientId, setClientId] = useState<number | null>(null);
   const [platformLimit, setPlatformLimit] = useState(1);
   const [existingPlatformsCount, setExistingPlatformsCount] = useState(0);
+  const [existingPlatformNames, setExistingPlatformNames] = useState<string[]>([]);
+  const [branches, setBranches] = useState<BranchOption[]>([]);
+  const [canCreateBranch, setCanCreateBranch] = useState(false);
+  const [scope, setScope] = useState<PlatformScope>("");
+  const [selectedBranchId, setSelectedBranchId] = useState("");
+  const [newBranchName, setNewBranchName] = useState("");
 
   const [selectedPlatform, setSelectedPlatform] = useState("google_maps");
   const [platformUrl, setPlatformUrl] = useState("");
@@ -139,32 +146,40 @@ export default function PlatformsOnboardingPage() {
         return;
       }
 
-      const { data: currentPlatforms, error: platformsError } = await supabase
-        .from("client_platforms")
-        .select("id, platform_name, branch_id")
-        .eq("client_id", client.id)
-        .eq("is_active", true);
+      const [platformsResult, branchesResult] = await Promise.all([
+        supabase
+          .from("client_platforms")
+          .select("id, platform_name, branch_id")
+          .eq("client_id", client.id)
+          .eq("is_active", true),
+        supabase
+          .from("branches")
+          .select("id, name")
+          .eq("client_id", client.id)
+          .eq("is_active", true)
+          .order("created_at", { ascending: true }),
+      ]);
 
-      if (platformsError) {
-        setMessage("حدث خطأ أثناء التحقق من المنصات الحالية");
+      if (platformsResult.error || branchesResult.error) {
+        setMessage("حدث خطأ أثناء التحقق من المنصات والفروع الحالية");
         setLoading(false);
         return;
       }
 
-      const uniquePlatformNames =
-        new Set(
-          (currentPlatforms ?? []).map(
-            (platform) =>
-              platform.platform_name
-          )
-        );
-      
-      const count =
-        uniquePlatformNames.size;
-      setClientId(client.id);
-      setPlatformLimit(permissions.platformLimit);
-      setExistingPlatformsCount(count);
+      const currentBranches = (branchesResult.data ?? []) as BranchOption[];
+      const uniquePlatformNames = new Set(
+        (platformsResult.data ?? []).map((platform) => platform.platform_name)
+      );
+      const permissionsWithUsage = getSubscriptionPermissions(client, {
+        currentBranchesCount: currentBranches.length,
+        currentPlatformsCount: uniquePlatformNames.size,
+      });
 
+      setPlatformLimit(permissions.platformLimit);
+      setExistingPlatformsCount(uniquePlatformNames.size);
+      setExistingPlatformNames(Array.from(uniquePlatformNames));
+      setBranches(currentBranches);
+      setCanCreateBranch(permissionsWithUsage.canAddBranch);
 
       setLoading(false);
     }
@@ -182,8 +197,18 @@ export default function PlatformsOnboardingPage() {
   async function handleSave(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
 
-    if (!clientId) {
-      setMessage("لم يتم العثور على بيانات العميل");
+    if (!scope) {
+      setMessage("الرجاء تحديد ما إذا كانت المنصة شاملة أو مرتبطة بفرع");
+      return;
+    }
+
+    if (scope === "existing_branch" && !selectedBranchId) {
+      setMessage("الرجاء اختيار الفرع المطلوب");
+      return;
+    }
+
+    if (scope === "new_branch" && !newBranchName.trim()) {
+      setMessage("الرجاء إدخال اسم الفرع الجديد");
       return;
     }
 
@@ -211,81 +236,37 @@ export default function PlatformsOnboardingPage() {
       return;
     }
 
-    if (existingPlatformsCount >= platformLimit) {
-      setMessage("وصلت للحد الأعلى من المنصات في باقتك الحالية");
+    const isNewPlatformType = !existingPlatformNames.includes(selectedPlatform);
+    if (isNewPlatformType && existingPlatformsCount >= platformLimit) {
+      setMessage("وصلت إلى حد أنواع المنصات في باقتك الحالية");
       return;
     }
 
     setSaving(true);
     setMessage("");
 
-    const { data: existingPlatform, error: existingError } = await supabase
-      .from("client_platforms")
-      .select("id")
-      .eq("client_id", clientId)
-      .eq("platform_name", selectedPlatform)
-      .eq("is_active", true)
-      .limit(1)
-      .maybeSingle();
+    try {
+      const response = await fetch("/api/platforms", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          platformName: selectedPlatform,
+          platformValue: selectedPlatform === "x" ? username : platformUrl,
+          businessActivity: businessActivity.trim(),
+          scope,
+          branchId: scope === "existing_branch" ? selectedBranchId : null,
+          branchName: scope === "new_branch" ? newBranchName.trim() : null,
+        }),
+      });
+      const result = (await response.json()) as { message?: string };
 
-    if (existingError) {
-      console.error("Check existing platform error:", existingError);
-      setMessage("حدث خطأ أثناء التحقق من المنصة");
-      setSaving(false);
-      return;
-    }
-
-    if (existingPlatform) {
-      setMessage("هذه المنصة مضافة مسبقًا لهذا الحساب");
-      setSaving(false);
-      return;
-    }
-    const cleanUsername =
-      selectedPlatform === "x" ? normalizeXUsername(username) : username.trim();
-
-    const finalPlatformUrl =
-      selectedPlatform === "x"
-        ? `https://x.com/${cleanUsername}`
-        : platformUrl.trim();
-
-    const finalUsername =
-      selectedPlatform === "x" ? cleanUsername : username.trim() || null;
-
-    const { data: onboardingBranchId, error: branchError } = await supabase.rpc(
-      "ensure_onboarding_main_branch"
-    );
-    const branchId = Number(onboardingBranchId);
-
-    if (branchError || !Number.isSafeInteger(branchId) || branchId <= 0) {
-      console.error("Create onboarding branch error:", branchError);
-      setMessage("حدث خطأ أثناء تجهيز الفرع الرئيسي");
-      setSaving(false);
-      return;
-    }
-
-    const { error: insertError } =
-      await supabase
-        .from("client_platforms")
-        .insert({
-          client_id: clientId,
-          branch_id: branchId,
-          platform_name: selectedPlatform,
-          platform_url: finalPlatformUrl,
-          username: finalUsername,
-          business_activity: businessActivity.trim(),
-          is_active: true,
-        });
-
-    if (insertError) {
-      console.error("Save platform error:", insertError);
-
-      if (insertError.code === "23505") {
-        setMessage("هذه المنصة مضافة مسبقًا لهذا الحساب");
+      if (!response.ok) {
+        setMessage(result.message || "حدث خطأ أثناء حفظ المنصة");
         setSaving(false);
         return;
       }
-
-      setMessage("حدث خطأ أثناء حفظ المنصة");
+    } catch {
+      setMessage("تعذر الاتصال بالخادم. حاول مرة أخرى");
       setSaving(false);
       return;
     }
@@ -382,6 +363,88 @@ export default function PlatformsOnboardingPage() {
             })}
           </div>
 
+          <section className="mt-8 rounded-[1.75rem] border border-[#BABDE2]/40 bg-[#F8F7F3] p-4 sm:p-6">
+            <div className="mb-4">
+              <h2 className="text-lg font-extrabold">حدد نطاق المنصة</h2>
+              <p className="mt-1 text-sm leading-6 text-gray-500">
+                اختر ربط المنصة بجميع الفروع أو بفرع محدد. يجب تحديد النطاق قبل الحفظ.
+              </p>
+            </div>
+
+            <div className="grid gap-3 md:grid-cols-3">
+              <ScopeButton
+                active={scope === "global"}
+                icon={<Globe2 size={21} />}
+                title="شاملة لجميع الفروع"
+                description="تظهر بيانات المنصة على مستوى الحساب كاملًا."
+                onClick={() => {
+                  setScope("global");
+                  setMessage("");
+                }}
+              />
+              <ScopeButton
+                active={scope === "existing_branch"}
+                disabled={branches.length === 0}
+                icon={<Building2 size={21} />}
+                title="فرع موجود"
+                description={
+                  branches.length > 0
+                    ? "اربط المنصة بأحد فروعك الحالية."
+                    : "لا توجد فروع حالية للاختيار منها."
+                }
+                onClick={() => {
+                  setScope("existing_branch");
+                  setMessage("");
+                }}
+              />
+              <ScopeButton
+                active={scope === "new_branch"}
+                disabled={!canCreateBranch}
+                icon={<Plus size={21} />}
+                title="إنشاء فرع"
+                description={
+                  canCreateBranch
+                    ? "أنشئ فرعًا جديدًا واربط المنصة به مباشرة."
+                    : "إنشاء فرع جديد غير متاح حسب باقتك الحالية."
+                }
+                onClick={() => {
+                  setScope("new_branch");
+                  setMessage("");
+                }}
+              />
+            </div>
+
+            {scope === "existing_branch" && (
+              <div className="mt-4">
+                <label className="mb-2 block text-sm font-bold">اختر الفرع</label>
+                <select
+                  value={selectedBranchId}
+                  onChange={(event) => setSelectedBranchId(event.target.value)}
+                  className="w-full rounded-2xl border border-gray-200 bg-white px-4 py-4 text-right outline-none transition focus:border-[#374375] focus:ring-4 focus:ring-[#BABDE2]/30"
+                >
+                  <option value="">اختر فرعًا</option>
+                  {branches.map((branch) => (
+                    <option key={branch.id} value={branch.id}>
+                      {branch.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            {scope === "new_branch" && (
+              <div className="mt-4">
+                <label className="mb-2 block text-sm font-bold">اسم الفرع الجديد</label>
+                <input
+                  value={newBranchName}
+                  onChange={(event) => setNewBranchName(event.target.value)}
+                  placeholder="مثال: فرع الرياض"
+                  className="w-full rounded-2xl border border-gray-200 bg-white px-4 py-4 text-right outline-none transition focus:border-[#374375] focus:ring-4 focus:ring-[#BABDE2]/30"
+                />
+              </div>
+            )}
+          </section>
+
           <div className="mt-8 grid gap-5 md:grid-cols-2">
             <div>
               <label className="mb-2 block text-sm font-bold">
@@ -428,6 +491,16 @@ export default function PlatformsOnboardingPage() {
             </div>
           </div>
 
+          {existingPlatformNames.includes(selectedPlatform) ? (
+            <p className="mt-5 rounded-2xl bg-[#BABDE2]/20 px-4 py-3 text-center text-sm font-bold text-[#374375]">
+              نوع المنصة مستخدم في حسابك، ويمكن ربط حساب مختلف منه بفرع آخر دون احتسابه كنوع جديد.
+            </p>
+          ) : existingPlatformsCount >= platformLimit ? (
+            <p className="mt-5 rounded-2xl bg-[#DFAEA1]/25 px-4 py-3 text-center text-sm font-bold text-[#895159]">
+              وصلت إلى حد أنواع المنصات في باقتك ({existingPlatformsCount} من {platformLimit}).
+            </p>
+          ) : null}
+
           {message && (
             <p className="mt-5 rounded-2xl bg-[#DFAEA1]/30 px-4 py-3 text-center text-sm font-bold text-[#895159]">
               {message}
@@ -444,5 +517,42 @@ export default function PlatformsOnboardingPage() {
         </form>
       </div>
     </main>
+  );
+}
+
+function ScopeButton({
+  active,
+  disabled = false,
+  icon,
+  title,
+  description,
+  onClick,
+}: {
+  active: boolean;
+  disabled?: boolean;
+  icon: ReactNode;
+  title: string;
+  description: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      disabled={disabled}
+      onClick={onClick}
+      className={`rounded-2xl border p-4 text-right transition ${
+        active
+          ? "border-[#374375] bg-[#374375] text-white"
+          : "border-[#BABDE2]/50 bg-white text-[#374375] hover:border-[#374375]"
+      } disabled:cursor-not-allowed disabled:opacity-45`}
+    >
+      <span className="mb-3 inline-flex h-9 w-9 items-center justify-center rounded-xl bg-[#BABDE2]/30">
+        {icon}
+      </span>
+      <span className="block font-extrabold">{title}</span>
+      <span className={`mt-1 block text-xs leading-5 ${active ? "text-white/75" : "text-gray-500"}`}>
+        {description}
+      </span>
+    </button>
   );
 }

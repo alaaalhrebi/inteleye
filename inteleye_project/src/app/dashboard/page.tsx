@@ -168,7 +168,7 @@ const permissions = getSubscriptionPermissions(client, {
 });
 
 const plan = permissions.plan;
-const canAddPlatforms = permissions.canAddPlatform;
+const canManagePlatformLinks = permissions.canUsePlatform;
 const recommendations = extractRecommendations(reports);
 const branchNames = Object.fromEntries(
   (branches ?? []).map((branch) => [String(branch.id), branch.name])
@@ -189,7 +189,7 @@ const activePlatforms = Array.from(
     <DashboardSideMenu
           platforms={platforms}
           branches={branches ?? []}
-          canAddPlatforms={canAddPlatforms}
+          canManagePlatformLinks={canManagePlatformLinks}
           currentPlatformsCount={currentPlatformsCount}
           platformLimit={permissions.platformLimit}
           canManageBranches={permissions.canManageBranches}
@@ -217,7 +217,7 @@ const activePlatforms = Array.from(
           <section className="mt-6">
             <PlatformsSection
               platforms={platforms}
-              canAddPlatforms={canAddPlatforms}
+              canManagePlatformLinks={canManagePlatformLinks}
               plan={plan}
               currentPlatformsCount={currentPlatformsCount}
               platformLimit={permissions.platformLimit}
@@ -266,7 +266,7 @@ function DashboardHeader({
 function DashboardSideMenu({
   platforms,
   branches,
-  canAddPlatforms,
+  canManagePlatformLinks,
   currentPlatformsCount,
   platformLimit,
   canManageBranches,
@@ -274,7 +274,7 @@ function DashboardSideMenu({
 }: {
   platforms: any[];
   branches: any[];
-  canAddPlatforms: boolean;
+  canManagePlatformLinks: boolean;
   currentPlatformsCount: number;
   platformLimit: number;
   canManageBranches: boolean;
@@ -285,13 +285,13 @@ function DashboardSideMenu({
       <DashboardFilters branches={branches} platforms={platforms} />
 
       <div className="mt-6 space-y-3">
-        {canAddPlatforms ? (
+        {canManagePlatformLinks ? (
           <Link
             href="/onboarding/platforms"
             className="flex w-full items-center justify-center gap-2 rounded-2xl border border-[#BABDE2]/60 bg-[#F8F7F3] px-5 py-3 text-sm font-bold text-[#374375] transition hover:bg-[#BABDE2]/30"
           >
             <Plus size={18} />
-            إضافة منصة
+            إضافة أو ربط منصة
           </Link>
         ) : (
           <div className="rounded-2xl bg-[#F8F7F3] p-4 text-sm font-bold leading-7 text-gray-500">
@@ -423,13 +423,13 @@ function AiRecommendations({ recommendations }: { recommendations: any[] }) {
 
 function PlatformsSection({
   platforms,
-  canAddPlatforms,
+  canManagePlatformLinks,
   plan,
   currentPlatformsCount,
   platformLimit,
 }: {
   platforms: any[];
-  canAddPlatforms: boolean;
+  canManagePlatformLinks: boolean;
   plan: string;
   currentPlatformsCount: number;
   platformLimit: number;
@@ -460,7 +460,7 @@ function PlatformsSection({
           </div>
         ))}
 
-        {!canAddPlatforms && (
+        {!canManagePlatformLinks && (
           <div className="rounded-3xl bg-[#DFAEA1]/20 p-5 text-sm font-bold text-[#895159]">
           <>
             وصلت إلى الحد المسموح في باقة {formatPlan(plan)}.

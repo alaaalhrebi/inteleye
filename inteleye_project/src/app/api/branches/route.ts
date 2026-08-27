@@ -21,6 +21,10 @@ function textValue(value: unknown) {
   return typeof value === "string" ? value.trim() : "";
 }
 
+function normalizeComparableUrl(value: string) {
+  return value.trim().replace(/\/+$/, "").toLowerCase();
+}
+
 export async function POST(request: Request) {
   const supabase = createSupabaseServerClient();
   const {
@@ -73,7 +77,7 @@ export async function POST(request: Request) {
         .eq("is_active", true),
       supabase
         .from("client_platforms")
-        .select("platform_name")
+        .select("platform_name, platform_url")
         .eq("client_id", client.id)
         .eq("is_active", true),
     ]);
@@ -109,7 +113,21 @@ export async function POST(request: Request) {
   const finalPlatformUrl =
     platformName === "x"
       ? `https://x.com/${cleanUsername}`
-      : platformValue;
+      : platformValue.replace(/\/+$/, "");
+
+  const duplicateLink = (activePlatforms ?? []).some(
+    (platform) =>
+      platform.platform_name === platformName &&
+      normalizeComparableUrl(platform.platform_url) ===
+        normalizeComparableUrl(finalPlatformUrl)
+  );
+
+  if (duplicateLink) {
+    return NextResponse.json(
+      { message: "تمت إضافة المنصة مسبقًا" },
+      { status: 409 }
+    );
+  }
 
   const { data: branch, error: branchError } = await supabase
     .from("branches")
@@ -144,11 +162,18 @@ export async function POST(request: Request) {
       .eq("id", branch.id)
       .eq("client_id", client.id);
 
-    const status = platformError.code === "42501" ? 403 : 500;
+    const status =
+      platformError.code === "23505"
+        ? 409
+        : platformError.code === "42501"
+        ? 403
+        : 500;
     return NextResponse.json(
       {
         message:
-          status === 403
+          status === 409
+            ? "تمت إضافة المنصة مسبقًا"
+            : status === 403
             ? "غير مصرح بإضافة منصة أخرى"
             : "تعذر ربط المنصة بالفرع",
       },
