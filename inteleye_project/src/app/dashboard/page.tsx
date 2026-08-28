@@ -71,7 +71,7 @@ export default async function DashboardPage({
 
   let platformsQuery = supabase
     .from("client_platforms")
-    .select("id, branch_id, platform_name, platform_url, username, business_activity, is_active, connection_status, last_sync_at, last_success_at, last_error")
+    .select("id, branch_id, platform_name, platform_url, username, business_activity, is_active, connection_status, last_error")
     .eq("client_id", client.id)
     .eq("is_active", true);
 
@@ -400,8 +400,6 @@ function PlatformsSection({
         {platforms.map((platform) => {
           const status = getPlatformConnectionState(platform);
           const accountUrl = safePlatformUrl(platform.platform_url);
-          const lastSync = platform.last_success_at || platform.last_sync_at;
-
           return (
             <div key={platform.id} className="rounded-2xl border border-[#BABDE2]/30 bg-[#F8F7F3] p-4">
               <div className="flex items-start justify-between gap-2">
@@ -422,12 +420,9 @@ function PlatformsSection({
                 </span>
               </div>
 
-              <p className="mt-4 text-sm font-bold text-gray-500">
-                آخر مزامنة: {formatRelativeSync(lastSync)}
-              </p>
               {platform.last_error ? (
-                <p className="mt-2 line-clamp-2 text-xs leading-5 text-[#895159]">
-                  توجد ملاحظة في آخر مزامنة. راجع صفحة حالة المنصات.
+                <p className="mt-4 line-clamp-2 text-xs leading-5 text-[#895159]">
+                  توجد ملاحظة في مزامنة المنصة. راجع صفحة حالة المنصات.
                 </p>
               ) : null}
 
@@ -566,19 +561,6 @@ function getPlatformConnectionState(platform: {
     return { label: "متصل", className: "bg-emerald-50 text-emerald-700" };
   }
   return { label: "غير متصل", className: "bg-gray-100 text-gray-500" };
-}
-
-function formatRelativeSync(value: unknown) {
-  if (typeof value !== "string") return "لم تتم بعد";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "غير معروف";
-  const minutes = Math.max(0, Math.floor((Date.now() - date.getTime()) / 60_000));
-  if (minutes < 1) return "الآن";
-  if (minutes < 60) return `منذ ${minutes} دقيقة`;
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `منذ ${hours} ساعة`;
-  const days = Math.floor(hours / 24);
-  return `منذ ${days} يوم`;
 }
 
 function asObject(value: unknown): Record<string, any> {
