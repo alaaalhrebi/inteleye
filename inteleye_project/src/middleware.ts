@@ -1,6 +1,28 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
+const AUTH_REQUEST_TIMEOUT_MS = 5_000;
+
+async function fetchWithAuthTimeout(
+  input: RequestInfo | URL,
+  init?: RequestInit
+) {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(
+    () => controller.abort(),
+    AUTH_REQUEST_TIMEOUT_MS
+  );
+
+  try {
+    return await fetch(input, {
+      ...init,
+      signal: controller.signal,
+    });
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({ request });
 
@@ -12,17 +34,26 @@ export async function middleware(request: NextRequest) {
         getAll() {
           return request.cookies.getAll();
         },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value }) => {
-            request.cookies.set(name, value);
+        setAll(cookiesToSet, headers) {
+          cookiesToSet.forEach(({ name, value }) =>
+            request.cookies.set(name, value)
+          );
+
+          response = NextResponse.next({
+            request,
           });
 
-          response = NextResponse.next({ request });
+          cookiesToSet.forEach(({ name, value, options }) =>
+            response.cookies.set(name, value, options)
+          );
 
-          cookiesToSet.forEach(({ name, value, options }) => {
-            response.cookies.set(name, value, options);
-          });
+          Object.entries(headers).forEach(([name, value]) =>
+            response.headers.set(name, value)
+          );
         },
+      },
+      global: {
+        fetch: fetchWithAuthTimeout,
       },
     }
   );
@@ -34,15 +65,33 @@ export async function middleware(request: NextRequest) {
     path.startsWith(protectedPath)
   );
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  let hasAuthenticatedClaims = false;
 
-  if (isProtectedPath && !user) {
+  try {
+    const { data, error } = await supabase.auth.getClaims();
+
+    if (error) {
+      console.warn("Supabase middleware session check failed:", error.name);
+      return response;
+    }
+
+    hasAuthenticatedClaims = Boolean(data?.claims?.sub);
+  } catch (error) {
+    console.warn(
+      "Supabase middleware session check was interrupted:",
+      error instanceof Error ? error.name : "unknown_error"
+    );
+    return response;
+  }
+
+  if (isProtectedPath && !hasAuthenticatedClaims) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
-  if ((path === "/login" || path === "/signup") && user) {
+  if (
+    (path === "/login" || path === "/signup") &&
+    hasAuthenticatedClaims
+  ) {
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 
