@@ -606,11 +606,11 @@ function MetricCard({
           lowerIsBetter={lowerIsBetter}
         />
       </div>
-      <p className="mt-5 text-xs text-gray-400">{title}</p>
+      <p className="mt-5 text-sm font-semibold text-gray-500">{title}</p>
       <p className="mt-2 text-2xl font-black text-[#374375] sm:text-3xl">
         {value}
       </p>
-      {detail ? <p className="mt-1 text-[10px] font-bold text-gray-400">{detail}</p> : null}
+      {detail ? <p className="mt-1 text-xs font-bold text-gray-500">{detail}</p> : null}
     </article>
   );
 }
@@ -627,7 +627,7 @@ function ChangeBadge({
   lowerIsBetter?: boolean;
 }) {
   if (current === null || previous === null) {
-    return <span className="text-[10px] text-gray-300">لا توجد مقارنة</span>;
+    return <span className="text-xs font-bold text-gray-400">لا توجد مقارنة</span>;
   }
 
   const difference = round(current - previous, 1);
@@ -636,7 +636,7 @@ function ChangeBadge({
 
   return (
     <span
-      className={`rounded-full px-2.5 py-1 text-[10px] font-extrabold ${
+      className={`whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-extrabold sm:text-sm ${
         difference === 0
           ? "bg-gray-50 text-gray-400"
           : improved
