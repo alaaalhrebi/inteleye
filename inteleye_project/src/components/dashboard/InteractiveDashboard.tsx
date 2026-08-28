@@ -1,12 +1,14 @@
 "use client";
 
 import { useMemo, useState, type ReactNode } from "react";
+import Link from "next/link";
 import {
   Activity,
   AlertTriangle,
   BarChart3,
   Building2,
   CheckCircle2,
+  FileText,
   FilterX,
   Hash,
   MessageCircle,
@@ -353,6 +355,26 @@ export default function InteractiveDashboard({
           </div>
         )}
       </section>
+
+      <section className="no-print mt-4 flex flex-col gap-4 rounded-[1.35rem] border border-[#BABDE2]/45 bg-[#374375] p-5 text-white shadow-sm sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-3">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white/10 text-[#DFAEA1]">
+            <FileText size={21} />
+          </div>
+          <div>
+            <h2 className="font-extrabold">التقارير</h2>
+            <p className="mt-1 text-sm text-white/70">
+              لمشاهدة التقارير الكاملة والمخصصة انتقل إلى صفحة إدارة التقارير.
+            </p>
+          </div>
+        </div>
+        <Link
+          href="/dashboard/reports"
+          className="inline-flex shrink-0 items-center justify-center rounded-xl bg-white px-5 py-3 text-sm font-extrabold text-[#374375] transition hover:bg-[#F8F7F3]"
+        >
+          إدارة التقارير
+        </Link>
+      </section>
     </>
   );
 }
@@ -463,10 +485,9 @@ function ExecutiveIntelligence({
   return (
     <section className="mt-4 rounded-[1.35rem] border border-[#BABDE2]/40 bg-white p-4 shadow-sm">
       <div className="mb-3 flex items-center justify-between gap-3">
-        <div>
-          <p className="text-[10px] font-bold text-[#895159]">خلاصة IntelEye</p>
-          <h3 className="text-base font-extrabold text-[#374375]">ما الذي يهم الإدارة الآن؟</h3>
-        </div>
+        <p className="text-base font-extrabold text-[#895159] sm:text-lg">
+          خلاصة IntelEye
+        </p>
         <span className="rounded-full bg-[#374375] px-3 py-1 text-[10px] font-bold text-white">
           قراءة آلية من البيانات الحالية
         </span>

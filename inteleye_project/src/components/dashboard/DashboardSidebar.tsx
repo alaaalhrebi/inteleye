@@ -7,7 +7,6 @@ import {
   ChevronLeft,
   ChevronRight,
   FileText,
-  Menu,
   Plus,
   RadioTower,
   Repeat2,
@@ -52,15 +51,7 @@ export default function DashboardSidebar({
         collapsed ? "lg:w-[76px]" : "lg:w-[220px] xl:w-[232px]"
       }`}
     >
-      <div className="mb-3 flex items-center justify-between gap-2">
-        <div
-          className={`flex items-center gap-2 px-1 text-sm font-extrabold text-[#374375] ${
-            collapsed ? "lg:hidden" : ""
-          }`}
-        >
-          <Menu size={17} />
-          التحكم بالعرض
-        </div>
+      <div className="mb-3 flex justify-end">
         <button
           type="button"
           onClick={() => setCollapsed((value) => !value)}
