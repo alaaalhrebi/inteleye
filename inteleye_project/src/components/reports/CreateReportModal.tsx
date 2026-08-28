@@ -208,9 +208,12 @@ export default function CreateReportModal({
           data.message ||
           "تم استلام طلب التقرير وبدأت معالجته.",
         requestId: String(data.request_id),
-        branchId: Number.isFinite(acceptedBranchId)
-          ? acceptedBranchId
-          : Number(branchId),
+        branchId:
+          acceptedBranchId === null
+            ? null
+            : Number.isFinite(acceptedBranchId)
+              ? acceptedBranchId
+              : Number(branchId),
         platformId: Number(platformId),
         periodStart,
         periodEnd,
@@ -315,7 +318,7 @@ export default function CreateReportModal({
                   >
                     {formatPlatform(platform.name)}
                     {platform.branchId === null
-                      ? " — عامة لكل الفروع"
+                      ? " — شاملة لجميع الفروع"
                       : ""}
                   </option>
                 ))}

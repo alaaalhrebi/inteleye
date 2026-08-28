@@ -38,33 +38,64 @@ export async function POST(request: Request) {
   }
 
   const platformId = validation.value.platformIds[0];
-  const [{ data: branch }, { data: platform }] = await Promise.all([
+  const [
+    { data: branch, error: branchError },
+    { data: platform, error: platformError },
+  ] = await Promise.all([
     access.supabase
       .from("branches")
       .select("id")
       .eq("id", validation.value.branchId)
       .eq("client_id", access.client.id)
+      .eq("is_active", true)
       .maybeSingle(),
     access.supabase
       .from("client_platforms")
-      .select("id")
+      .select("id, branch_id")
       .eq("id", platformId)
       .eq("client_id", access.client.id)
-      .eq("branch_id", validation.value.branchId)
       .eq("is_active", true)
       .maybeSingle(),
   ]);
 
-  if (!branch || !platform) {
+  if (branchError || !branch) {
     return NextResponse.json(
-      { message: "الفرع أو المنصة لا ينتميان إلى حسابك أو غير مرتبطين معًا" },
+      { message: "الفرع المحدد غير موجود أو لا ينتمي إلى حسابك" },
       { status: 403 }
     );
   }
 
+  if (platformError || !platform) {
+    return NextResponse.json(
+      { message: "المنصة المحددة غير موجودة أو غير مفعلة" },
+      { status: 403 }
+    );
+  }
+
+  const platformBranchId =
+    platform.branch_id === null || platform.branch_id === undefined
+      ? null
+      : Number(platform.branch_id);
+
+  const isGlobalPlatform = platformBranchId === null;
+  const platformMatchesBranch =
+    isGlobalPlatform || platformBranchId === validation.value.branchId;
+
+  if (!platformMatchesBranch) {
+    return NextResponse.json(
+      { message: "المنصة المحددة مرتبطة بفرع آخر" },
+      { status: 403 }
+    );
+  }
+
+  const workflowBranchId = isGlobalPlatform
+    ? null
+    : validation.value.branchId;
+
   try {
     const workflow = await requestReportFromWorkflow({
       ...validation.value,
+      branchId: workflowBranchId,
       clientId: access.client.id,
       requestedBy: access.user.id,
     });
@@ -73,6 +104,9 @@ export async function POST(request: Request) {
       {
         request_id: workflow.requestId,
         status: workflow.status,
+        branch_id: workflowBranchId,
+        platform_id: platformId,
+        platform_scope: isGlobalPlatform ? "global" : "branch",
         message: "تم استلام طلب التقرير وبدأت معالجته.",
       },
       { status: 202 }

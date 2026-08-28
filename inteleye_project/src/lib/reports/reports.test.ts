@@ -181,6 +181,26 @@ test("يبني payload القديم بالحقول الستة فقط", () => {
   );
 });
 
+test("يحافظ على branch_id فارغًا للمنصة العامة", () => {
+  assert.deepEqual(
+    buildLegacyWorkflowPayload({
+      ...validBody,
+      branchId: null,
+      reportType: "custom",
+      clientId: 1,
+      requestedBy: "USER_UUID",
+    }),
+    {
+      client_id: 1,
+      requested_by: "USER_UUID",
+      branch_id: null,
+      platform_id: 3,
+      period_start: "2026-07-01",
+      period_end: "2026-07-31",
+    }
+  );
+});
+
 test("يتعامل مع 202 وrequest_id بنجاح دون إضافة Bearer", async () => {
   let receivedHeaders: Headers | undefined;
   const result = await requestReportFromWorkflow(
