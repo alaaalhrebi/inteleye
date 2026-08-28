@@ -287,7 +287,7 @@ function ActiveScopeBar({
   const hasFilters = Boolean(branchName || platformName || period !== "this_week");
 
   return (
-    <div className="no-print mb-3 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-[#BABDE2]/35 bg-white px-3 py-2 text-xs font-bold text-[#374375] shadow-sm">
+    <div className="no-print mb-3 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-[#BABDE2]/35 bg-white px-3 py-2 text-sm font-bold text-[#374375] shadow-sm">
       <div className="flex flex-wrap items-center gap-1.5">
         <span className="rounded-full bg-[#F8F7F3] px-3 py-1.5">
           {branchName || "كل الفروع"}
@@ -406,20 +406,20 @@ function PlatformsSection({
                   <h3 className="font-extrabold text-[#374375]">
                     {formatPlatform(platform.platform_name)}
                   </h3>
-                  <p className="mt-1 text-[10px] text-gray-400">
+                  <p className="mt-1 text-xs text-gray-500">
                     {platform.branch_id === null ? "شاملة لجميع الفروع" : "مرتبطة بفرع"}
                   </p>
                 </div>
-                <span className={`rounded-full px-2.5 py-1 text-[10px] font-bold ${status.className}`}>
+                <span className={`rounded-full px-2.5 py-1 text-xs font-bold ${status.className}`}>
                   {status.label}
                 </span>
               </div>
 
-              <p className="mt-4 text-xs font-bold text-gray-500">
+              <p className="mt-4 text-sm font-bold text-gray-500">
                 آخر مزامنة: {formatRelativeSync(lastSync)}
               </p>
               {platform.last_error ? (
-                <p className="mt-2 line-clamp-2 text-[10px] leading-5 text-[#895159]">
+                <p className="mt-2 line-clamp-2 text-xs leading-5 text-[#895159]">
                   توجد ملاحظة في آخر مزامنة. راجع صفحة حالة المنصات.
                 </p>
               ) : null}
@@ -430,14 +430,14 @@ function PlatformsSection({
                     href={accountUrl}
                     target="_blank"
                     rel="noreferrer"
-                    className="text-xs font-extrabold text-[#374375] underline decoration-[#BABDE2] underline-offset-4"
+                    className="text-sm font-extrabold text-[#374375] underline decoration-[#BABDE2] underline-offset-4"
                   >
                     فتح الحساب
                   </a>
                 ) : null}
                 <Link
                   href="/dashboard/platforms"
-                  className="text-xs font-bold text-gray-400 hover:text-[#374375]"
+                  className="text-sm font-bold text-gray-500 hover:text-[#374375]"
                 >
                   التفاصيل
                 </Link>
@@ -450,7 +450,7 @@ function PlatformsSection({
           <div className="rounded-2xl bg-[#DFAEA1]/20 p-4 text-sm font-bold text-[#895159] md:col-span-2 xl:col-span-4">
           <>
             وصلت إلى الحد المسموح في باقة {formatPlan(plan)}.
-            <span className="mt-1 block text-xs">
+            <span className="mt-1 block text-sm">
               تستخدم حاليًا {currentPlatformsCount} من أصل {platformLimit} منصة.
             </span>
           </>
@@ -481,7 +481,7 @@ function Panel({
           <div className="scale-90 sm:scale-100">{icon}</div>
         </div>
         <div className="min-w-0">
-          <p className="text-[10px] sm:text-xs text-gray-400">{eyebrow}</p>
+          <p className="text-xs sm:text-sm text-gray-500">{eyebrow}</p>
           <h2 className="text-base sm:text-lg lg:text-xl font-extrabold text-[#374375]">{title}</h2>
         </div>
       </div>
@@ -509,7 +509,7 @@ function AlertItem({
         <div className="flex flex-wrap items-center gap-2">
           <p className="font-extrabold text-[#374375]">{title}</p>
           {priority && (
-            <span className="rounded-full bg-[#DFAEA1]/25 px-2.5 py-1 text-[10px] font-bold text-[#895159]">
+            <span className="rounded-full bg-[#DFAEA1]/25 px-2.5 py-1 text-xs font-bold text-[#895159]">
               {formatPriority(priority)}
             </span>
           )}

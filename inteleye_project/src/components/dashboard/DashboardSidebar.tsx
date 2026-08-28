@@ -84,9 +84,9 @@ export default function DashboardSidebar({
             <RadioTower size={18} />
           </div>
         ) : (
-          <div className="rounded-xl bg-amber-50 p-3 text-xs font-bold leading-6 text-amber-800">
+          <div className="rounded-xl bg-amber-50 p-3 text-sm font-bold leading-6 text-amber-800">
             وصلت إلى حد المنصات.
-            <span className="block text-[10px]">
+            <span className="block text-xs">
               {currentPlatformsCount} من أصل {platformLimit}
             </span>
           </div>
@@ -120,7 +120,7 @@ export default function DashboardSidebar({
 
         <div className="border-t border-[#BABDE2]/30 pt-2">
           <p
-            className={`mb-1 px-2 text-[10px] font-bold text-gray-400 ${
+            className={`mb-1 px-2 text-xs font-bold text-gray-400 ${
               collapsed ? "lg:hidden" : ""
             }`}
           >

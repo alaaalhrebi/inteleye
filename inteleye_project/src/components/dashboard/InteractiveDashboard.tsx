@@ -184,7 +184,7 @@ export default function InteractiveDashboard({
         <div className="absolute -bottom-24 right-1/3 h-52 w-52 rounded-full bg-[#DFAEA1]/15 blur-3xl" />
         <div className="relative grid gap-7 lg:grid-cols-[1fr_auto] lg:items-end">
           <div>
-            <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-xs font-bold text-[#F8F7F3]">
+            <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-sm font-bold text-[#F8F7F3]">
               <Sparkles size={14} />
               {profile.eyebrow}
             </div>
@@ -194,7 +194,7 @@ export default function InteractiveDashboard({
             <p className="mt-3 max-w-3xl text-sm font-bold leading-7 text-white/80 sm:text-base">
               {executive.summary}
             </p>
-            <p className="mt-1 max-w-3xl text-xs leading-6 text-white/55">
+            <p className="mt-1 max-w-3xl text-sm leading-6 text-white/65">
               {clientName} · {profile.description}
             </p>
           </div>
@@ -300,7 +300,7 @@ export default function InteractiveDashboard({
               <Quote size={21} />
             </div>
             <div>
-              <p className="text-xs text-gray-400">عينات حقيقية من البيانات</p>
+              <p className="text-sm text-gray-500">عينات حقيقية من البيانات</p>
               <h2 className="text-lg font-extrabold text-[#374375] sm:text-xl">
                 ماذا يقول عملاؤك؟
               </h2>
@@ -310,7 +310,7 @@ export default function InteractiveDashboard({
             <button
               type="button"
               onClick={resetInteractiveFilters}
-              className="no-print inline-flex items-center justify-center gap-2 rounded-full border border-[#BABDE2]/60 px-4 py-2 text-xs font-bold text-[#374375] transition hover:bg-[#F8F7F3]"
+              className="no-print inline-flex items-center justify-center gap-2 rounded-full border border-[#BABDE2]/60 px-4 py-2 text-sm font-bold text-[#374375] transition hover:bg-[#F8F7F3]"
             >
               <FilterX size={15} />
               مسح التصفية التفاعلية
@@ -413,7 +413,7 @@ function PeriodSummary({
   hasError: boolean;
   platformName: string | null;
 }) {
-  const formatter = new Intl.DateTimeFormat("ar-SA", {
+  const formatter = new Intl.DateTimeFormat("ar-SA-u-nu-latn", {
     day: "numeric",
     month: "long",
     year: "numeric",
@@ -435,7 +435,7 @@ function PeriodSummary({
               new Date(end)
             )}.`}
       </span>
-      <span className="rounded-full bg-[#BABDE2]/20 px-3 py-1 text-xs text-[#374375]">
+      <span className="rounded-full bg-[#BABDE2]/20 px-3 py-1 text-sm text-[#374375]">
         {platformName ? formatPlatform(platformName) : "جميع المنصات"}
       </span>
     </div>
@@ -488,7 +488,7 @@ function ExecutiveIntelligence({
         <p className="text-base font-extrabold text-[#895159] sm:text-lg">
           خلاصة IntelEye
         </p>
-        <span className="rounded-full bg-[#374375] px-3 py-1 text-[10px] font-bold text-white">
+        <span className="rounded-full bg-[#374375] px-3 py-1 text-xs font-bold text-white">
           قراءة آلية من البيانات الحالية
         </span>
       </div>
@@ -498,8 +498,8 @@ function ExecutiveIntelligence({
             <div className={`mb-2 flex h-8 w-8 items-center justify-center rounded-xl ${item.className}`}>
               {item.icon}
             </div>
-            <p className="text-[10px] text-gray-400">{item.label}</p>
-            <p className="mt-1 line-clamp-2 text-xs font-extrabold leading-5 text-[#374375]">
+            <p className="text-xs text-gray-500">{item.label}</p>
+            <p className="mt-1 line-clamp-2 text-sm font-extrabold leading-6 text-[#374375]">
               {item.value}
             </p>
           </div>
@@ -562,7 +562,7 @@ function AdvancedSignals({
               <h3 className="text-sm font-extrabold text-[#374375]">
                 {item.title}
               </h3>
-              <p className="mt-1.5 text-xs font-medium leading-6 text-gray-500">
+              <p className="mt-1.5 text-sm font-medium leading-6 text-gray-500">
                 {item.value}
               </p>
             </div>
@@ -669,7 +669,7 @@ function DashboardPanel({
           {icon}
         </div>
         <div className="min-w-0">
-          <p className="text-xs text-gray-400">{eyebrow}</p>
+          <p className="text-sm text-gray-500">{eyebrow}</p>
           <h2 className="truncate text-lg font-extrabold text-[#374375] sm:text-xl">
             {title}
           </h2>
@@ -709,7 +709,7 @@ function ActivityChart({
               title={`${point.label}: ${point.count}`}
             >
               <span
-                className={`mb-2 text-[10px] font-extrabold transition ${
+                className={`mb-2 text-xs font-extrabold transition ${
                   selected ? "text-[#895159]" : "text-[#374375]"
                 }`}
               >
@@ -722,7 +722,7 @@ function ActivityChart({
                 style={{ height: `${height}%` }}
               />
               <span
-                className={`mt-2 w-full truncate text-[9px] sm:text-[10px] ${
+                className={`mt-2 w-full truncate text-[11px] sm:text-xs ${
                   selected ? "font-bold text-[#895159]" : "text-gray-400"
                 }`}
               >
@@ -732,11 +732,11 @@ function ActivityChart({
           );
         })}
       </div>
-      <p className="mt-3 text-xs text-gray-400">
+      <p className="mt-3 text-sm text-gray-500">
         اضغط على أي يوم لعرض التعليقات المسجلة فيه.
       </p>
       {insight ? (
-        <p className="mt-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs font-bold leading-6 text-amber-900">
+        <p className="mt-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-bold leading-6 text-amber-900">
           {insight}
         </p>
       ) : null}
@@ -774,7 +774,7 @@ function SentimentChart({
           <strong className="text-2xl font-black text-[#374375]">
             {formatNumber(total)}
           </strong>
-          <span className="text-[10px] text-gray-400">مصنّف</span>
+          <span className="text-xs text-gray-500">مصنّف</span>
         </div>
       </div>
       <div className="space-y-2">
@@ -826,7 +826,7 @@ function SentimentLegendButton({
     <button
       type="button"
       onClick={onClick}
-      className={`flex w-full items-center justify-between rounded-xl border px-3 py-2 text-xs transition ${
+      className={`flex w-full items-center justify-between rounded-xl border px-3 py-2 text-sm transition ${
         selected
           ? "border-[#374375]/25 bg-[#F8F7F3]"
           : "border-transparent hover:bg-[#F8F7F3]"
@@ -889,11 +889,11 @@ function PlatformContextPanel({
                   style={{ width: `${(item.count / max) * 100}%` }}
                 />
               </span>
-              <span className="text-xs text-gray-400">{item.count}</span>
+              <span className="text-sm text-gray-500">{item.count}</span>
             </button>
           ))}
         </div>
-        <p className="mt-3 text-xs text-gray-400">
+        <p className="mt-3 text-sm text-gray-500">
           اضغط على عدد النجوم لتصفية عينات آراء العملاء.
         </p>
       </DashboardPanel>
@@ -913,7 +913,7 @@ function PlatformContextPanel({
           <div className="space-y-4">
             {breakdown.map((item) => (
               <div key={item.platform} className="rounded-2xl border border-[#BABDE2]/30 bg-[#F8F7F3] p-3">
-                <div className="mb-3 flex items-center justify-between text-xs">
+                <div className="mb-3 flex items-center justify-between text-sm">
                   <span className="font-extrabold text-[#374375]">
                     {formatPlatform(item.platform)}
                   </span>
@@ -933,7 +933,7 @@ function PlatformContextPanel({
                     style={{ width: `${item.negativePct}%` }}
                   />
                 </div>
-                <div className="mt-3 grid grid-cols-3 gap-2 text-center text-[10px]">
+                <div className="mt-3 grid grid-cols-3 gap-2 text-center text-xs">
                   <div className="rounded-xl bg-white px-2 py-2">
                     <strong className="block text-emerald-700">{round(item.positivePct, 1)}%</strong>
                     <span className="text-gray-400">رضا</span>
@@ -1030,7 +1030,7 @@ function TopicsChart({
         >
           <span className="mb-2 flex items-center justify-between gap-3 text-sm">
             <span className="font-bold text-[#374375]">{topic.label}</span>
-            <span className="text-left text-[10px] text-gray-400">
+            <span className="text-left text-xs text-gray-500">
               {topic.count} ذكر ·{" "}
               <span className={topic.negativePct > topic.positivePct ? "text-[#895159]" : "text-emerald-700"}>
                 {round(Math.max(topic.positivePct, topic.negativePct), 1)}% {topic.negativePct > topic.positivePct ? "سلبي" : "إيجابي"}
@@ -1053,7 +1053,7 @@ function TopicsChart({
           </span>
         </button>
       ))}
-      <p className="pt-1 text-xs text-gray-400">
+      <p className="pt-1 text-sm text-gray-500">
         اضغط على الموضوع لاستعراض التعليقات المرتبطة به.
       </p>
     </div>
@@ -1087,7 +1087,7 @@ function SentimentTabs({
           key={tab.key}
           type="button"
           onClick={() => onSelect(tab.key)}
-          className={`rounded-full px-4 py-2 text-xs font-bold transition ${
+          className={`rounded-full px-4 py-2 text-sm font-bold transition ${
             selected === tab.key
               ? "bg-[#374375] text-white"
               : "bg-[#F8F7F3] text-gray-500 hover:bg-[#BABDE2]/30 hover:text-[#374375]"
@@ -1118,7 +1118,7 @@ function ActiveFilterSummary({
   if (filters.length === 0) return null;
 
   return (
-    <p className="mt-4 text-xs font-bold text-[#895159]">
+    <p className="mt-4 text-sm font-bold text-[#895159]">
       التصفية الحالية: {filters.join(" · ")}
     </p>
   );
@@ -1161,7 +1161,7 @@ function FeedbackSampleCard({
       className={`rounded-3xl border border-[#BABDE2]/30 border-r-4 bg-[#F8F7F3] p-5 ${sentimentStyle.border}`}
     >
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="flex flex-wrap items-center gap-2 text-xs text-gray-400">
+        <div className="flex flex-wrap items-center gap-2 text-sm text-gray-500">
           <span className="font-extrabold text-[#374375]">
             {formatPlatform(row.platform_name ?? "") || "منصة غير محددة"}
           </span>
@@ -1173,14 +1173,14 @@ function FeedbackSampleCard({
         </div>
         <div className="flex flex-wrap justify-end gap-1.5">
           <span
-            className={`rounded-full px-2.5 py-1 text-[10px] font-bold ${sentimentStyle.badge}`}
+            className={`rounded-full px-2.5 py-1 text-xs font-bold ${sentimentStyle.badge}`}
           >
             {sentimentStyle.label}
           </span>
           {classifications.map((item) => (
             <span
               key={item.label}
-              className={`rounded-full px-2.5 py-1 text-[10px] font-bold ${item.className}`}
+              className={`rounded-full px-2.5 py-1 text-xs font-bold ${item.className}`}
             >
               {item.label}
             </span>
@@ -1197,13 +1197,13 @@ function FeedbackSampleCard({
           {(row.category ?? []).slice(0, 3).map((category) => (
             <span
               key={category}
-              className="rounded-full bg-white px-2.5 py-1 text-[10px] text-gray-500"
+              className="rounded-full bg-white px-2.5 py-1 text-xs text-gray-500"
             >
               {category}
             </span>
           ))}
         </div>
-        <div className="flex items-center gap-2 text-[10px] text-gray-400">
+        <div className="flex items-center gap-2 text-xs text-gray-500">
           {Number(row.rating) > 0 && (
             <span className="inline-flex items-center gap-1 font-bold text-amber-600">
               {Number(row.rating)}
@@ -1387,7 +1387,7 @@ function buildActivity(
     const key = date.toISOString().slice(0, 10);
     return {
       date: key,
-      label: new Intl.DateTimeFormat("ar-SA", {
+      label: new Intl.DateTimeFormat("ar-SA-u-nu-latn", {
         day: "numeric",
         month: "short",
         timeZone: "UTC",
@@ -1775,7 +1775,7 @@ function startOfUtcDay(date: Date) {
 }
 
 function formatDateTime(value: string) {
-  return new Intl.DateTimeFormat("ar-SA", {
+  return new Intl.DateTimeFormat("ar-SA-u-nu-latn", {
     day: "numeric",
     month: "short",
     year: "numeric",
@@ -1784,7 +1784,7 @@ function formatDateTime(value: string) {
 }
 
 function formatShortDate(value: string) {
-  return new Intl.DateTimeFormat("ar-SA", {
+  return new Intl.DateTimeFormat("ar-SA-u-nu-latn", {
     day: "numeric",
     month: "short",
     timeZone: "UTC",
@@ -1792,7 +1792,7 @@ function formatShortDate(value: string) {
 }
 
 function formatNumber(value: number) {
-  return new Intl.NumberFormat("ar-SA", { maximumFractionDigits: 2 }).format(
+  return new Intl.NumberFormat("en-US", { maximumFractionDigits: 2 }).format(
     value
   );
 }
