@@ -115,7 +115,7 @@ export function getCheckoutQuote({
 }
 
 export function formatPrice(priceHalalas: number) {
-  return new Intl.NumberFormat("ar-SA", {
+  return new Intl.NumberFormat("en-US", {
     maximumFractionDigits: 0,
   }).format(priceHalalas / 100);
 }

@@ -279,7 +279,7 @@ function SentimentMetricsSection({
               </div>
               <p className="mt-4 text-sm font-bold text-gray-500">{card.label}</p>
               <p className={`mt-1 text-3xl font-black ${card.valueStyle}`}>
-                {new Intl.NumberFormat("ar-SA").format(metric.count)}
+                {new Intl.NumberFormat("en-US").format(metric.count)}
               </p>
             </article>
           );
@@ -677,7 +677,7 @@ function readableObject(value: unknown) {
 }
 
 function scalar(value: unknown) {
-  if (typeof value === "number") return new Intl.NumberFormat("ar-SA").format(value);
+  if (typeof value === "number") return new Intl.NumberFormat("en-US").format(value);
   if (typeof value === "boolean") return value ? "نعم" : "لا";
   if (typeof value === "string") return value;
   return "—";
@@ -712,7 +712,7 @@ function label(key: string) {
 }
 
 function formatCount(count: number) {
-  return `${new Intl.NumberFormat("ar-SA").format(count)} ${count === 1 ? "مرة" : "مرات"}`;
+  return `${new Intl.NumberFormat("en-US").format(count)} ${count === 1 ? "مرة" : "مرات"}`;
 }
 
 function priorityLabel(priority: string) {
@@ -725,13 +725,13 @@ function priorityLabel(priority: string) {
 
 function formatDate(value: string | null) {
   if (!value) return "—";
-  return new Intl.DateTimeFormat("ar-SA", { dateStyle: "medium" }).format(
+  return new Intl.DateTimeFormat("ar-SA-u-nu-latn", { dateStyle: "medium" }).format(
     new Date(`${value.slice(0, 10)}T00:00:00Z`)
   );
 }
 
 function formatDateTime(value: string) {
-  return new Intl.DateTimeFormat("ar-SA", {
+  return new Intl.DateTimeFormat("ar-SA-u-nu-latn", {
     dateStyle: "medium",
     timeZone: "Asia/Riyadh",
   }).format(new Date(value));

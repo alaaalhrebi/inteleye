@@ -201,7 +201,7 @@ export function buildRatingTrend(
 
   return Array.from(ratingsByDay, ([date, ratings]) => ({
     date,
-    label: new Intl.DateTimeFormat("ar-SA", {
+    label: new Intl.DateTimeFormat("ar-SA-u-nu-latn", {
       day: "numeric",
       month: "short",
       timeZone: "UTC",

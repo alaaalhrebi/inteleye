@@ -491,8 +491,8 @@ function formatType(value: string) {
 }
 function formatDate(value: string | null) {
   if (!value) return "—";
-  return new Intl.DateTimeFormat("ar-SA", { dateStyle: "medium" }).format(new Date(`${value.slice(0, 10)}T00:00:00Z`));
+  return new Intl.DateTimeFormat("ar-SA-u-nu-latn", { dateStyle: "medium" }).format(new Date(`${value.slice(0, 10)}T00:00:00Z`));
 }
 function formatDateTime(value: string) {
-  return new Intl.DateTimeFormat("ar-SA", { dateStyle: "medium", timeStyle: "short" }).format(new Date(value));
+  return new Intl.DateTimeFormat("ar-SA-u-nu-latn", { dateStyle: "medium", timeStyle: "short" }).format(new Date(value));
 }

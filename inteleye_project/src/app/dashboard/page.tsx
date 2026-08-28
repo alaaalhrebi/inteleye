@@ -223,6 +223,7 @@ const selectedBranchName =
           <section className="mt-4">
             <PlatformsSection
               platforms={platforms}
+              branchNames={branchNames}
               canManagePlatformLinks={canManagePlatformLinks}
               plan={plan}
               currentPlatformsCount={currentPlatformsCount}
@@ -380,12 +381,14 @@ function TopActions({
 
 function PlatformsSection({
   platforms,
+  branchNames,
   canManagePlatformLinks,
   plan,
   currentPlatformsCount,
   platformLimit,
 }: {
   platforms: any[];
+  branchNames: Record<string, string>;
   canManagePlatformLinks: boolean;
   plan: string;
   currentPlatformsCount: number;
@@ -407,7 +410,11 @@ function PlatformsSection({
                     {formatPlatform(platform.platform_name)}
                   </h3>
                   <p className="mt-1 text-xs text-gray-500">
-                    {platform.branch_id === null ? "شاملة لجميع الفروع" : "مرتبطة بفرع"}
+                    {platform.branch_id === null
+                      ? "شاملة لجميع الفروع"
+                      : `مرتبطة بفرع: ${
+                          branchNames[String(platform.branch_id)] || "فرع غير مسمى"
+                        }`}
                   </p>
                 </div>
                 <span className={`rounded-full px-2.5 py-1 text-xs font-bold ${status.className}`}>

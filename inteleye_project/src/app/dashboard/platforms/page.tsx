@@ -373,7 +373,7 @@ function formatRelativeDate(value: string | null) {
   if (days === 0) return "اليوم";
   if (days === 1) return "أمس";
   if (days < 7) return `${days} أيام`;
-  return new Intl.DateTimeFormat("ar-SA", {
+  return new Intl.DateTimeFormat("ar-SA-u-nu-latn", {
     day: "numeric",
     month: "short",
     timeZone: "Asia/Riyadh",

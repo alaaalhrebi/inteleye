@@ -291,7 +291,7 @@ function formatDate(value: string | null) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "غير محدد";
 
-  return new Intl.DateTimeFormat("ar-SA", {
+  return new Intl.DateTimeFormat("ar-SA-u-nu-latn", {
     day: "numeric",
     month: "long",
     year: "numeric",
