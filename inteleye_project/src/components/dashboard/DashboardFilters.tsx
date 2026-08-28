@@ -108,7 +108,7 @@ export default function DashboardFilters({
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       <FilterSelect
         label="اختيار الفرع"
         value={selectedBranch}
@@ -209,7 +209,7 @@ function FilterSelect({
 }) {
   return (
     <div>
-      <label className="mb-2 block text-sm font-extrabold text-[#374375]">
+      <label className="mb-1.5 block text-xs font-extrabold text-[#374375]">
         {label}
       </label>
 
@@ -218,7 +218,7 @@ function FilterSelect({
         onChange={(event) =>
           onChange(event.target.value)
         }
-        className="w-full rounded-2xl border border-[#BABDE2]/50 bg-[#F8F7F3] px-4 py-3 text-sm font-bold text-[#374375] outline-none transition focus:border-[#374375] focus:ring-4 focus:ring-[#BABDE2]/30"
+        className="w-full rounded-xl border border-[#BABDE2]/50 bg-[#F8F7F3] px-3 py-2.5 text-xs font-bold text-[#374375] outline-none transition focus:border-[#374375] focus:ring-4 focus:ring-[#BABDE2]/30"
       >
         {children}
       </select>

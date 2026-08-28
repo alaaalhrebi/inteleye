@@ -4,16 +4,10 @@ import Link from "next/link";
 import {
   AlertTriangle,
   BarChart3,
-  Building2,
-  FileText,
   Lightbulb,
-  Plus,
-  RadioTower,
-  Repeat2,
-  Settings,
 } from "lucide-react";
 import LogoutButton from "@/components/dashboard/LogoutButton";
-import DashboardFilters from "@/components/dashboard/DashboardFilters";
+import DashboardSidebar from "@/components/dashboard/DashboardSidebar";
 import PrintDashboardButton from "@/components/dashboard/PrintDashboardButton";
 import InteractiveDashboard from "@/components/dashboard/InteractiveDashboard";
 import { getSubscriptionPermissions } from "@/lib/subscription-permissions";
@@ -77,7 +71,7 @@ export default async function DashboardPage({
 
   let platformsQuery = supabase
     .from("client_platforms")
-    .select("id, branch_id, platform_name, platform_url, username, business_activity, is_active")
+    .select("id, branch_id, platform_name, platform_url, username, business_activity, is_active, connection_status, last_sync_at, last_success_at, last_error")
     .eq("client_id", client.id)
     .eq("is_active", true);
 
@@ -170,6 +164,7 @@ const permissions = getSubscriptionPermissions(client, {
 const plan = permissions.plan;
 const canManagePlatformLinks = permissions.canUsePlatform;
 const recommendations = extractRecommendations(reports);
+const topActions = buildTopActions(currentFeedback, recommendations);
 const branchNames = Object.fromEntries(
   (branches ?? []).map((branch) => [String(branch.id), branch.name])
 );
@@ -181,12 +176,16 @@ const selectedPlatformName =
 const activePlatforms = Array.from(
   new Set(platforms.map((platform) => platform.platform_name).filter(Boolean))
 );
+const selectedBranchName =
+  selectedBranch === null
+    ? null
+    : branchNames[String(selectedBranch)] ?? null;
 
   return (
   <div dir="rtl" className="dashboard-print-root min-h-screen bg-[#F8F7F3] text-[#374375]">
     <DashboardHeader clientName={client.name} plan={client.plan} />
-    <div className="mx-auto flex max-w-[1400px] flex-col gap-4 px-4 py-4 sm:px-6 sm:py-6 lg:flex-row lg:gap-6">
-    <DashboardSideMenu
+    <div className="mx-auto flex max-w-[1500px] flex-col gap-4 px-3 py-3 sm:px-5 sm:py-4 lg:flex-row lg:gap-4">
+    <DashboardSidebar
           platforms={platforms}
           branches={branches ?? []}
           canManagePlatformLinks={canManagePlatformLinks}
@@ -196,7 +195,13 @@ const activePlatforms = Array.from(
           canAccessCustomReports={permissions.canAccessCustomReports}
         />
 
-        <main className="min-w-0 flex-1 pb-10">
+        <main className="min-w-0 flex-1 pb-8">
+          <ActiveScopeBar
+            branchName={selectedBranchName}
+            platformName={selectedPlatformName}
+            period={selectedPeriod}
+          />
+
           <InteractiveDashboard
             clientName={client.name}
             feedback={currentFeedback}
@@ -207,14 +212,15 @@ const activePlatforms = Array.from(
             periodStart={periodRange.start.toISOString()}
             periodEnd={periodRange.end.toISOString()}
             hasError={dashboardErrors.length > 0}
+            priorityContent={
+              <section className="mt-4 grid gap-4 xl:grid-cols-2">
+                <SmartAlerts alerts={alerts} />
+                <TopActions actions={topActions} />
+              </section>
+            }
           />
 
-          <section className="mt-6 grid gap-6 xl:grid-cols-2">
-            <SmartAlerts alerts={alerts} />
-            <AiRecommendations recommendations={recommendations} />
-          </section>
-
-          <section className="mt-6">
+          <section className="mt-4">
             <PlatformsSection
               platforms={platforms}
               canManagePlatformLinks={canManagePlatformLinks}
@@ -238,7 +244,7 @@ function DashboardHeader({
 }) {
   return (
     <header className="sticky top-0 z-50 border-b border-[#BABDE2]/30 bg-[#F8F7F3]/90 backdrop-blur-xl">
-      <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
+      <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-3">
         <div className="flex items-center gap-4">
           <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#374375] text-white">
             <BarChart3 size={24} />
@@ -263,111 +269,47 @@ function DashboardHeader({
   );
 }
 
-function DashboardSideMenu({
-  platforms,
-  branches,
-  canManagePlatformLinks,
-  currentPlatformsCount,
-  platformLimit,
-  canManageBranches,
-  canAccessCustomReports,
+function ActiveScopeBar({
+  branchName,
+  platformName,
+  period,
 }: {
-  platforms: any[];
-  branches: any[];
-  canManagePlatformLinks: boolean;
-  currentPlatformsCount: number;
-  platformLimit: number;
-  canManageBranches: boolean;
-  canAccessCustomReports: boolean;
+  branchName: string | null;
+  platformName: string | null;
+  period: "this_week" | "last_week" | "this_month" | "last_60_days";
 }) {
+  const periodLabels = {
+    this_week: "هذا الأسبوع",
+    last_week: "الأسبوع الماضي",
+    this_month: "هذا الشهر",
+    last_60_days: "آخر شهرين",
+  };
+  const hasFilters = Boolean(branchName || platformName || period !== "this_week");
+
   return (
-    <aside className="no-print w-full shrink-0 rounded-[1.5rem] border border-[#BABDE2]/40 bg-white p-4 shadow-sm lg:sticky lg:top-24 lg:w-[260px] xl:w-[300px]">
-      <DashboardFilters branches={branches} platforms={platforms} />
-
-      <div className="mt-6 space-y-3">
-        {canManagePlatformLinks ? (
-          <Link
-            href="/onboarding/platforms"
-            className="flex w-full items-center justify-center gap-2 rounded-2xl border border-[#BABDE2]/60 bg-[#F8F7F3] px-5 py-3 text-sm font-bold text-[#374375] transition hover:bg-[#BABDE2]/30"
-          >
-            <Plus size={18} />
-            إضافة أو ربط منصة
-          </Link>
-        ) : (
-          <div className="rounded-2xl bg-[#F8F7F3] p-4 text-sm font-bold leading-7 text-gray-500">
-          وصلت إلى الحد المسموح من المنصات في باقتك الحالية.
-          <span className="mt-1 block text-xs">
-            تستخدم حاليًا {currentPlatformsCount} من أصل {platformLimit}.
-          </span>
-        </div>
-        )}
-
-        <Link
-          href="/dashboard/replies"
-          className="flex w-full items-center justify-center gap-2 rounded-2xl border border-[#BABDE2]/60 bg-[#F8F7F3] px-5 py-3 text-sm font-bold text-[#374375] transition hover:bg-[#BABDE2]/30"
-        >
-          <Repeat2 size={18} />
-          مركز الردود
-        </Link>
-
-        {canAccessCustomReports && (
-          <Link
-            href="/dashboard/reports"
-            className="flex w-full items-center justify-center gap-2 rounded-2xl border border-[#BABDE2]/60 bg-[#F8F7F3] px-5 py-3 text-sm font-bold text-[#374375] transition hover:bg-[#BABDE2]/30"
-          >
-            <FileText size={18} />
-            التقارير المخصصة
-          </Link>
-        )}
-
-        {canManageBranches && (
-          <Link
-            href="/dashboard/branches"
-            className="flex w-full items-center justify-center gap-2 rounded-2xl border border-[#BABDE2]/60 bg-[#F8F7F3] px-5 py-3 text-sm font-bold text-[#374375] transition hover:bg-[#BABDE2]/30"
-          >
-            <Building2 size={18} />
-            إدارة الفروع
-          </Link>
-        )}
-
-        <div className="border-t border-[#BABDE2]/30 pt-3">
-          <p className="mb-2 px-2 text-xs font-bold text-gray-400">إدارة الحساب</p>
-          <div className="space-y-2">
-            <DashboardMenuLink
-              href="/dashboard/platforms"
-              label="حالة المنصات"
-              icon={<RadioTower size={18} />}
-            />
-            <DashboardMenuLink
-              href="/dashboard/settings"
-              label="الإعدادات"
-              icon={<Settings size={18} />}
-            />
-          </div>
-        </div>
-
+    <div className="no-print mb-3 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-[#BABDE2]/35 bg-white px-3 py-2 text-xs font-bold text-[#374375] shadow-sm">
+      <div className="flex flex-wrap items-center gap-1.5">
+        <span className="rounded-full bg-[#F8F7F3] px-3 py-1.5">
+          {branchName || "كل الفروع"}
+        </span>
+        <span className="text-[#BABDE2]">•</span>
+        <span className="rounded-full bg-[#F8F7F3] px-3 py-1.5">
+          {platformName ? formatPlatform(platformName) : "كل المنصات"}
+        </span>
+        <span className="text-[#BABDE2]">•</span>
+        <span className="rounded-full bg-[#BABDE2]/20 px-3 py-1.5">
+          {periodLabels[period]}
+        </span>
       </div>
-    </aside>
-  );
-}
-
-function DashboardMenuLink({
-  href,
-  label,
-  icon,
-}: {
-  href: string;
-  label: string;
-  icon: React.ReactNode;
-}) {
-  return (
-    <Link
-      href={href}
-      className="flex w-full items-center gap-3 rounded-2xl px-4 py-2.5 text-sm font-bold text-gray-500 transition hover:bg-[#BABDE2]/25 hover:text-[#374375]"
-    >
-      {icon}
-      {label}
-    </Link>
+      {hasFilters ? (
+        <Link
+          href="/dashboard"
+          className="rounded-full px-3 py-1.5 text-[#895159] transition hover:bg-[#DFAEA1]/15"
+        >
+          مسح الفلاتر
+        </Link>
+      ) : null}
+    </div>
   );
 }
 
@@ -404,16 +346,31 @@ function SmartAlerts({
   );
 }
 
-function AiRecommendations({ recommendations }: { recommendations: any[] }) {
+function TopActions({
+  actions,
+}: {
+  actions: { title: string; text: string; tone: "risk" | "warn" | "opportunity" | "info" }[];
+}) {
   return (
-    <Panel eyebrow="توصيات الذكاء الاصطناعي" title="ماذا تفعل لتحسين الخدمة؟" icon={<Lightbulb size={22} />}>
-      <div className="space-y-4">
-        {recommendations.map((item, index) => (
-          <div key={index} className="rounded-2xl bg-[#F8F7F3] p-4">
+    <Panel eyebrow="قرار هذا الأسبوع" title="أهم 3 إجراءات" icon={<Lightbulb size={22} />}>
+      <div className="space-y-3">
+        {actions.map((item, index) => (
+          <div
+            key={`${item.title}-${index}`}
+            className={`rounded-2xl border-r-4 p-4 ${
+              item.tone === "risk"
+                ? "border-r-[#895159] bg-[#DFAEA1]/12"
+                : item.tone === "warn"
+                  ? "border-r-amber-500 bg-amber-50"
+                  : item.tone === "opportunity"
+                    ? "border-r-emerald-600 bg-emerald-50"
+                    : "border-r-[#374375] bg-[#F8F7F3]"
+            }`}
+          >
             <p className="font-extrabold text-[#374375]">
               {index + 1}. {item.title}
             </p>
-            <p className="mt-2 leading-7 text-gray-500">{item.text}</p>
+            <p className="mt-1.5 text-sm leading-6 text-gray-600">{item.text}</p>
           </div>
         ))}
       </div>
@@ -435,33 +392,62 @@ function PlatformsSection({
   platformLimit: number;
 }) {
   return (
-    <Panel eyebrow="المنصات المرتبطة" title="المنصات المفعّلة" icon={<BarChart3 size={22} />}>
-      <div className="space-y-4">
-        {platforms.map((platform) => (
-          <div key={platform.id} className="rounded-3xl border border-[#BABDE2]/30 bg-[#F8F7F3] p-5">
-            <div className="flex items-center justify-between">
-              <h3 className="text-lg font-extrabold text-[#374375]">
-                {formatPlatform(platform.platform_name)}
-              </h3>
-              <span className="rounded-full bg-[#BABDE2]/40 px-3 py-1 text-xs font-bold">
-                مفعّلة
-              </span>
-            </div>
+    <Panel eyebrow="صحة مصادر البيانات" title="حالة المنصات والمزامنة" icon={<BarChart3 size={22} />}>
+      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+        {platforms.map((platform) => {
+          const status = getPlatformConnectionState(platform);
+          const accountUrl = safePlatformUrl(platform.platform_url);
+          const lastSync = platform.last_success_at || platform.last_sync_at;
 
-            <p className="mt-3 break-all text-sm text-gray-500">
-              {platform.platform_url || platform.username || "—"}
-            </p>
+          return (
+            <div key={platform.id} className="rounded-2xl border border-[#BABDE2]/30 bg-[#F8F7F3] p-4">
+              <div className="flex items-start justify-between gap-2">
+                <div>
+                  <h3 className="font-extrabold text-[#374375]">
+                    {formatPlatform(platform.platform_name)}
+                  </h3>
+                  <p className="mt-1 text-[10px] text-gray-400">
+                    {platform.branch_id === null ? "شاملة لجميع الفروع" : "مرتبطة بفرع"}
+                  </p>
+                </div>
+                <span className={`rounded-full px-2.5 py-1 text-[10px] font-bold ${status.className}`}>
+                  {status.label}
+                </span>
+              </div>
 
-            {platform.business_activity && (
-              <p className="mt-2 text-sm text-gray-500">
-                النشاط: {platform.business_activity}
+              <p className="mt-4 text-xs font-bold text-gray-500">
+                آخر مزامنة: {formatRelativeSync(lastSync)}
               </p>
-            )}
-          </div>
-        ))}
+              {platform.last_error ? (
+                <p className="mt-2 line-clamp-2 text-[10px] leading-5 text-[#895159]">
+                  توجد ملاحظة في آخر مزامنة. راجع صفحة حالة المنصات.
+                </p>
+              ) : null}
+
+              <div className="mt-4 flex items-center gap-2">
+                {accountUrl ? (
+                  <a
+                    href={accountUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-xs font-extrabold text-[#374375] underline decoration-[#BABDE2] underline-offset-4"
+                  >
+                    فتح الحساب
+                  </a>
+                ) : null}
+                <Link
+                  href="/dashboard/platforms"
+                  className="text-xs font-bold text-gray-400 hover:text-[#374375]"
+                >
+                  التفاصيل
+                </Link>
+              </div>
+            </div>
+          );
+        })}
 
         {!canManagePlatformLinks && (
-          <div className="rounded-3xl bg-[#DFAEA1]/20 p-5 text-sm font-bold text-[#895159]">
+          <div className="rounded-2xl bg-[#DFAEA1]/20 p-4 text-sm font-bold text-[#895159] md:col-span-2 xl:col-span-4">
           <>
             وصلت إلى الحد المسموح في باقة {formatPlan(plan)}.
             <span className="mt-1 block text-xs">
@@ -547,6 +533,47 @@ function formatPlatform(platform: string) {
   return platform;
 }
 
+function safePlatformUrl(value: unknown) {
+  if (typeof value !== "string") return null;
+  try {
+    const url = new URL(value);
+    return url.protocol === "https:" || url.protocol === "http:" ? url.toString() : null;
+  } catch {
+    return null;
+  }
+}
+
+function getPlatformConnectionState(platform: {
+  connection_status?: string | null;
+  last_error?: string | null;
+  is_active?: boolean;
+}) {
+  const value = platform.connection_status?.trim().toLowerCase();
+  if (platform.last_error || ["error", "failed"].includes(value ?? "")) {
+    return { label: "خطأ بالمزامنة", className: "bg-[#DFAEA1]/25 text-[#895159]" };
+  }
+  if (["reauth_required", "needs_reconnect", "disconnected"].includes(value ?? "")) {
+    return { label: "يحتاج إعادة ربط", className: "bg-amber-100 text-amber-800" };
+  }
+  if (platform.is_active) {
+    return { label: "متصل", className: "bg-emerald-50 text-emerald-700" };
+  }
+  return { label: "غير متصل", className: "bg-gray-100 text-gray-500" };
+}
+
+function formatRelativeSync(value: unknown) {
+  if (typeof value !== "string") return "لم تتم بعد";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "غير معروف";
+  const minutes = Math.max(0, Math.floor((Date.now() - date.getTime()) / 60_000));
+  if (minutes < 1) return "الآن";
+  if (minutes < 60) return `منذ ${minutes} دقيقة`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `منذ ${hours} ساعة`;
+  const days = Math.floor(hours / 24);
+  return `منذ ${days} يوم`;
+}
+
 function asObject(value: unknown): Record<string, any> {
   if (
     value &&
@@ -583,7 +610,7 @@ async function loadDashboardFeedback(
     let query = supabase
       .from("unified_feedback")
       .select(
-        "source_table, source_record_id, branch_id, platform_id, platform_name, feedback_text, rating, published_at, sentiment, category, severity, needs_reply, is_complaint, suggested_reply"
+        "source_table, source_record_id, branch_id, platform_id, platform_name, feedback_text, rating, published_at, sentiment, category, severity, needs_reply, is_sales_opportunity, is_complaint, suggested_reply"
       )
       .eq("client_id", scope.clientId)
       .gte("published_at", scope.start.toISOString())
@@ -732,6 +759,79 @@ function extractRecommendations(reports: any[]) {
           text: "ستظهر التوصيات بعد توفر تقرير مكتمل يحتوي على بيانات كافية.",
         },
       ];
+}
+
+function buildTopActions(
+  feedback: DashboardFeedbackRow[],
+  recommendations: { title: string; text: string }[]
+) {
+  const actions: {
+    title: string;
+    text: string;
+    tone: "risk" | "warn" | "opportunity" | "info";
+  }[] = [];
+  const urgentCount = feedback.filter((row) =>
+    ["high", "critical"].includes(row.severity?.trim().toLowerCase() ?? "")
+  ).length;
+  const needsReplyCount = feedback.filter((row) => row.needs_reply === true).length;
+  const opportunityCount = feedback.filter(
+    (row) => row.is_sales_opportunity === true
+  ).length;
+
+  if (urgentCount > 0 || needsReplyCount > 0) {
+    actions.push({
+      title: `معالجة ${Math.max(urgentCount, needsReplyCount)} حالة ذات أولوية`,
+      text: `توجد ${urgentCount} حالة مرتفعة الخطورة و${needsReplyCount} حالة تحتاج ردًا ضمن الفترة الحالية. ابدأ بالأعلى خطورة من مركز الردود.`,
+      tone: "risk",
+    });
+  }
+
+  const negativeTopics = new Map<string, number>();
+  for (const row of feedback) {
+    const negative =
+      row.is_complaint === true ||
+      row.sentiment?.trim().toLowerCase() === "negative";
+    if (!negative) continue;
+    for (const rawCategory of row.category ?? []) {
+      const category = rawCategory.trim();
+      if (category) {
+        negativeTopics.set(category, (negativeTopics.get(category) ?? 0) + 1);
+      }
+    }
+  }
+  const leadingIssue = Array.from(negativeTopics, ([label, count]) => ({ label, count }))
+    .sort((left, right) => right.count - left.count)[0];
+
+  if (leadingIssue) {
+    actions.push({
+      title: `مراجعة ${leadingIssue.label}`,
+      text: `بناءً على ${leadingIssue.count} تعليقًا سلبيًا أو شكوى مرتبطة بـ${leadingIssue.label}، راجع السبب التشغيلي وراقب أثر المعالجة في الفترة القادمة.`,
+      tone: "warn",
+    });
+  }
+
+  if (opportunityCount > 0) {
+    actions.push({
+      title: `متابعة ${opportunityCount} فرصة مكتشفة`,
+      text: "رُصدت إشارات تحمل نية شراء أو فرصة تجارية. راجع العينات الإيجابية وحوّلها إلى إجراء تسويقي أو متابعة مباشرة.",
+      tone: "opportunity",
+    });
+  }
+
+  for (const recommendation of recommendations) {
+    if (actions.length >= 3 || recommendation.title === "لا توجد توصيات بعد") break;
+    actions.push({ ...recommendation, tone: "info" });
+  }
+
+  if (actions.length === 0) {
+    actions.push({
+      title: "استمر في مراقبة التجربة",
+      text: "لا توجد حالات حرجة أو اتجاهات سلبية واضحة في الفترة الحالية. راقب التغيرات مع وصول بيانات جديدة.",
+      tone: "info",
+    });
+  }
+
+  return actions.slice(0, 3);
 }
 
 function formatPriority(priority: string) {

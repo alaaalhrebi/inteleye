@@ -11,8 +11,12 @@ import {
   Hash,
   MessageCircle,
   Quote,
+  ShieldAlert,
   Sparkles,
   Star,
+  Target,
+  TrendingDown,
+  TrendingUp,
 } from "lucide-react";
 import type { DashboardFeedbackRow } from "@/lib/dashboard-analytics";
 
@@ -29,6 +33,7 @@ type InteractiveDashboardProps = {
   periodStart: string;
   periodEnd: string;
   hasError: boolean;
+  priorityContent?: ReactNode;
 };
 
 type Snapshot = {
@@ -48,9 +53,20 @@ type Kpi = {
   previous: number | null;
   current: number | null;
   suffix?: string;
+  detail?: string;
   icon: ReactNode;
   tone?: "primary" | "good" | "warn" | "accent";
   lowerIsBetter?: boolean;
+};
+
+type ExecutiveIntelligenceValue = {
+  summary: string;
+  direction: string;
+  strength: string;
+  issue: string;
+  emerging: string;
+  priority: string;
+  improving: boolean;
 };
 
 export default function InteractiveDashboard({
@@ -63,6 +79,7 @@ export default function InteractiveDashboard({
   periodStart,
   periodEnd,
   hasError,
+  priorityContent,
 }: InteractiveDashboardProps) {
   const [sentimentFilter, setSentimentFilter] =
     useState<SentimentFilter>("all");
@@ -90,6 +107,34 @@ export default function InteractiveDashboard({
   const platformBreakdown = useMemo(
     () => buildPlatformBreakdown(feedback),
     [feedback]
+  );
+  const executive = useMemo(
+    () =>
+      buildExecutiveIntelligence(
+        feedback,
+        comparisonFeedback,
+        current,
+        previous,
+        periodEnd
+      ),
+    [comparisonFeedback, current, feedback, periodEnd, previous]
+  );
+  const activityInsight = useMemo(
+    () => buildActivityInsight(activity, feedback, selectedPlatformName),
+    [activity, feedback, selectedPlatformName]
+  );
+  const advancedSignals = useMemo(
+    () => ({
+      emerging: executive.emerging,
+      opportunities: feedback.filter(
+        (row) => row.is_sales_opportunity === true
+      ).length,
+      reputationRisks: feedback.filter((row) => {
+        const severity = row.severity?.trim().toLowerCase();
+        return severity === "critical" || severity === "high";
+      }).length,
+    }),
+    [executive.emerging, feedback]
   );
 
   const samples = useMemo(() => {
@@ -132,7 +177,7 @@ export default function InteractiveDashboard({
 
   return (
     <>
-      <section className="relative overflow-hidden rounded-[1.5rem] border border-[#374375]/10 bg-[#374375] p-6 text-white shadow-sm sm:rounded-[2rem] sm:p-8">
+      <section className="relative overflow-hidden rounded-[1.35rem] border border-[#374375]/10 bg-[#374375] p-5 text-white shadow-sm sm:rounded-[1.6rem] sm:p-6">
         <div className="absolute -left-16 -top-20 h-56 w-56 rounded-full bg-[#BABDE2]/20 blur-3xl" />
         <div className="absolute -bottom-24 right-1/3 h-52 w-52 rounded-full bg-[#DFAEA1]/15 blur-3xl" />
         <div className="relative grid gap-7 lg:grid-cols-[1fr_auto] lg:items-end">
@@ -141,11 +186,14 @@ export default function InteractiveDashboard({
               <Sparkles size={14} />
               {profile.eyebrow}
             </div>
-            <h2 className="max-w-4xl text-2xl font-black leading-tight sm:text-4xl">
-              {profile.title.replace("{name}", clientName)}
+            <h2 className="max-w-4xl text-2xl font-black leading-tight sm:text-3xl">
+              نظرة عامة على تجربة العملاء
             </h2>
-            <p className="mt-4 max-w-3xl text-sm leading-7 text-white/70 sm:text-base">
-              {profile.description}
+            <p className="mt-3 max-w-3xl text-sm font-bold leading-7 text-white/80 sm:text-base">
+              {executive.summary}
+            </p>
+            <p className="mt-1 max-w-3xl text-xs leading-6 text-white/55">
+              {clientName} · {profile.description}
             </p>
           </div>
           <div className="grid grid-cols-2 gap-2 text-center sm:flex">
@@ -169,13 +217,17 @@ export default function InteractiveDashboard({
         platformName={selectedPlatformName}
       />
 
-      <section className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+      <ExecutiveIntelligence intelligence={executive} />
+
+      <section className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         {kpis.map((kpi) => (
           <MetricCard key={kpi.title} {...kpi} />
         ))}
       </section>
 
-      <section className="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1.65fr)_minmax(300px,0.85fr)]">
+      {priorityContent}
+
+      <section className="mt-4 grid gap-4 xl:grid-cols-[minmax(0,1.65fr)_minmax(300px,0.85fr)]">
         <DashboardPanel
           eyebrow="حركة التفاعل"
           title={`النشاط اليومي — ${profile.volumeLabel}`}
@@ -189,6 +241,7 @@ export default function InteractiveDashboard({
                 currentDay === day ? null : day
               )
             }
+            insight={activityInsight}
           />
         </DashboardPanel>
 
@@ -205,7 +258,7 @@ export default function InteractiveDashboard({
         </DashboardPanel>
       </section>
 
-      <section className="mt-6 grid gap-6 xl:grid-cols-2">
+      <section className="mt-4 grid gap-4 xl:grid-cols-2">
         <PlatformContextPanel
           platformKey={platformKey}
           feedback={feedback}
@@ -236,7 +289,9 @@ export default function InteractiveDashboard({
         </DashboardPanel>
       </section>
 
-      <section className="mt-6 rounded-[1.5rem] border border-[#BABDE2]/40 bg-white p-4 shadow-sm sm:p-6">
+      <AdvancedSignals {...advancedSignals} />
+
+      <section className="mt-4 rounded-[1.35rem] border border-[#BABDE2]/40 bg-white p-4 shadow-sm sm:p-5">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">
             <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#DFAEA1]/25 text-[#895159]">
@@ -365,12 +420,145 @@ function PeriodSummary({
   );
 }
 
+function ExecutiveIntelligence({
+  intelligence,
+}: {
+  intelligence: ExecutiveIntelligenceValue;
+}) {
+  const items = [
+    {
+      label: "الاتجاه العام",
+      value: intelligence.direction,
+      icon: intelligence.improving ? <TrendingUp size={18} /> : <TrendingDown size={18} />,
+      className: intelligence.improving
+        ? "bg-emerald-50 text-emerald-700"
+        : "bg-[#DFAEA1]/20 text-[#895159]",
+    },
+    {
+      label: "أكبر نقطة قوة",
+      value: intelligence.strength,
+      icon: <Sparkles size={18} />,
+      className: "bg-emerald-50 text-emerald-700",
+    },
+    {
+      label: "أكبر مشكلة",
+      value: intelligence.issue,
+      icon: <ShieldAlert size={18} />,
+      className: "bg-[#DFAEA1]/20 text-[#895159]",
+    },
+    {
+      label: "إشارة ناشئة",
+      value: intelligence.emerging,
+      icon: <Activity size={18} />,
+      className: "bg-amber-50 text-amber-800",
+    },
+    {
+      label: "أولوية اليوم",
+      value: intelligence.priority,
+      icon: <Target size={18} />,
+      className: "bg-[#BABDE2]/25 text-[#374375]",
+    },
+  ];
+
+  return (
+    <section className="mt-4 rounded-[1.35rem] border border-[#BABDE2]/40 bg-white p-4 shadow-sm">
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <div>
+          <p className="text-[10px] font-bold text-[#895159]">خلاصة IntelEye</p>
+          <h3 className="text-base font-extrabold text-[#374375]">ما الذي يهم الإدارة الآن؟</h3>
+        </div>
+        <span className="rounded-full bg-[#374375] px-3 py-1 text-[10px] font-bold text-white">
+          قراءة آلية من البيانات الحالية
+        </span>
+      </div>
+      <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-5">
+        {items.map((item) => (
+          <div key={item.label} className="rounded-2xl bg-[#F8F7F3] p-3">
+            <div className={`mb-2 flex h-8 w-8 items-center justify-center rounded-xl ${item.className}`}>
+              {item.icon}
+            </div>
+            <p className="text-[10px] text-gray-400">{item.label}</p>
+            <p className="mt-1 line-clamp-2 text-xs font-extrabold leading-5 text-[#374375]">
+              {item.value}
+            </p>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function AdvancedSignals({
+  emerging,
+  opportunities,
+  reputationRisks,
+}: {
+  emerging: string;
+  opportunities: number;
+  reputationRisks: number;
+}) {
+  const items = [
+    {
+      title: "إشارات ناشئة",
+      value: emerging,
+      icon: <Activity size={19} />,
+      className: "bg-amber-50 text-amber-800",
+    },
+    {
+      title: "فرص مكتشفة",
+      value:
+        opportunities > 0
+          ? `${formatNumber(opportunities)} تعليقًا يحمل نية شراء أو فرصة متابعة.`
+          : "لا توجد فرص شراء واضحة في الفترة الحالية.",
+      icon: <Target size={19} />,
+      className: "bg-emerald-50 text-emerald-700",
+    },
+    {
+      title: "مخاطر السمعة",
+      value:
+        reputationRisks > 0
+          ? `${formatNumber(reputationRisks)} حالة عالية الأولوية تحتاج مراجعة.`
+          : "لا توجد مخاطر سمعة عالية في الفترة الحالية.",
+      icon: <ShieldAlert size={19} />,
+      className: "bg-[#DFAEA1]/20 text-[#895159]",
+    },
+  ];
+
+  return (
+    <section className="mt-4 grid gap-3 lg:grid-cols-3">
+      {items.map((item) => (
+        <article
+          key={item.title}
+          className="rounded-[1.2rem] border border-[#BABDE2]/35 bg-white p-4 shadow-sm"
+        >
+          <div className="flex items-start gap-3">
+            <div
+              className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl ${item.className}`}
+            >
+              {item.icon}
+            </div>
+            <div>
+              <h3 className="text-sm font-extrabold text-[#374375]">
+                {item.title}
+              </h3>
+              <p className="mt-1.5 text-xs font-medium leading-6 text-gray-500">
+                {item.value}
+              </p>
+            </div>
+          </div>
+        </article>
+      ))}
+    </section>
+  );
+}
+
 function MetricCard({
   title,
   value,
   previous,
   current,
   suffix,
+  detail,
   icon,
   tone = "primary",
   lowerIsBetter = false,
@@ -401,6 +589,7 @@ function MetricCard({
       <p className="mt-2 text-2xl font-black text-[#374375] sm:text-3xl">
         {value}
       </p>
+      {detail ? <p className="mt-1 text-[10px] font-bold text-gray-400">{detail}</p> : null}
     </article>
   );
 }
@@ -421,7 +610,7 @@ function ChangeBadge({
   }
 
   const difference = round(current - previous, 1);
-  const direction = difference > 0 ? "+" : "";
+  const direction = difference > 0 ? "↑" : difference < 0 ? "↓" : "";
   const improved = lowerIsBetter ? difference < 0 : difference > 0;
 
   return (
@@ -435,9 +624,8 @@ function ChangeBadge({
       }`}
       title="مقارنة بالفترة السابقة"
     >
-      {direction}
-      {formatNumber(difference)}
-      {suffix}
+      {direction} {formatNumber(Math.abs(difference))}
+      {suffix} عن السابقة
     </span>
   );
 }
@@ -475,10 +663,12 @@ function ActivityChart({
   points,
   selectedDay,
   onSelectDay,
+  insight,
 }: {
   points: { date: string; label: string; count: number }[];
   selectedDay: string | null;
   onSelectDay: (day: string) => void;
+  insight: string | null;
 }) {
   const max = Math.max(...points.map((point) => point.count), 1);
 
@@ -524,6 +714,11 @@ function ActivityChart({
       <p className="mt-3 text-xs text-gray-400">
         اضغط على أي يوم لعرض التعليقات المسجلة فيه.
       </p>
+      {insight ? (
+        <p className="mt-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs font-bold leading-6 text-amber-900">
+          {insight}
+        </p>
+      ) : null}
     </div>
   );
 }
@@ -565,6 +760,7 @@ function SentimentChart({
         <SentimentLegendButton
           label="إيجابي"
           count={counts.positive}
+          total={total}
           color="bg-emerald-600"
           selected={selected === "positive"}
           onClick={() => onSelect(selected === "positive" ? "all" : "positive")}
@@ -572,6 +768,7 @@ function SentimentChart({
         <SentimentLegendButton
           label="محايد"
           count={counts.neutral}
+          total={total}
           color="bg-[#BABDE2]"
           selected={selected === "neutral"}
           onClick={() => onSelect(selected === "neutral" ? "all" : "neutral")}
@@ -579,6 +776,7 @@ function SentimentChart({
         <SentimentLegendButton
           label="سلبي"
           count={counts.negative}
+          total={total}
           color="bg-[#895159]"
           selected={selected === "negative"}
           onClick={() => onSelect(selected === "negative" ? "all" : "negative")}
@@ -591,12 +789,14 @@ function SentimentChart({
 function SentimentLegendButton({
   label,
   count,
+  total,
   color,
   selected,
   onClick,
 }: {
   label: string;
   count: number;
+  total: number;
   color: string;
   selected: boolean;
   onClick: () => void;
@@ -615,7 +815,9 @@ function SentimentLegendButton({
         <span className={`h-2.5 w-2.5 rounded-full ${color}`} />
         {label}
       </span>
-      <span className="text-gray-400">{formatNumber(count)}</span>
+      <span className="text-gray-400">
+        {formatNumber(count)} · {total > 0 ? round((count / total) * 100, 1) : 0}%
+      </span>
     </button>
   );
 }
@@ -689,8 +891,8 @@ function PlatformContextPanel({
         ) : (
           <div className="space-y-4">
             {breakdown.map((item) => (
-              <div key={item.platform}>
-                <div className="mb-2 flex items-center justify-between text-xs">
+              <div key={item.platform} className="rounded-2xl border border-[#BABDE2]/30 bg-[#F8F7F3] p-3">
+                <div className="mb-3 flex items-center justify-between text-xs">
                   <span className="font-extrabold text-[#374375]">
                     {formatPlatform(item.platform)}
                   </span>
@@ -709,6 +911,20 @@ function PlatformContextPanel({
                     className="bg-[#895159]"
                     style={{ width: `${item.negativePct}%` }}
                   />
+                </div>
+                <div className="mt-3 grid grid-cols-3 gap-2 text-center text-[10px]">
+                  <div className="rounded-xl bg-white px-2 py-2">
+                    <strong className="block text-emerald-700">{round(item.positivePct, 1)}%</strong>
+                    <span className="text-gray-400">رضا</span>
+                  </div>
+                  <div className="rounded-xl bg-white px-2 py-2">
+                    <strong className="block text-[#895159]">{round(item.negativePct, 1)}%</strong>
+                    <span className="text-gray-400">سلبي</span>
+                  </div>
+                  <div className="rounded-xl bg-white px-2 py-2">
+                    <strong className="block truncate text-[#374375]">{item.topTopic || "—"}</strong>
+                    <span className="text-gray-400">أبرز موضوع</span>
+                  </div>
                 </div>
               </div>
             ))}
@@ -770,15 +986,13 @@ function TopicsChart({
   selectedTopic,
   onSelectTopic,
 }: {
-  topics: { label: string; count: number }[];
+  topics: { label: string; count: number; positivePct: number; negativePct: number }[];
   selectedTopic: string | null;
   onSelectTopic: (topic: string) => void;
 }) {
   if (topics.length === 0) {
     return <EmptyChart message="لم تُصنّف موضوعات كافية ضمن الفترة الحالية." />;
   }
-
-  const max = Math.max(...topics.map((topic) => topic.count), 1);
 
   return (
     <div className="space-y-3">
@@ -793,14 +1007,27 @@ function TopicsChart({
               : "border-transparent hover:bg-[#F8F7F3]"
           }`}
         >
-          <span className="mb-2 flex items-center justify-between text-sm">
+          <span className="mb-2 flex items-center justify-between gap-3 text-sm">
             <span className="font-bold text-[#374375]">{topic.label}</span>
-            <span className="text-xs text-gray-400">{topic.count}</span>
+            <span className="text-left text-[10px] text-gray-400">
+              {topic.count} ذكر ·{" "}
+              <span className={topic.negativePct > topic.positivePct ? "text-[#895159]" : "text-emerald-700"}>
+                {round(Math.max(topic.positivePct, topic.negativePct), 1)}% {topic.negativePct > topic.positivePct ? "سلبي" : "إيجابي"}
+              </span>
+            </span>
           </span>
-          <span className="block h-2.5 overflow-hidden rounded-full bg-[#F1F0EC]">
+          <span className="flex h-2.5 overflow-hidden rounded-full bg-[#F1F0EC]">
             <span
-              className="block h-full rounded-full bg-[#DFAEA1] transition-all duration-300"
-              style={{ width: `${(topic.count / max) * 100}%` }}
+              className="h-full bg-emerald-600 transition-all duration-300"
+              style={{ width: `${topic.positivePct}%` }}
+            />
+            <span
+              className="h-full bg-[#BABDE2] transition-all duration-300"
+              style={{ width: `${Math.max(0, 100 - topic.positivePct - topic.negativePct)}%` }}
+            />
+            <span
+              className="h-full bg-[#895159] transition-all duration-300"
+              style={{ width: `${topic.negativePct}%` }}
             />
           </span>
         </button>
@@ -906,6 +1133,7 @@ function FeedbackSampleCard({
       border: "border-r-gray-300",
     },
   }[sentiment];
+  const classifications = buildFeedbackLabels(row);
 
   return (
     <article
@@ -922,11 +1150,21 @@ function FeedbackSampleCard({
             {branchName}
           </span>
         </div>
-        <span
-          className={`rounded-full px-2.5 py-1 text-[10px] font-bold ${sentimentStyle.badge}`}
-        >
-          {sentimentStyle.label}
-        </span>
+        <div className="flex flex-wrap justify-end gap-1.5">
+          <span
+            className={`rounded-full px-2.5 py-1 text-[10px] font-bold ${sentimentStyle.badge}`}
+          >
+            {sentimentStyle.label}
+          </span>
+          {classifications.map((item) => (
+            <span
+              key={item.label}
+              className={`rounded-full px-2.5 py-1 text-[10px] font-bold ${item.className}`}
+            >
+              {item.label}
+            </span>
+          ))}
+        </div>
       </div>
 
       <p className="mt-4 line-clamp-4 min-h-[3.5rem] font-bold leading-7 text-[#374375]">
@@ -972,26 +1210,15 @@ function buildKpis(
   previous: Snapshot,
   activePlatformsCount: number
 ): Kpi[] {
-  const commonAttention: Kpi[] = [
-    {
-      title: "شكاوى مرصودة",
-      value: current.complaints,
-      current: current.complaints,
-      previous: previous.complaints,
-      icon: <MessageCircle size={21} />,
-      tone: "accent",
-      lowerIsBetter: true,
-    },
-    {
-      title: "تحتاج تدخلاً سريعًا",
-      value: current.urgent,
-      current: current.urgent,
-      previous: previous.urgent,
-      icon: <AlertTriangle size={21} />,
-      tone: "warn",
-      lowerIsBetter: true,
-    },
-  ];
+  const urgentKpi: Kpi = {
+    title: "تحتاج تدخلاً سريعًا",
+    value: current.urgent,
+    current: current.urgent,
+    previous: previous.urgent,
+    icon: <AlertTriangle size={21} />,
+    tone: "warn",
+    lowerIsBetter: true,
+  };
 
   if (platformKey === "google_maps") {
     return [
@@ -1007,6 +1234,7 @@ function buildKpis(
         value: current.total,
         current: current.total,
         previous: previous.total,
+        detail: "مقارنة بالفترة السابقة",
         icon: <BarChart3 size={21} />,
       },
       {
@@ -1018,7 +1246,7 @@ function buildKpis(
         icon: <CheckCircle2 size={21} />,
         tone: "good",
       },
-      ...commonAttention,
+      urgentKpi,
     ];
   }
 
@@ -1033,6 +1261,7 @@ function buildKpis(
       value: current.total,
       current: current.total,
       previous: previous.total,
+      detail: `من ${activePlatformsCount} منصات نشطة`,
       icon: <Activity size={21} />,
     },
     {
@@ -1044,14 +1273,21 @@ function buildKpis(
       icon: <CheckCircle2 size={21} />,
       tone: "good",
     },
-    ...commonAttention,
     {
-      title: platformKey === "all" ? "منصات نشطة" : "موضوعات نشطة",
-      value: platformKey === "all" ? activePlatformsCount : current.topicCount,
-      current: null,
-      previous: null,
-      icon: platformKey === "all" ? <BarChart3 size={21} /> : <Hash size={21} />,
+      title: "الاتجاه العام",
+      value: reputationDirectionLabel(current, previous),
+      current: current.positivePct,
+      previous: previous.positivePct,
+      suffix: " نقطة",
+      icon:
+        current.positivePct >= previous.positivePct ? (
+          <TrendingUp size={21} />
+        ) : (
+          <TrendingDown size={21} />
+        ),
+      tone: current.positivePct >= previous.positivePct ? "good" : "accent",
     },
+    urgentKpi,
   ];
 }
 
@@ -1152,16 +1388,35 @@ function buildSentiment(feedback: DashboardFeedbackRow[]) {
 }
 
 function buildTopics(feedback: DashboardFeedbackRow[]) {
-  const counts = new Map<string, number>();
+  const rowsByTopic = new Map<string, DashboardFeedbackRow[]>();
   for (const row of feedback) {
     for (const rawCategory of row.category ?? []) {
       const category = rawCategory.trim();
       if (!category) continue;
-      counts.set(category, (counts.get(category) ?? 0) + 1);
+      const rows = rowsByTopic.get(category) ?? [];
+      rows.push(row);
+      rowsByTopic.set(category, rows);
     }
   }
 
-  return Array.from(counts, ([label, count]) => ({ label, count }))
+  return Array.from(rowsByTopic, ([label, rows]) => {
+    const sentiments = rows
+      .map((row) => normalizeSentiment(row.sentiment))
+      .filter((sentiment) => sentiment !== "unknown");
+    const denominator = sentiments.length || 1;
+    return {
+      label,
+      count: rows.length,
+      positivePct:
+        (sentiments.filter((sentiment) => sentiment === "positive").length /
+          denominator) *
+        100,
+      negativePct:
+        (sentiments.filter((sentiment) => sentiment === "negative").length /
+          denominator) *
+        100,
+    };
+  })
     .sort((left, right) => right.count - left.count)
     .slice(0, 6);
 }
@@ -1187,9 +1442,19 @@ function buildPlatformBreakdown(feedback: DashboardFeedbackRow[]) {
       .map((row) => normalizeSentiment(row.sentiment))
       .filter((sentiment) => sentiment !== "unknown");
     const denominator = sentiments.length || 1;
+    const topicCounts = new Map<string, number>();
+    for (const row of rows) {
+      for (const rawCategory of row.category ?? []) {
+        const category = rawCategory.trim();
+        if (category) topicCounts.set(category, (topicCounts.get(category) ?? 0) + 1);
+      }
+    }
+    const topTopic = Array.from(topicCounts, ([label, count]) => ({ label, count }))
+      .sort((left, right) => right.count - left.count)[0]?.label ?? null;
     return {
       platform,
       total: rows.length,
+      topTopic,
       positivePct:
         (sentiments.filter((sentiment) => sentiment === "positive").length /
           denominator) *
@@ -1204,6 +1469,200 @@ function buildPlatformBreakdown(feedback: DashboardFeedbackRow[]) {
         100,
     };
   }).sort((left, right) => right.total - left.total);
+}
+
+function buildExecutiveIntelligence(
+  feedback: DashboardFeedbackRow[],
+  comparisonFeedback: DashboardFeedbackRow[],
+  current: Snapshot,
+  previous: Snapshot,
+  periodEnd: string
+): ExecutiveIntelligenceValue {
+  const satisfactionDelta = round(current.positivePct - previous.positivePct, 1);
+  const complaintDelta = current.complaints - previous.complaints;
+  const positiveTopic = leadingTopic(feedback, (row) => normalizeSentiment(row.sentiment) === "positive");
+  const negativeTopic = leadingTopic(
+    feedback,
+    (row) => row.is_complaint === true || normalizeSentiment(row.sentiment) === "negative"
+  );
+  const emerging = buildEmergingSignal([...comparisonFeedback, ...feedback], periodEnd);
+  const improving = satisfactionDelta >= 0 && complaintDelta <= 0;
+  const summary =
+    current.total === 0
+      ? "لا توجد بيانات كافية في الفترة الحالية لبناء قراءة تنفيذية."
+      : satisfactionDelta >= 3
+        ? `الرضا يتحسن بارتفاع ${Math.abs(satisfactionDelta)} نقطة، مع ضرورة متابعة ${current.urgent} حالة عاجلة.`
+        : satisfactionDelta <= -3
+          ? `تراجع الرضا ${Math.abs(satisfactionDelta)} نقطة عن الفترة السابقة، وتحتاج المشكلات الأعلى تكرارًا إلى تدخل.`
+          : complaintDelta > 0
+            ? `الرضا مستقر نسبيًا، لكن الشكاوى ارتفعت بمقدار ${complaintDelta} عن الفترة السابقة.`
+            : "الرضا مستقر ولا يظهر تغير حاد، مع استمرار الحاجة لمراقبة الحالات ذات الأولوية.";
+
+  return {
+    summary,
+    direction:
+      satisfactionDelta > 1
+        ? `السمعة تتحسن +${satisfactionDelta} نقطة`
+        : satisfactionDelta < -1
+          ? `تراجع طفيف ${Math.abs(satisfactionDelta)} نقطة`
+          : "الاتجاه مستقر",
+    strength: positiveTopic
+      ? `${positiveTopic.label} (${positiveTopic.count} إشارات إيجابية)`
+      : "لا توجد نقطة قوة بارزة بعد",
+    issue: negativeTopic
+      ? `${negativeTopic.label} (${negativeTopic.count} ملاحظات سلبية)`
+      : "لا توجد مشكلة متكررة واضحة",
+    emerging,
+    priority:
+      current.urgent > 0
+        ? `${current.urgent} حالات مرتفعة الخطورة`
+        : current.needsAttention > 0
+          ? `${current.needsAttention} حالات تحتاج ردًا`
+          : "لا توجد حالة عاجلة اليوم",
+    improving,
+  };
+}
+
+function leadingTopic(
+  feedback: DashboardFeedbackRow[],
+  include: (row: DashboardFeedbackRow) => boolean
+) {
+  const counts = new Map<string, number>();
+  for (const row of feedback) {
+    if (!include(row)) continue;
+    for (const rawCategory of row.category ?? []) {
+      const category = rawCategory.trim();
+      if (category) counts.set(category, (counts.get(category) ?? 0) + 1);
+    }
+  }
+  return Array.from(counts, ([label, count]) => ({ label, count })).sort(
+    (left, right) => right.count - left.count
+  )[0];
+}
+
+function buildEmergingSignal(feedback: DashboardFeedbackRow[], periodEnd: string) {
+  const end = startOfUtcDay(new Date(periodEnd));
+  const recentStart = new Date(end);
+  recentStart.setUTCDate(end.getUTCDate() - 9);
+  const previousEnd = new Date(recentStart);
+  previousEnd.setUTCDate(recentStart.getUTCDate() - 1);
+  const previousStart = new Date(previousEnd);
+  previousStart.setUTCDate(previousEnd.getUTCDate() - 9);
+
+  const recentRows = feedback.filter((row) => isWithin(row.published_at, recentStart, end));
+  const previousRows = feedback.filter((row) =>
+    isWithin(row.published_at, previousStart, previousEnd)
+  );
+  if (recentRows.length < 3 || previousRows.length < 3) {
+    return "لا توجد بيانات كافية لرصد تغير آخر 10 أيام";
+  }
+
+  const recentCounts = countNegativeTopics(recentRows);
+  const previousCounts = countNegativeTopics(previousRows);
+  const changes = Array.from(recentCounts, ([label, count]) => ({
+    label,
+    count,
+    increase: count - (previousCounts.get(label) ?? 0),
+  })).sort((left, right) => right.increase - left.increase);
+  const leading = changes[0];
+
+  return leading && leading.increase >= 2
+    ? `ارتفاع ${leading.label} بـ${leading.increase} إشارات خلال آخر 10 أيام`
+    : "لا توجد إشارة ناشئة مقلقة خلال آخر 10 أيام";
+}
+
+function countNegativeTopics(feedback: DashboardFeedbackRow[]) {
+  const counts = new Map<string, number>();
+  for (const row of feedback) {
+    if (row.is_complaint !== true && normalizeSentiment(row.sentiment) !== "negative") continue;
+    for (const rawCategory of row.category ?? []) {
+      const category = rawCategory.trim();
+      if (category) counts.set(category, (counts.get(category) ?? 0) + 1);
+    }
+  }
+  return counts;
+}
+
+function isWithin(value: string | null, start: Date, end: Date) {
+  if (!value) return false;
+  const time = new Date(value).getTime();
+  return Number.isFinite(time) && time >= start.getTime() && time < end.getTime() + 86_400_000;
+}
+
+function buildActivityInsight(
+  activity: { date: string; label: string; count: number }[],
+  feedback: DashboardFeedbackRow[],
+  selectedPlatformName: string | null
+) {
+  if (activity.length < 3) return null;
+  const average = activity.reduce((sum, point) => sum + point.count, 0) / activity.length;
+  const peak = [...activity].sort((left, right) => right.count - left.count)[0];
+  if (!peak || peak.count < 5 || peak.count < average * 1.8) return null;
+
+  const peakRows = feedback.filter((row) => dateKey(row.published_at) === peak.date);
+  const platform = leadingValue(peakRows.map((row) => row.platform_name));
+  const topic = leadingValue(peakRows.flatMap((row) => row.category ?? []));
+  const reason = selectedPlatformName
+    ? topic
+      ? `وتركزت حول موضوع ${topic}`
+      : "ضمن المنصة المحددة"
+    : platform
+      ? `وجاء الجزء الأكبر من ${formatPlatform(platform)}`
+      : "عبر المنصات";
+
+  return `ارتفاع غير معتاد في ${peak.label}: سُجل ${peak.count} تفاعلًا، ${reason}.`;
+}
+
+function leadingValue(values: Array<string | null>) {
+  const counts = new Map<string, number>();
+  for (const rawValue of values) {
+    const value = rawValue?.trim();
+    if (value) counts.set(value, (counts.get(value) ?? 0) + 1);
+  }
+  return Array.from(counts, ([value, count]) => ({ value, count })).sort(
+    (left, right) => right.count - left.count
+  )[0]?.value;
+}
+
+function buildFeedbackLabels(row: DashboardFeedbackRow) {
+  const labels: { label: string; className: string }[] = [];
+  const severity = row.severity?.trim().toLowerCase();
+  const categories = (row.category ?? []).join(" ").toLowerCase();
+  const feedbackText = row.feedback_text?.trim() ?? "";
+  if (severity === "critical" || severity === "high") {
+    labels.push({ label: "خطر سمعة", className: "bg-[#895159] text-white" });
+  }
+  if (row.is_complaint === true) {
+    labels.push({ label: "شكوى", className: "bg-[#DFAEA1]/25 text-[#895159]" });
+  }
+  if (row.is_sales_opportunity === true) {
+    labels.push({ label: "نية شراء", className: "bg-emerald-100 text-emerald-800" });
+  }
+  if (
+    labels.length < 2 &&
+    (categories.includes("سؤال") ||
+      categories.includes("استفسار") ||
+      categories.includes("question") ||
+      categories.includes("inquiry") ||
+      feedbackText.includes("؟") ||
+      feedbackText.endsWith("?"))
+  ) {
+    labels.push({ label: "سؤال", className: "bg-[#BABDE2]/30 text-[#374375]" });
+  }
+  if (normalizeSentiment(row.sentiment) === "positive" && row.is_sales_opportunity !== true) {
+    labels.push({ label: "مدح", className: "bg-emerald-50 text-emerald-700" });
+  }
+  if (row.needs_reply === true && labels.length === 0) {
+    labels.push({ label: "يحتاج ردًا", className: "bg-amber-100 text-amber-800" });
+  }
+  return labels.slice(0, 2);
+}
+
+function reputationDirectionLabel(current: Snapshot, previous: Snapshot) {
+  const delta = current.positivePct - previous.positivePct;
+  if (delta > 1) return "↗ تتحسن";
+  if (delta < -1) return "↘ تراجع طفيف";
+  return "→ مستقرة";
 }
 
 function getPlatformProfile(platformKey: string) {

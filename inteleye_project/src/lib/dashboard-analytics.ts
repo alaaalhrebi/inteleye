@@ -17,6 +17,7 @@ export type DashboardFeedbackRow = {
   category: string[] | null;
   severity: string | null;
   needs_reply: boolean | null;
+  is_sales_opportunity: boolean | null;
   is_complaint: boolean | null;
   suggested_reply: string | null;
 };
