@@ -298,7 +298,7 @@ export default function LoginPage() {
 
             <p className="mt-6 text-center text-gray-500">
               ليس لديك حساب؟{" "}
-              <Link href="/signup" className="font-extrabold text-[#895159]">
+              <Link href="/pricing" className="font-extrabold text-[#895159]">
                 شاهد الباقات وابدأ الآن
               </Link>
             </p>
