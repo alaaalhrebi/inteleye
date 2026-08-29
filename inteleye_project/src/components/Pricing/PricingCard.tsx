@@ -103,7 +103,7 @@ export default function PricingCard({ plan }: Props) {
         {/* Description */}
 
         <p
-          className={`mt-5 text-sm sm:text-base leading-7 ${
+          className={`mt-5 text-sm font-bold sm:text-base leading-7 ${
             plan.featured ? "text-[#FFFCF5]" : "text-gray-600"
           }`}
         >

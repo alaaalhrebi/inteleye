@@ -199,7 +199,7 @@ export default function PricingPage() {
                   {planId === "enterprise" ? <Crown size={22} /> : <ShieldCheck size={22} />}
                 </div>
                 <h2 className="mt-5 text-2xl font-extrabold">{plan.name}</h2>
-                <p className="mt-2 min-h-[56px] text-sm leading-7 text-gray-500">
+                <p className="mt-2 min-h-[56px] text-sm font-bold leading-7 text-gray-600">
                   {plan.description}
                 </p>
 
