@@ -39,7 +39,7 @@ export default function Navbar() {
           </nav>
 
           <div className="flex items-center justify-end gap-3">
-            <Link href="/demo" className={`hidden md:block ${btn}`}>تجربة مجانية</Link>
+            <Link href="/signup" className={`hidden md:block ${btn}`}>تجربة مجانية</Link>
             <Link href="/login" className={`hidden md:block ${btn}`}>تسجيل الدخول</Link>
 
             <button onClick={()=>setOpen(!open)} className="rounded-xl border border-border p-2.5 lg:hidden">
@@ -62,7 +62,7 @@ export default function Navbar() {
                 <a href="#pricing" onClick={()=>setOpen(false)}>الأسعار</a>
                 <a href="#contact" onClick={()=>setOpen(false)}>تواصل</a>
 
-                <Link href="/demo" onClick={()=>setOpen(false)} className={btn}>تجربة مجانية</Link>
+                <Link href="/signup" onClick={()=>setOpen(false)} className={btn}>تجربة مجانية</Link>
                 <Link href="/login" onClick={()=>setOpen(false)} className={btn}>تسجيل الدخول</Link>
               </nav>
             </motion.div>

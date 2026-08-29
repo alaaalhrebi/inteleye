@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { motion } from "framer-motion";
 import Marquee from "react-fast-marquee";
 import { ArrowRight, Sparkles, Globe, Instagram, Twitter, Smartphone, Star, MessageSquare } from "lucide-react";
@@ -73,7 +74,10 @@ export default function HeroSection() {
           {/* Button */}
           <div className="mb-14 flex flex-col items-center justify-center gap-4 sm:flex-row">
 
-            <button className="group flex min-h-[64px] w-full items-center justify-center gap-3 rounded-xl bg-[#374375] px-6 py-4 font-bold text-white shadow-lg transition-all duration-300 hover:bg-[#2D3560] hover:shadow-xl sm:h-[68px] sm:w-auto sm:px-8 lg:px-10">
+            <Link
+              href="/signup"
+              className="group flex min-h-[64px] w-full items-center justify-center gap-3 rounded-xl bg-[#374375] px-6 py-4 font-bold text-white shadow-lg transition-all duration-300 hover:bg-[#2D3560] hover:shadow-xl sm:h-[68px] sm:w-auto sm:px-8 lg:px-10"
+            >
 
               <div className="flex flex-col items-start text-right">
 
@@ -92,7 +96,7 @@ export default function HeroSection() {
                 className="transition-transform group-hover:translate-x-1"
               />
 
-            </button>
+            </Link>
 
           </div>
                     {/* Features Tags */}
@@ -176,5 +180,3 @@ export default function HeroSection() {
     </section>
   );
 }
-
-

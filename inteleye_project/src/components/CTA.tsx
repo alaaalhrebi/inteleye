@@ -66,7 +66,7 @@ export default function CTA() {
 
             <div className="mt-10 sm:mt-12 flex justify-center">
 
-          <PrimaryButton>
+          <PrimaryButton href="/signup">
   ابدأ التجربة المجانية
 </PrimaryButton>
 

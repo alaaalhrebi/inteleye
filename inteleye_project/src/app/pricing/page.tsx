@@ -214,11 +214,6 @@ export default function PricingPage() {
                   </div>
                 )}
 
-                <div className="mt-6 grid grid-cols-2 gap-3">
-                  <PlanLimit label="الفروع" value={plan.branches} />
-                  <PlanLimit label="المنصات" value={plan.platforms} />
-                </div>
-
                 <ul className="mt-6 flex-1 space-y-3 text-sm text-gray-600">
                   {plan.features.map((feature) => (
                     <li key={feature} className="flex items-start gap-2.5">
@@ -263,15 +258,6 @@ export default function PricingPage() {
           </p>
         )}
       </main>
-    </div>
-  );
-}
-
-function PlanLimit({ label, value }: { label: string; value: number }) {
-  return (
-    <div className="rounded-2xl bg-[#F8F7F3] px-4 py-3 text-center">
-      <p className="text-xs text-gray-400">{label}</p>
-      <p className="mt-1 text-lg font-extrabold">{value}</p>
     </div>
   );
 }

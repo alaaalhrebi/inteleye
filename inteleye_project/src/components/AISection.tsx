@@ -5,7 +5,6 @@ import {
   BrainCircuit,
   SearchCheck,
   Sparkles,
-  ArrowRight,
 } from "lucide-react";
 
 const steps = [
@@ -134,15 +133,6 @@ export default function AISection() {
 
                 </p>
 
-                {/* Link */}
-
-                <button className="mt-6 flex items-center gap-2 font-semibold text-[#374375] transition hover:gap-3">
-
-                  معرفة المزيد
-
-                  <ArrowRight size={18} />
-
-                </button>
               </motion.div>
             );
           })}
