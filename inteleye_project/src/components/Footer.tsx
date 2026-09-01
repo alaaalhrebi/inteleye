@@ -1,6 +1,6 @@
 import Image from "next/image";
 import {
-  Mail, Phone, MapPin, Linkedin, Twitter, Instagram,
+  Mail, Phone, MapPin, Linkedin, Music2, Instagram,
 } from "lucide-react";
 
 export default function Footer() {
@@ -47,9 +47,24 @@ export default function Footer() {
           <div>
             <h3 className="mb-6 text-2xl font-bold">تابعنا</h3>
             <div className="flex gap-4">
-              <SocialIcon><Linkedin size={20}/></SocialIcon>
-              <SocialIcon><Twitter size={20}/></SocialIcon>
-              <SocialIcon><Instagram size={20}/></SocialIcon>
+              <SocialIcon
+                href="https://www.linkedin.com/company/inteleye-sa/?viewAsMember=true"
+                label="حساب IntelEye على LinkedIn"
+              >
+                <Linkedin size={20}/>
+              </SocialIcon>
+              <SocialIcon
+                href="https://www.tiktok.com/@inteleye7?_r=1&_t=ZS-99MwKPZBGGl"
+                label="حساب IntelEye على TikTok"
+              >
+                <Music2 size={20}/>
+              </SocialIcon>
+              <SocialIcon
+                href="https://www.instagram.com/sa.inteleye?igsi=MWlsOXp0ZXF2bmkzMA=="
+                label="حساب IntelEye على Instagram"
+              >
+                <Instagram size={20}/>
+              </SocialIcon>
             </div>
           </div>
         </div>
@@ -66,9 +81,34 @@ export default function Footer() {
   );
 }
 
-function SocialIcon({children}:{children:React.ReactNode}){
+function SocialIcon({
+  children,
+  href,
+  label,
+}: {
+  children: React.ReactNode;
+  href?: string;
+  label?: string;
+}) {
+  const className =
+    "flex h-12 w-12 items-center justify-center rounded-2xl border border-white/15 bg-white/10 transition hover:-translate-y-1 hover:bg-white hover:text-[#374375]";
+
+  if (href) {
+    return (
+      <a
+        href={href}
+        target="_blank"
+        rel="noreferrer"
+        aria-label={label}
+        className={className}
+      >
+        {children}
+      </a>
+    );
+  }
+
   return (
-    <button className="flex h-12 w-12 items-center justify-center rounded-2xl border border-white/15 bg-white/10 transition hover:-translate-y-1 hover:bg-white hover:text-[#374375]">
+    <button className={className} aria-label={label}>
       {children}
     </button>
   );
