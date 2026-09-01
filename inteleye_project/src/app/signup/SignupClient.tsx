@@ -55,9 +55,10 @@ export default function SignupClient({
         email: cleanEmail,
         password,
         options: {
-          emailRedirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(
-            checkoutPath
-          )}`,
+          // يضيف قالب Confirm signup قيمة token_hash إلى هذا الرابط.
+          // يجب أن يبقى الرابط بلا query string حتى لا تتداخل قيمة token_hash
+          // مع معاملات إعادة التوجيه.
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
           data: {
             // الدالة handle_new_client_signup تقرأ الحقل name.
             name: cleanCompanyName,

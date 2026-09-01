@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
+import { normalizePlan } from "@/lib/plans";
 
 const DEFAULT_REDIRECT = "/dashboard";
 
@@ -15,6 +16,35 @@ function getSafeNext(value: string | null) {
   }
 
   return value;
+}
+
+function getCallbackParams(request: NextRequest) {
+  const type = request.nextUrl.searchParams.get("type");
+  let tokenHash = request.nextUrl.searchParams.get("token_hash");
+  let nextValue = request.nextUrl.searchParams.get("next");
+
+  // توافق مع رسائل التأكيد التي أُرسلت عندما كان RedirectTo يحتوي على
+  // ?next=... ثم أضاف القالب ?token_hash=... بعلامة استفهام ثانية.
+  // لا يتم تسجيل token_hash أو إعادته ضمن أي رسالة خطأ.
+  if (!tokenHash && type === "signup" && nextValue) {
+    const nestedTokenMarker = "?token_hash=";
+    const nestedTokenIndex = nextValue.lastIndexOf(nestedTokenMarker);
+
+    if (nestedTokenIndex > 0) {
+      const nestedParams = new URLSearchParams(
+        nextValue.slice(nestedTokenIndex + 1)
+      );
+      tokenHash = nestedParams.get("token_hash");
+      nextValue = nextValue.slice(0, nestedTokenIndex);
+    }
+  }
+
+  return {
+    tokenHash,
+    type,
+    code: request.nextUrl.searchParams.get("code"),
+    next: nextValue ? getSafeNext(nextValue) : null,
+  };
 }
 
 function authErrorRedirect(request: NextRequest, reason: string) {
@@ -44,16 +74,16 @@ function getPkceErrorReason(errorCode?: string) {
 }
 
 export async function GET(request: NextRequest) {
-  const tokenHash = request.nextUrl.searchParams.get("token_hash");
-  const type = request.nextUrl.searchParams.get("type");
-  const code = request.nextUrl.searchParams.get("code");
-  const next = getSafeNext(request.nextUrl.searchParams.get("next"));
+  const { tokenHash, type, code, next } = getCallbackParams(request);
   const supabase = createSupabaseServerClient();
+  let isSignupVerification = false;
 
   if (tokenHash) {
     if (type !== "signup") {
       return authErrorRedirect(request, "invalid_type");
     }
+
+    isSignupVerification = true;
 
     const { error: verificationError } = await supabase.auth.verifyOtp({
       token_hash: tokenHash,
@@ -86,5 +116,11 @@ export async function GET(request: NextRequest) {
     return authErrorRedirect(request, "no_session");
   }
 
-  return NextResponse.redirect(new URL(next, request.url));
+  const destination =
+    next ??
+    (isSignupVerification
+      ? `/checkout?plan=${normalizePlan(user.user_metadata?.selected_plan)}`
+      : DEFAULT_REDIRECT);
+
+  return NextResponse.redirect(new URL(destination, request.url));
 }
