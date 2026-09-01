@@ -38,8 +38,24 @@ export default function Footer() {
           <div>
             <h3 className="mb-6 text-2xl font-bold">تواصل معنا</h3>
             <div className="space-y-4 text-white/80">
-              <div className="flex items-center gap-3"><Mail size={18}/>hello@inteleye-sa.com</div>
-              <div className="flex items-center gap-3"><Phone size={18}/>+966 50 123 4567</div>
+              <a
+                href="mailto:Info.inteleye@gmail.com"
+                className="flex items-center gap-3 transition hover:text-white"
+                aria-label="مراسلة IntelEye عبر البريد الإلكتروني"
+              >
+                <Mail size={18}/>
+                Info.inteleye@gmail.com
+              </a>
+              <a
+                href="https://wa.me/966533825409"
+                target="_blank"
+                rel="noreferrer"
+                className="flex items-center gap-3 transition hover:text-white"
+                aria-label="التواصل مع IntelEye عبر WhatsApp"
+              >
+                <Phone size={18}/>
+                0533825409
+              </a>
               <div className="flex items-center gap-3"><MapPin size={18}/>الرياض، المملكة العربية السعودية</div>
             </div>
           </div>
