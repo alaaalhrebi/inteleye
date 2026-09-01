@@ -1,6 +1,6 @@
 import Image from "next/image";
 import {
-  Mail, Phone, MapPin, Linkedin, Music2, Instagram,
+  Mail, MapPin, Linkedin, Music2, Instagram,
 } from "lucide-react";
 
 export default function Footer() {
@@ -53,7 +53,7 @@ export default function Footer() {
                 className="flex items-center gap-3 transition hover:text-white"
                 aria-label="التواصل مع IntelEye عبر WhatsApp"
               >
-                <Phone size={18}/>
+                <WhatsAppIcon size={18}/>
                 0533825409
               </a>
               <div className="flex items-center gap-3"><MapPin size={18}/>الرياض، المملكة العربية السعودية</div>
@@ -127,5 +127,30 @@ function SocialIcon({
     <button className={className} aria-label={label}>
       {children}
     </button>
+  );
+}
+
+function WhatsAppIcon({ size = 18 }: { size?: number }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
+    >
+      <path
+        d="M20.5 11.6a8.5 8.5 0 0 1-12.55 7.47L3.5 20.5l1.45-4.3A8.5 8.5 0 1 1 20.5 11.6Z"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M8.2 7.7c.2-.45.42-.46.78-.47h.42c.18 0 .34.04.45.3l.86 2.03c.1.24.06.43-.1.63l-.66.78c-.14.16-.13.3-.02.49.57 1.01 1.39 1.83 2.4 2.39.18.1.34.12.48-.05l.82-.96c.17-.2.38-.24.61-.14l1.93.91c.26.12.3.3.27.52-.11.78-.55 1.5-1.2 1.95-.54.38-1.26.53-2.03.32-1.46-.4-3.04-1.3-4.32-2.58-1.14-1.14-2-2.54-2.4-3.85-.3-.96-.14-1.67.25-2.27.14-.22.3-.42.46-.58Z"
+        fill="currentColor"
+      />
+    </svg>
   );
 }
