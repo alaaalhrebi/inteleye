@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 import {
   Mail, MapPin, Linkedin, Music2, Instagram,
 } from "lucide-react";
@@ -88,8 +89,8 @@ export default function Footer() {
         <div className="mt-16 border-t border-white/10 pt-8 flex flex-col md:flex-row items-center justify-between text-white/60 gap-4">
           <p>© 2026 <strong>INTELEYE</strong>. جميع الحقوق محفوظة.</p>
           <div className="flex gap-8">
-            <a href="#">سياسة الخصوصية</a>
-            <a href="#">الشروط والأحكام</a>
+            <Link href="/privacy" className="transition hover:text-white">سياسة الخصوصية</Link>
+            <Link href="/terms" className="transition hover:text-white">شروط الاستخدام</Link>
           </div>
         </div>
       </div>
