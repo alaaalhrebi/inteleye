@@ -8,12 +8,17 @@ type SignupPageProps = {
 };
 
 export default function SignupPage({ searchParams }: SignupPageProps) {
-  const requestedPlan =
+  const selectedPlanParam =
     typeof searchParams?.plan === "string"
       ? searchParams.plan
       : Array.isArray(searchParams?.plan)
-      ? searchParams.plan[0]
-      : "basic";
+        ? searchParams.plan[0]
+        : null;
 
-  return <SignupClient selectedPlan={normalizePlan(requestedPlan)} />;
+  return (
+    <SignupClient
+      selectedPlan={normalizePlan(selectedPlanParam)}
+      signupMode={selectedPlanParam ? "checkout" : "trial"}
+    />
+  );
 }

@@ -18,16 +18,20 @@ import { formatPrice, normalizePlan, PLAN_DETAILS } from "@/lib/plans";
 
 type SignupClientProps = {
   selectedPlan?: string;
+  signupMode?: "trial" | "checkout";
 };
 
 export default function SignupClient({
   selectedPlan = "basic",
+  signupMode = "trial",
 }: SignupClientProps) {
   const router = useRouter();
   const supabase = createSupabaseBrowserClient();
   const plan = normalizePlan(selectedPlan);
   const planDetails = PLAN_DETAILS[plan];
   const checkoutPath = `/checkout?plan=${plan}`;
+  const isTrialSignup = signupMode === "trial";
+  const destinationPath = isTrialSignup ? "/dashboard" : checkoutPath;
 
   const [companyName, setCompanyName] = useState("");
   const [email, setEmail] = useState("");
@@ -64,9 +68,11 @@ export default function SignupClient({
             name: cleanCompanyName,
             company_name: cleanCompanyName,
 
-            // اختيار العميل يُستخدم لإكمال مسار الدفع بعد تأكيد البريد.
-            // تفعيل الاشتراك الفعلي يبقى مسؤولية webhook الدفع الموثوق.
+            // الخطة مطلوبة لإنشاء صلاحيات التجربة وحدود الحساب.
             selected_plan: plan,
+
+            // تُستخدم للتوجيه بعد تأكيد البريد فقط، وليست مصدر صلاحيات.
+            signup_intent: signupMode,
           },
         },
       });
@@ -79,7 +85,7 @@ export default function SignupClient({
 
       // إذا كان تأكيد البريد غير مطلوب، تكون الجلسة جاهزة مباشرة.
       if (data.session) {
-        router.replace(checkoutPath);
+        router.replace(destinationPath);
         router.refresh();
         return;
       }
@@ -87,7 +93,9 @@ export default function SignupClient({
       // عند تفعيل تأكيد البريد في Supabase.
       setSignupComplete(true);
       setMessage(
-        `تم إنشاء حسابك. افتح رسالة التأكيد المرسلة إلى بريدك، وبعد التأكيد ستنتقل لإتمام دفع باقة ${planDetails.name}.`
+        isTrialSignup
+          ? "تم إنشاء حسابك. افتح رسالة التأكيد المرسلة إلى بريدك، وبعد التأكيد ستبدأ تجربتك المجانية."
+          : `تم إنشاء حسابك. افتح رسالة التأكيد المرسلة إلى بريدك، وبعد التأكيد ستنتقل لإتمام دفع باقة ${planDetails.name}.`
       );
       setMessageType("success");
     } catch {
@@ -123,16 +131,21 @@ export default function SignupClient({
 
           <div className="mb-7 inline-flex items-center gap-2 rounded-full bg-[#BABDE2]/35 px-5 py-2 text-sm font-bold text-[#374375]">
             <Sparkles size={16} />
-            اخترت باقة {planDetails.name}
+            {isTrialSignup
+              ? "تجربة مجانية لمدة 14 يومًا"
+              : `اخترت باقة ${planDetails.name}`}
           </div>
 
           <h1 className="max-w-xl text-5xl font-extrabold leading-[1.25] text-[#374375]">
-            ابدأ بتحليل تقييمات عملائك بالباقة المناسبة لك
+            {isTrialSignup
+              ? "ابدأ بتحليل تقييمات عملائك مجانًا"
+              : "ابدأ بتحليل تقييمات عملائك بالباقة المناسبة لك"}
           </h1>
 
           <p className="mt-6 max-w-xl text-xl leading-10 text-gray-600">
-            أنشئ حسابك، أكّد بريدك الإلكتروني، ثم انتقل مباشرة إلى الدفع
-            الآمن لإكمال اشتراكك.
+            {isTrialSignup
+              ? "أنشئ حسابك وأكّد بريدك الإلكتروني، ثم ابدأ تجربتك المجانية مباشرة دون الانتقال إلى الدفع."
+              : "أنشئ حسابك، أكّد بريدك الإلكتروني، ثم انتقل مباشرة إلى الدفع الآمن لإكمال اشتراكك."}
           </p>
 
           <div className="mt-10 grid max-w-xl gap-4">
@@ -158,22 +171,36 @@ export default function SignupClient({
         >
           <div className="rounded-[2.2rem] border border-[#BABDE2]/40 bg-white/90 p-7 shadow-2xl backdrop-blur">
             <div className="mb-7 rounded-[1.5rem] bg-[#FFFCF5] px-5 py-5 text-center">
-              <p className="mb-1 text-sm text-gray-400">الباقة المختارة</p>
+              <p className="mb-1 text-sm text-gray-400">
+                {isTrialSignup ? "التجربة المجانية" : "الباقة المختارة"}
+              </p>
               <p className="text-lg font-extrabold text-[#374375]">
-                باقة {planDetails.name} — {formatPrice(planDetails.priceHalalas)}{" "}
-                ريال شهريًا
+                {isTrialSignup ? (
+                  "14 يومًا مجانًا — فرع واحد ومنصة واحدة"
+                ) : (
+                  <>
+                    باقة {planDetails.name} — {formatPrice(planDetails.priceHalalas)}{" "}
+                    ريال شهريًا
+                  </>
+                )}
               </p>
               <p className="mt-2 text-sm text-gray-500">
-                ستنتقل للدفع بعد إنشاء الحساب وتأكيد البريد
+                {isTrialSignup
+                  ? "يمكنك اختيار الباقة المناسبة لك لاحقًا"
+                  : "ستنتقل للدفع بعد إنشاء الحساب وتأكيد البريد"}
               </p>
             </div>
 
             <div className="mb-7 text-center">
               <h2 className="text-3xl font-extrabold text-[#374375]">
-                إنشاء حساب والمتابعة للدفع
+                {isTrialSignup
+                  ? "إنشاء حساب وبدء التجربة"
+                  : "إنشاء حساب والمتابعة للدفع"}
               </h2>
               <p className="mt-3 text-gray-500">
-                سجّل بياناتك لإكمال اشتراكك
+                {isTrialSignup
+                  ? "سجّل بياناتك لبدء تجربتك المجانية"
+                  : "سجّل بياناتك لإكمال اشتراكك"}
               </p>
             </div>
 
@@ -246,7 +273,7 @@ export default function SignupClient({
               <div className="rounded-2xl bg-[#BABDE2]/20 p-4">
                 <div className="mb-3 flex items-center gap-2 font-bold text-[#374375]">
                   <BadgeCheck size={18} />
-                  أبرز مزايا الباقة
+                  {isTrialSignup ? "أبرز مزايا التجربة" : "أبرز مزايا الباقة"}
                 </div>
 
                 <div className="space-y-2">
@@ -284,14 +311,16 @@ export default function SignupClient({
                   ? "جاري إنشاء الحساب..."
                   : signupComplete
                     ? "تم إنشاء الحساب"
-                    : "إنشاء الحساب والمتابعة"}
+                    : isTrialSignup
+                      ? "إنشاء الحساب وبدء التجربة"
+                      : "إنشاء الحساب والمتابعة"}
               </button>
             </form>
 
             <p className="mt-6 text-center text-gray-500">
               لديك حساب بالفعل؟{" "}
               <Link
-                href={`/login?next=${encodeURIComponent(checkoutPath)}`}
+                href={`/login?next=${encodeURIComponent(destinationPath)}`}
                 className="font-extrabold text-[#895159]"
               >
                 سجّل دخولك

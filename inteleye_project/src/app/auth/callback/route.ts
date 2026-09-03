@@ -119,7 +119,9 @@ export async function GET(request: NextRequest) {
   const destination =
     next ??
     (isSignupVerification
-      ? `/checkout?plan=${normalizePlan(user.user_metadata?.selected_plan)}`
+      ? user.user_metadata?.signup_intent === "trial"
+        ? DEFAULT_REDIRECT
+        : `/checkout?plan=${normalizePlan(user.user_metadata?.selected_plan)}`
       : DEFAULT_REDIRECT);
 
   return NextResponse.redirect(new URL(destination, request.url));
