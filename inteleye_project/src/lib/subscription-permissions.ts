@@ -53,6 +53,7 @@ export function getSubscriptionPermissions(
   const canManageBranches = hasActiveSubscription;
   const canAccessReports = hasActiveSubscription;
   const isAdvancedReportsPlan = plan === "pro" || plan === "enterprise";
+  const canChoosePlatformScope = hasActiveSubscription && isAdvancedReportsPlan;
   const canCreateCustomReport =
     hasActiveSubscription && isAdvancedReportsPlan;
 
@@ -87,6 +88,7 @@ export function getSubscriptionPermissions(
     canViewReports: canAccessReports,
     // الاسم القديم مستخدم في القائمة الجانبية، ويعني الوصول إلى صفحة التقارير.
     canAccessCustomReports: canAccessReports,
+    canChoosePlatformScope,
     canCreateCustomReport,
     canAddBranch:
       canManageBranches && currentBranchesCount < branchLimit,

@@ -101,6 +101,7 @@ export default function PlatformsOnboardingPage() {
   const [existingPlatformNames, setExistingPlatformNames] = useState<string[]>([]);
   const [branches, setBranches] = useState<BranchOption[]>([]);
   const [canCreateBranch, setCanCreateBranch] = useState(false);
+  const [canChoosePlatformScope, setCanChoosePlatformScope] = useState(false);
   const [scope, setScope] = useState<PlatformScope>("");
   const [selectedBranchId, setSelectedBranchId] = useState("");
   const [newBranchName, setNewBranchName] = useState("");
@@ -180,6 +181,7 @@ export default function PlatformsOnboardingPage() {
       setExistingPlatformNames(Array.from(uniquePlatformNames));
       setBranches(currentBranches);
       setCanCreateBranch(permissionsWithUsage.canAddBranch);
+      setCanChoosePlatformScope(permissionsWithUsage.canChoosePlatformScope);
 
       setLoading(false);
     }
@@ -197,7 +199,7 @@ export default function PlatformsOnboardingPage() {
   async function handleSave(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
 
-    if (!scope) {
+    if (canChoosePlatformScope && !scope) {
       setMessage("الرجاء تحديد ما إذا كانت المنصة شاملة أو مرتبطة بفرع");
       return;
     }
@@ -363,87 +365,89 @@ export default function PlatformsOnboardingPage() {
             })}
           </div>
 
-          <section className="mt-8 rounded-[1.75rem] border border-[#BABDE2]/40 bg-[#F8F7F3] p-4 sm:p-6">
-            <div className="mb-4">
-              <h2 className="text-lg font-extrabold">حدد نطاق المنصة</h2>
-              <p className="mt-1 text-sm leading-6 text-gray-500">
-                اختر ربط المنصة بجميع الفروع أو بفرع محدد. يجب تحديد النطاق قبل الحفظ.
-              </p>
-            </div>
-
-            <div className="grid gap-3 md:grid-cols-3">
-              <ScopeButton
-                active={scope === "global"}
-                icon={<Globe2 size={21} />}
-                title="شاملة لجميع الفروع"
-                description="تظهر بيانات المنصة على مستوى الحساب كاملًا."
-                onClick={() => {
-                  setScope("global");
-                  setMessage("");
-                }}
-              />
-              <ScopeButton
-                active={scope === "existing_branch"}
-                disabled={branches.length === 0}
-                icon={<Building2 size={21} />}
-                title="فرع موجود"
-                description={
-                  branches.length > 0
-                    ? "اربط المنصة بأحد فروعك الحالية."
-                    : "لا توجد فروع حالية للاختيار منها."
-                }
-                onClick={() => {
-                  setScope("existing_branch");
-                  setMessage("");
-                }}
-              />
-              <ScopeButton
-                active={scope === "new_branch"}
-                disabled={!canCreateBranch}
-                icon={<Plus size={21} />}
-                title="إنشاء فرع"
-                description={
-                  canCreateBranch
-                    ? "أنشئ فرعًا جديدًا واربط المنصة به مباشرة."
-                    : "إنشاء فرع جديد غير متاح حسب باقتك الحالية."
-                }
-                onClick={() => {
-                  setScope("new_branch");
-                  setMessage("");
-                }}
-              />
-            </div>
-
-            {scope === "existing_branch" && (
-              <div className="mt-4">
-                <label className="mb-2 block text-sm font-bold">اختر الفرع</label>
-                <select
-                  value={selectedBranchId}
-                  onChange={(event) => setSelectedBranchId(event.target.value)}
-                  className="w-full rounded-2xl border border-gray-200 bg-white px-4 py-4 text-right outline-none transition focus:border-[#374375] focus:ring-4 focus:ring-[#BABDE2]/30"
-                >
-                  <option value="">اختر فرعًا</option>
-                  {branches.map((branch) => (
-                    <option key={branch.id} value={branch.id}>
-                      {branch.name}
-                    </option>
-                  ))}
-                </select>
+          {canChoosePlatformScope && (
+            <section className="mt-8 rounded-[1.75rem] border border-[#BABDE2]/40 bg-[#F8F7F3] p-4 sm:p-6">
+              <div className="mb-4">
+                <h2 className="text-lg font-extrabold">حدد نطاق المنصة</h2>
+                <p className="mt-1 text-sm leading-6 text-gray-500">
+                  اختر ربط المنصة بجميع الفروع أو بفرع محدد. يجب تحديد النطاق قبل الحفظ.
+                </p>
               </div>
-            )}
 
-            {scope === "new_branch" && (
-              <div className="mt-4">
-                <label className="mb-2 block text-sm font-bold">اسم الفرع الجديد</label>
-                <input
-                  value={newBranchName}
-                  onChange={(event) => setNewBranchName(event.target.value)}
-                  placeholder="مثال: فرع الرياض"
-                  className="w-full rounded-2xl border border-gray-200 bg-white px-4 py-4 text-right outline-none transition focus:border-[#374375] focus:ring-4 focus:ring-[#BABDE2]/30"
+              <div className="grid gap-3 md:grid-cols-3">
+                <ScopeButton
+                  active={scope === "global"}
+                  icon={<Globe2 size={21} />}
+                  title="شاملة لجميع الفروع"
+                  description="تظهر بيانات المنصة على مستوى الحساب كاملًا."
+                  onClick={() => {
+                    setScope("global");
+                    setMessage("");
+                  }}
+                />
+                <ScopeButton
+                  active={scope === "existing_branch"}
+                  disabled={branches.length === 0}
+                  icon={<Building2 size={21} />}
+                  title="فرع موجود"
+                  description={
+                    branches.length > 0
+                      ? "اربط المنصة بأحد فروعك الحالية."
+                      : "لا توجد فروع حالية للاختيار منها."
+                  }
+                  onClick={() => {
+                    setScope("existing_branch");
+                    setMessage("");
+                  }}
+                />
+                <ScopeButton
+                  active={scope === "new_branch"}
+                  disabled={!canCreateBranch}
+                  icon={<Plus size={21} />}
+                  title="إنشاء فرع"
+                  description={
+                    canCreateBranch
+                      ? "أنشئ فرعًا جديدًا واربط المنصة به مباشرة."
+                      : "إنشاء فرع جديد غير متاح حسب باقتك الحالية."
+                  }
+                  onClick={() => {
+                    setScope("new_branch");
+                    setMessage("");
+                  }}
                 />
               </div>
-            )}
-          </section>
+
+              {scope === "existing_branch" && (
+                <div className="mt-4">
+                  <label className="mb-2 block text-sm font-bold">اختر الفرع</label>
+                  <select
+                    value={selectedBranchId}
+                    onChange={(event) => setSelectedBranchId(event.target.value)}
+                    className="w-full rounded-2xl border border-gray-200 bg-white px-4 py-4 text-right outline-none transition focus:border-[#374375] focus:ring-4 focus:ring-[#BABDE2]/30"
+                  >
+                    <option value="">اختر فرعًا</option>
+                    {branches.map((branch) => (
+                      <option key={branch.id} value={branch.id}>
+                        {branch.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              {scope === "new_branch" && (
+                <div className="mt-4">
+                  <label className="mb-2 block text-sm font-bold">اسم الفرع الجديد</label>
+                  <input
+                    value={newBranchName}
+                    onChange={(event) => setNewBranchName(event.target.value)}
+                    placeholder="مثال: فرع الرياض"
+                    className="w-full rounded-2xl border border-gray-200 bg-white px-4 py-4 text-right outline-none transition focus:border-[#374375] focus:ring-4 focus:ring-[#BABDE2]/30"
+                  />
+                </div>
+              )}
+            </section>
+          )}
 
           <div className="mt-8 grid gap-5 md:grid-cols-2">
             <div>

@@ -92,11 +92,10 @@ export async function POST(request: Request) {
   if (
     !ALLOWED_PLATFORMS.has(platformName) ||
     !platformValue ||
-    !businessActivity ||
-    !ALLOWED_SCOPES.has(scope)
+    !businessActivity
   ) {
     return NextResponse.json(
-      { message: "أكمل بيانات المنصة وحدد نطاق الربط" },
+      { message: "أكمل بيانات المنصة" },
       { status: 400 }
     );
   }
@@ -118,7 +117,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ message: "تعذر التحقق من الحساب" }, { status: 403 });
   }
 
-  const [{ data: activePlatforms }, { count: branchesCount }] = await Promise.all([
+  const [{ data: activePlatforms }, { data: activeBranches }] = await Promise.all([
     supabase
       .from("client_platforms")
       .select("id, branch_id, platform_name, platform_url")
@@ -126,15 +125,17 @@ export async function POST(request: Request) {
       .eq("is_active", true),
     supabase
       .from("branches")
-      .select("id", { count: "exact", head: true })
+      .select("id")
       .eq("client_id", client.id)
-      .eq("is_active", true),
+      .eq("is_active", true)
+      .order("created_at", { ascending: true }),
   ]);
 
   const platformRows = activePlatforms ?? [];
+  const branchRows = activeBranches ?? [];
   const platformTypes = new Set(platformRows.map((platform) => platform.platform_name));
   const permissions = getSubscriptionPermissions(client, {
-    currentBranchesCount: branchesCount ?? 0,
+    currentBranchesCount: branchRows.length,
     currentPlatformsCount: platformTypes.size,
   });
 
@@ -142,6 +143,13 @@ export async function POST(request: Request) {
     return NextResponse.json(
       { message: "ربط المنصات غير متاح في اشتراكك الحالي" },
       { status: 403 }
+    );
+  }
+
+  if (permissions.canChoosePlatformScope && !ALLOWED_SCOPES.has(scope)) {
+    return NextResponse.json(
+      { message: "حدد نطاق ربط المنصة" },
+      { status: 400 }
     );
   }
 
@@ -171,16 +179,46 @@ export async function POST(request: Request) {
 
   let targetBranchId: number | null = null;
   let createdBranchId: number | null = null;
+  let effectiveScope = scope;
+  let effectiveRequestedBranchId = requestedBranchId;
 
-  if (scope === "existing_branch") {
-    if (!Number.isSafeInteger(requestedBranchId) || requestedBranchId <= 0) {
+  if (!permissions.canChoosePlatformScope) {
+    let primaryBranchId = Number(branchRows[0]?.id);
+
+    if (!Number.isSafeInteger(primaryBranchId) || primaryBranchId <= 0) {
+      const { data: ensuredBranchId, error: branchError } = await supabase.rpc(
+        "ensure_onboarding_main_branch"
+      );
+
+      primaryBranchId = Number(ensuredBranchId);
+      if (
+        branchError ||
+        !Number.isSafeInteger(primaryBranchId) ||
+        primaryBranchId <= 0
+      ) {
+        return NextResponse.json(
+          { message: "تعذر العثور على الفرع الرئيسي للحساب" },
+          { status: 409 }
+        );
+      }
+    }
+
+    effectiveScope = "existing_branch";
+    effectiveRequestedBranchId = primaryBranchId;
+  }
+
+  if (effectiveScope === "existing_branch") {
+    if (
+      !Number.isSafeInteger(effectiveRequestedBranchId) ||
+      effectiveRequestedBranchId <= 0
+    ) {
       return NextResponse.json({ message: "اختر الفرع المطلوب" }, { status: 400 });
     }
 
     const { data: branch } = await supabase
       .from("branches")
       .select("id")
-      .eq("id", requestedBranchId)
+      .eq("id", effectiveRequestedBranchId)
       .eq("client_id", client.id)
       .eq("is_active", true)
       .maybeSingle();
@@ -192,7 +230,7 @@ export async function POST(request: Request) {
     targetBranchId = branch.id;
   }
 
-  if (scope === "new_branch") {
+  if (effectiveScope === "new_branch") {
     if (!branchName) {
       return NextResponse.json({ message: "أدخل اسم الفرع الجديد" }, { status: 400 });
     }
