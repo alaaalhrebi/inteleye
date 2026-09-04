@@ -194,9 +194,7 @@ export default function InteractiveDashboard({
             <p className="mt-3 max-w-3xl text-sm font-bold leading-7 text-white/80 sm:text-base">
               {executive.summary}
             </p>
-            <p className="mt-1 max-w-3xl text-sm leading-6 text-white/65">
-              {clientName} · {profile.description}
-            </p>
+    
           </div>
           <div className="grid grid-cols-2 gap-2 text-center sm:flex">
             <HeroBadge
@@ -484,14 +482,11 @@ function ExecutiveIntelligence({
 
   return (
     <section className="mt-4 rounded-[1.35rem] border border-[#BABDE2]/40 bg-white p-4 shadow-sm">
-      <div className="mb-3 flex items-center justify-between gap-3">
-        <p className="text-base font-extrabold text-[#895159] sm:text-lg">
-          خلاصة IntelEye
-        </p>
-        <span className="rounded-full bg-[#374375] px-3 py-1 text-xs font-bold text-white">
-          قراءة آلية من البيانات الحالية
-        </span>
-      </div>
+      <div className="mb-3">
+  <p className="text-base font-extrabold text-[#895159] sm:text-lg">
+    خلاصة IntelEye للبيانات الحالية
+  </p>
+</div>
       <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-5">
         {items.map((item) => (
           <div key={item.label} className="rounded-2xl bg-[#F8F7F3] p-3">
@@ -1510,7 +1505,7 @@ function buildExecutiveIntelligence(
   const improving = satisfactionDelta >= 0 && complaintDelta <= 0;
   const summary =
     current.total === 0
-      ? "لا توجد بيانات كافية في الفترة الحالية لبناء قراءة تنفيذية."
+      ? "لا توجد بيانات كافية حاليًا لبناء قراءة دقيقة."
       : satisfactionDelta >= 3
         ? `الرضا يتحسن بارتفاع ${Math.abs(satisfactionDelta)} نقطة، مع ضرورة متابعة ${current.urgent} حالة عاجلة.`
         : satisfactionDelta <= -3
