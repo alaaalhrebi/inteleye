@@ -63,34 +63,38 @@ export default function DashboardSidebar({
         </button>
       </div>
 
-      <div className={collapsed ? "lg:hidden" : ""}>
-        <DashboardFilters branches={branches} platforms={platforms} />
-      </div>
+     <div className="mb-4">
+  {canManagePlatformLinks ? (
+    <SidebarLink
+      href="/onboarding/platforms"
+      label="إضافة أو ربط منصة"
+      icon={<Plus size={18} />}
+      collapsed={collapsed}
+      primary
+    />
+  ) : collapsed ? (
+    <div
+      className="hidden h-11 items-center justify-center rounded-xl bg-amber-50 text-amber-700 lg:flex"
+      title={`تستخدم ${currentPlatformsCount} من أصل ${platformLimit} منصة`}
+    >
+      <RadioTower size={18} />
+    </div>
+  ) : (
+    <div className="rounded-xl bg-amber-50 p-3 text-sm font-bold leading-6 text-amber-800">
+      وصلت إلى حد المنصات.
+      <span className="block text-xs">
+        {currentPlatformsCount} من أصل {platformLimit}
+      </span>
+    </div>
+  )}
+</div>
 
-      <nav className={`${collapsed ? "lg:mt-1" : "mt-4"} space-y-2`}>
-        {canManagePlatformLinks ? (
-          <SidebarLink
-            href="/onboarding/platforms"
-            label="إضافة أو ربط منصة"
-            icon={<Plus size={18} />}
-            collapsed={collapsed}
-            emphasized
-          />
-        ) : collapsed ? (
-          <div
-            className="hidden h-11 items-center justify-center rounded-xl bg-amber-50 text-amber-700 lg:flex"
-            title={`تستخدم ${currentPlatformsCount} من أصل ${platformLimit} منصة`}
-          >
-            <RadioTower size={18} />
-          </div>
-        ) : (
-          <div className="rounded-xl bg-amber-50 p-3 text-sm font-bold leading-6 text-amber-800">
-            وصلت إلى حد المنصات.
-            <span className="block text-xs">
-              {currentPlatformsCount} من أصل {platformLimit}
-            </span>
-          </div>
-        )}
+<div className={collapsed ? "lg:hidden" : ""}>
+  <DashboardFilters branches={branches} platforms={platforms} />
+</div>
+
+<nav className={`${collapsed ? "lg:mt-1" : "mt-4"} space-y-2`}>
+      
 
         <SidebarLink
           href="/dashboard/replies"
@@ -152,12 +156,14 @@ function SidebarLink({
   icon,
   collapsed,
   emphasized = false,
+  primary = false,
 }: {
-  href: string;
-  label: string;
-  icon: ReactNode;
-  collapsed: boolean;
-  emphasized?: boolean;
+href: string;
+label: string;
+icon: ReactNode;
+collapsed: boolean;
+emphasized?: boolean;
+primary?: boolean;
 }) {
   return (
     <Link
@@ -166,10 +172,12 @@ function SidebarLink({
       className={`flex min-h-11 w-full items-center rounded-xl px-3 text-sm font-bold transition ${
         collapsed ? "lg:justify-center lg:px-0" : "gap-2.5"
       } ${
-        emphasized
-          ? "border border-[#BABDE2]/55 bg-[#F8F7F3] text-[#374375] hover:bg-[#BABDE2]/25"
-          : "text-gray-500 hover:bg-[#BABDE2]/20 hover:text-[#374375]"
-      }`}
+  primary
+    ? "bg-[#374375] text-white shadow-sm hover:bg-[#2F3966]"
+    : emphasized
+      ? "border border-[#BABDE2]/55 bg-[#F8F7F3] text-[#374375] hover:bg-[#BABDE2]/25"
+      : "text-gray-500 hover:bg-[#BABDE2]/20 hover:text-[#374375]"
+}`}
     >
       <span className="shrink-0">{icon}</span>
       <span className={collapsed ? "lg:hidden" : ""}>{label}</span>
