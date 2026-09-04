@@ -52,7 +52,7 @@ function getPlatformInputConfig(selectedPlatform: string) {
       fieldName: "platformUrl",
       label: "رابط الموقع في Google Maps",
       placeholder: "مثال: https://maps.app.goo.gl/xxxx",
-      helpText: "ضعي رابط موقع المنشأة أو الفرع من Google Maps.",
+      helpText: "ضع رابط موقع المنشأة أو الفرع من Google Maps.",
     };
   }
 
@@ -307,13 +307,13 @@ export default function PlatformsOnboardingPage() {
             إعداد حسابك
           </div>
 
-          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold">
-            اختر المنصة التي تريد تحليلها
-          </h1>
+        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold">
+  اختر المنصة التي تريد تحليلها
+</h1>
 
-          <p className="mt-4 text-base sm:text-lg text-gray-500">
-            أدخلي بيانات المنصة حسب نوعها، وسيتم استخدامها في السحب والتحليل لاحقًا.
-          </p>
+<p className="mt-4 text-base sm:text-lg text-gray-500">
+  أدخل بيانات المنصة لبدء التحليل.
+</p>
         </div>
 
         <form
