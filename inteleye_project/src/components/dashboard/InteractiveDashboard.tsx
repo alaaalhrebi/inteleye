@@ -362,8 +362,7 @@ export default function InteractiveDashboard({
           <div>
             <h2 className="font-extrabold">التقارير</h2>
             <p className="mt-1 text-sm text-white/70">
-              لمشاهدة التقارير الكاملة والمخصصة انتقل إلى صفحة إدارة التقارير.
-            </p>
+استعرض التقارير الكاملة والمخصصة            </p>
           </div>
         </div>
         <Link
