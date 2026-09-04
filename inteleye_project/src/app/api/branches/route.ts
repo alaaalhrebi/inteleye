@@ -1,5 +1,10 @@
 import { NextResponse } from "next/server";
 
+import {
+  PlatformSyncWebhookError,
+  queuePlatformSync,
+  type SyncPlatformName,
+} from "@/lib/platforms/n8n";
 import { getSubscriptionPermissions } from "@/lib/subscription-permissions";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 
@@ -143,7 +148,7 @@ export async function POST(request: Request) {
     );
   }
 
-  const { error: platformError } = await supabase
+  const { data: platform, error: platformError } = await supabase
     .from("client_platforms")
     .insert({
       client_id: client.id,
@@ -153,9 +158,11 @@ export async function POST(request: Request) {
       username: cleanUsername,
       business_activity: businessActivity,
       is_active: true,
-    });
+    })
+    .select("id")
+    .single();
 
-  if (platformError) {
+  if (platformError || !platform) {
     await supabase
       .from("branches")
       .delete()
@@ -181,5 +188,25 @@ export async function POST(request: Request) {
     );
   }
 
-  return NextResponse.json({ id: branch.id }, { status: 201 });
+  let syncQueued = false;
+  try {
+    await queuePlatformSync({
+      platformId: platform.id,
+      platformName: platformName as SyncPlatformName,
+    });
+    syncQueued = true;
+  } catch (error) {
+    console.warn("Branch platform sync webhook was not queued", {
+      platformName,
+      code:
+        error instanceof PlatformSyncWebhookError
+          ? error.code
+          : "UNKNOWN_ERROR",
+    });
+  }
+
+  return NextResponse.json(
+    { id: branch.id, platformId: platform.id, syncQueued },
+    { status: 201 }
+  );
 }

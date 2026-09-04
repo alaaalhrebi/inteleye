@@ -1,5 +1,10 @@
 import { NextResponse } from "next/server";
 
+import {
+  PlatformSyncWebhookError,
+  queuePlatformSync,
+  type SyncPlatformName,
+} from "@/lib/platforms/n8n";
 import { getSubscriptionPermissions } from "@/lib/subscription-permissions";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 
@@ -324,8 +329,25 @@ export async function POST(request: Request) {
     );
   }
 
+  let syncQueued = false;
+  try {
+    await queuePlatformSync({
+      platformId: platform.id,
+      platformName: platformName as SyncPlatformName,
+    });
+    syncQueued = true;
+  } catch (error) {
+    console.warn("Platform sync webhook was not queued", {
+      platformName,
+      code:
+        error instanceof PlatformSyncWebhookError
+          ? error.code
+          : "UNKNOWN_ERROR",
+    });
+  }
+
   return NextResponse.json(
-    { id: platform.id, branchId: targetBranchId },
+    { id: platform.id, branchId: targetBranchId, syncQueued },
     { status: 201 }
   );
 }
