@@ -182,6 +182,9 @@
       "id": "338c1312-9029-492d-a927-a8d886d904f9",
       "name": "Upsert TikTok Comments",
       "alwaysOutputData": true,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000,
       "credentials": {
         "httpCustomAuth": {
           "id": "zG0oLxK9PlldN0gl",
@@ -268,6 +271,9 @@
       "id": "99567a64-d71e-4655-a1ec-e887b6847526",
       "name": "Get Pending TikTok Comments",
       "alwaysOutputData": true,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000,
       "credentials": {
         "httpCustomAuth": {
           "id": "zG0oLxK9PlldN0gl",
@@ -311,7 +317,7 @@
     },
     {
       "parameters": {
-        "batchSize": 50,
+        "batchSize": 15,
         "options": {}
       },
       "type": "n8n-nodes-base.splitInBatches",
@@ -366,8 +372,8 @@
       "waitBetweenTries": 5000,
       "credentials": {
         "openAiApi": {
-          "id": "m1JKJ5EDpBNf733H",
-          "name": "n8n free OpenAI API credits"
+          "id": "YL3zdWbXhbX2hL1V",
+          "name": "OpenAI key"
         }
       }
     },
@@ -421,6 +427,9 @@
       ],
       "id": "097157d7-f6fc-4049-b439-83882dfac466",
       "name": "Save TikTok Analysis",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000,
       "credentials": {
         "httpCustomAuth": {
           "id": "zG0oLxK9PlldN0gl",
@@ -439,7 +448,7 @@
           "parameters": [
             {
               "name": "id",
-              "value": "={{ 'eq.' + $json.source_record_id }}\n"
+              "value": "={{ 'in.(' + $input.all().map(item => item.json.source_record_id).filter(Boolean).join(',') + ')' }}"
             }
           ]
         },
@@ -448,7 +457,7 @@
           "parameters": [
             {
               "name": "Prefer",
-              "value": "return=representation"
+              "value": "return=minimal"
             }
           ]
         },
@@ -465,6 +474,11 @@
       ],
       "id": "b1201f19-855b-4f67-8ee7-93fe2f459cbc",
       "name": "Mark TikTok Comments Completed",
+      "executeOnce": true,
+      "alwaysOutputData": true,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000,
       "credentials": {
         "httpCustomAuth": {
           "id": "zG0oLxK9PlldN0gl",
@@ -524,6 +538,9 @@
       "typeVersion": 4.2,
       "name": "Complete TikTok Sync",
       "type": "n8n-nodes-base.httpRequest",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000,
       "position": [
         2112,
         464
@@ -559,6 +576,9 @@
       "typeVersion": 4.2,
       "name": "Fail TikTok Sync",
       "type": "n8n-nodes-base.httpRequest",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000,
       "position": [
         1200,
         -96
@@ -714,6 +734,9 @@
       "id": "clockworks-get-existing-videos",
       "name": "Get Existing TikTok Videos",
       "alwaysOutputData": true,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000,
       "credentials": {
         "httpCustomAuth": {
           "id": "zG0oLxK9PlldN0gl",
@@ -772,6 +795,9 @@
       "id": "clockworks-upsert-videos",
       "name": "Upsert TikTok Videos",
       "alwaysOutputData": true,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000,
       "credentials": {
         "httpCustomAuth": {
           "id": "zG0oLxK9PlldN0gl",
@@ -1010,7 +1036,7 @@
       "main": [
         [
           {
-            "node": "Get Pending TikTok Comments",
+            "node": "Complete TikTok Sync",
             "type": "main",
             "index": 0
           }
