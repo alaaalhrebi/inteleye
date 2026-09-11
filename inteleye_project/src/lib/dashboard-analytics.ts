@@ -20,6 +20,16 @@ export type DashboardFeedbackRow = {
   is_sales_opportunity: boolean | null;
   is_complaint: boolean | null;
   suggested_reply: string | null;
+  analysis_status: string | null;
+  source_url: string | null;
+};
+
+export type DashboardTikTokMetrics = {
+  videoCount: number;
+  playCount: number;
+  diggCount: number;
+  commentCount: number;
+  shareCount: number;
 };
 
 export type DashboardMetrics = {

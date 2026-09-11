@@ -8,19 +8,27 @@ import {
   BarChart3,
   Building2,
   CheckCircle2,
+  Eye,
+  ExternalLink,
   FileText,
   FilterX,
   Hash,
   MessageCircle,
+  Heart,
   Quote,
   ShieldAlert,
   Sparkles,
   Star,
+  Share2,
   Target,
   TrendingDown,
   TrendingUp,
 } from "lucide-react";
-import type { DashboardFeedbackRow } from "@/lib/dashboard-analytics";
+import type {
+  DashboardFeedbackRow,
+  DashboardTikTokMetrics,
+} from "@/lib/dashboard-analytics";
+import { getSafeFeedbackUrl } from "@/lib/feedback-source-url";
 
 type SentimentFilter = "all" | "positive" | "negative" | "neutral";
 type KnownSentiment = Exclude<SentimentFilter, "all">;
@@ -35,6 +43,7 @@ type InteractiveDashboardProps = {
   periodStart: string;
   periodEnd: string;
   hasError: boolean;
+  tiktokMetrics: DashboardTikTokMetrics | null;
   priorityContent?: ReactNode;
 };
 
@@ -81,6 +90,7 @@ export default function InteractiveDashboard({
   periodStart,
   periodEnd,
   hasError,
+  tiktokMetrics,
   priorityContent,
 }: InteractiveDashboardProps) {
   const [sentimentFilter, setSentimentFilter] =
@@ -224,6 +234,17 @@ export default function InteractiveDashboard({
           <MetricCard key={kpi.title} {...kpi} />
         ))}
       </section>
+
+      {platformKey === "tiktok" && tiktokMetrics ? (
+        <TikTokEngagementMetrics
+          metrics={tiktokMetrics}
+          analyzedComments={feedback.filter(
+            (row) =>
+              row.analysis_status?.trim().toLowerCase() === "completed" ||
+              Boolean(row.sentiment?.trim())
+          ).length}
+        />
+      ) : null}
 
       {priorityContent}
 
@@ -606,6 +627,51 @@ function MetricCard({
       </p>
       {detail ? <p className="mt-1 text-xs font-bold text-gray-500">{detail}</p> : null}
     </article>
+  );
+}
+
+function TikTokEngagementMetrics({
+  metrics,
+  analyzedComments,
+}: {
+  metrics: DashboardTikTokMetrics;
+  analyzedComments: number;
+}) {
+  const cards = [
+    { label: "المشاهدات", value: metrics.playCount, icon: <Eye size={21} /> },
+    { label: "الإعجابات", value: metrics.diggCount, icon: <Heart size={21} /> },
+    { label: "تعليقات TikTok", value: metrics.commentCount, icon: <MessageCircle size={21} /> },
+    { label: "المشاركات", value: metrics.shareCount, icon: <Share2 size={21} /> },
+    { label: "التعليقات المحللة", value: analyzedComments, icon: <Sparkles size={21} /> },
+  ];
+
+  return (
+    <section className="mt-4 rounded-[1.5rem] border border-[#BABDE2]/40 bg-white p-4 shadow-sm sm:p-5">
+      <div className="flex flex-wrap items-end justify-between gap-2">
+        <div>
+          <p className="text-sm font-bold text-[#895159]">أداء محتوى TikTok</p>
+          <h2 className="mt-1 text-lg font-extrabold text-[#374375] sm:text-xl">
+            مؤشرات التفاعل للفيديوهات
+          </h2>
+        </div>
+        <p className="text-sm font-semibold text-gray-500">
+          {formatNumber(metrics.videoCount)} فيديو ضمن الفترة
+        </p>
+      </div>
+      <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+        {cards.map((card) => (
+          <article key={card.label} className="rounded-2xl bg-[#F8F7F3] p-4">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#BABDE2]/30 text-[#374375]">
+              {card.icon}
+            </div>
+            <p className="mt-4 text-sm font-semibold text-gray-500">{card.label}</p>
+            <p className="mt-1 text-2xl font-black text-[#374375]">
+              {formatNumber(card.value)}
+            </p>
+          </article>
+        ))}
+      </div>
+    </section>
   );
 }
 
@@ -1149,6 +1215,7 @@ function FeedbackSampleCard({
     },
   }[sentiment];
   const classifications = buildFeedbackLabels(row);
+  const sourceUrl = getSafeFeedbackUrl(row.source_url, row.platform_name);
 
   return (
     <article
@@ -1182,9 +1249,25 @@ function FeedbackSampleCard({
         </div>
       </div>
 
-      <p className="mt-4 line-clamp-4 min-h-[3.5rem] font-bold leading-7 text-[#374375]">
-        “{row.feedback_text?.trim()}”
-      </p>
+      {sourceUrl ? (
+        <a
+          href={sourceUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label={`فتح التعليق الأصلي في ${formatPlatform(row.platform_name ?? "")}`}
+          className="mt-4 block min-h-[3.5rem] rounded-2xl p-2 font-bold leading-7 text-[#374375] transition hover:bg-white"
+        >
+          <span className="line-clamp-4">“{row.feedback_text?.trim()}”</span>
+          <span className="mt-2 flex items-center gap-1 text-xs font-bold text-[#895159]">
+            <ExternalLink size={13} />
+            فتح التعليق الأصلي
+          </span>
+        </a>
+      ) : (
+        <p className="mt-4 line-clamp-4 min-h-[3.5rem] font-bold leading-7 text-[#374375]">
+          “{row.feedback_text?.trim()}”
+        </p>
+      )}
 
       <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap gap-1.5">

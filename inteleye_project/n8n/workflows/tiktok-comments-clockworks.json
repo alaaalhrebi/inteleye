@@ -1,0 +1,1289 @@
+{
+  "name": "TikTok Clockworks Metrics, Comments & AI - Webhook & Weekly",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "1e8495e2-7bc4-4fc1-8762-33e0f1032739",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 3
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        0,
+        208
+      ],
+      "id": "72f260f6-f64f-4015-aecf-c48cc4353d82",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://dhryldlprpdmsixhlaqe.supabase.co/rest/v1/rpc/claim_due_platform_syncs",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpCustomAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { p_platform_name: 'tiktok', p_batch_size: 25 } }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        208,
+        112
+      ],
+      "id": "3c92e3f3-d0c5-43ef-ac14-28d23a1c1562",
+      "name": "Get Due TikTok Platforms",
+      "credentials": {
+        "httpCustomAuth": {
+          "id": "zG0oLxK9PlldN0gl",
+          "name": "Supabase Backend"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        432,
+        96
+      ],
+      "id": "d43ae365-8e52-483d-9563-ad3dfe10d433",
+      "name": "Loop Over Items"
+    },
+    {
+      "parameters": {
+        "jsCode": "const platform = $json;\nconst now = new Date();\nconst dayMs = 24 * 60 * 60 * 1000;\nconst lastSuccess = platform.last_success_at ? new Date(platform.last_success_at) : null;\nconst isWeekly = lastSuccess && !Number.isNaN(lastSuccess.getTime());\nconst periodStart = isWeekly ? lastSuccess : new Date(now.getTime() - 30 * dayMs);\nconst rawAccount = String(platform.username || platform.platform_url || '').trim();\nlet tiktokUsername = rawAccount.replace(/^@/, '').split('?')[0].replace(/[/]$/, '');\ntry {\n  const parsedUrl = new URL(rawAccount);\n  const handle = parsedUrl.pathname.split('/').filter(Boolean).find(part => part.startsWith('@'));\n  if (handle) tiktokUsername = handle.slice(1);\n} catch {}\nreturn { json: {\n  ...platform,\n  client_data: Array.isArray(platform.clients) ? platform.clients[0] : platform.clients,\n  sync_type: isWeekly ? 'weekly' : 'initial_historical',\n  period_start: periodStart.toISOString(),\n  period_end: now.toISOString(),\n  metrics_period_start: new Date(now.getTime() - 30 * dayMs).toISOString(),\n  tiktok_username: tiktokUsername,\n  sync_platform: 'tiktok'\n} };"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        656,
+        112
+      ],
+      "id": "05ef65c7-2b21-48ec-80a2-fe4f2085e2dc",
+      "name": "Determine TikTok Sync Period"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.apify.com/v2/acts/clockworks~tiktok-profile-scraper/run-sync-get-dataset-items",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ {\n  profiles: [$json.tiktok_username],\n  resultsPerPage: Number($json.settings?.max_videos_per_profile || 50),\n  shouldDownloadCovers: false,\n  shouldDownloadSlideshowImages: false,\n  shouldDownloadSubtitles: false,\n  shouldDownloadVideos: false\n} }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        832,
+        80
+      ],
+      "id": "72156083-9ff0-4a4d-8b58-fd53b4991a3e",
+      "name": "Fetch TikTok Videos",
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "N1vlyfQSWC1Nud6H",
+          "name": "Apify API Token"
+        }
+      },
+      "onError": "continueRegularOutput",
+      "alwaysOutputData": true,
+      "retryOnFail": true,
+      "maxTries": 2
+    },
+    {
+      "parameters": {
+        "jsCode": "const platform = $('Determine TikTok Sync Period').first().json;\nconst periodStart = new Date(platform.metrics_period_start).getTime();\nconst periodEnd = new Date(platform.period_end).getTime();\nconst numberOrZero = value => {\n  const parsed = Number(value);\n  return Number.isFinite(parsed) && parsed > 0 ? Math.trunc(parsed) : 0;\n};\nconst toIsoDate = video => {\n  const raw = video.createTimeISO ?? video.createTime;\n  if (typeof raw === 'number') return new Date(raw * 1000).toISOString();\n  const parsed = new Date(raw);\n  return Number.isNaN(parsed.getTime()) ? null : parsed.toISOString();\n};\nconst rawItems = items.map(item => item.json);\nconst failures = rawItems.filter(item => item?.error || item?.errorCode || item?.errorDescription || item?.requestErrorMessages);\nconst videos = [];\nfor (const video of rawItems) {\n  const videoId = video.id ?? video.videoId;\n  const videoUrl = video.webVideoUrl ?? video.videoUrl;\n  const publishedAt = toIsoDate(video);\n  if (!videoId || !videoUrl || !publishedAt) continue;\n  const publishedTime = new Date(publishedAt).getTime();\n  if (publishedTime < periodStart || publishedTime >= periodEnd) continue;\n  videos.push({\n    video_id: String(videoId),\n    video_url: String(videoUrl),\n    description: String(video.text ?? video.description ?? '').trim() || null,\n    published_at: publishedAt,\n    play_count: numberOrZero(video.playCount),\n    digg_count: numberOrZero(video.diggCount),\n    comment_count: numberOrZero(video.commentCount),\n    share_count: numberOrZero(video.shareCount),\n    raw_data: {\n      author: video.authorMeta?.name ?? null,\n      hashtags: Array.isArray(video.hashtags) ? video.hashtags : [],\n      collect_count: numberOrZero(video.collectCount),\n      is_pinned: Boolean(video.isPinned)\n    }\n  });\n}\nreturn [{ json: {\n  ...platform,\n  fetch_succeeded: videos.length > 0 || failures.length === 0,\n  has_videos: videos.length > 0,\n  videos\n} }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1040,
+        80
+      ],
+      "id": "5bf7e7d0-64b9-4987-954c-da16483180c1",
+      "name": "Normalize TikTok Videos"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://dhryldlprpdmsixhlaqe.supabase.co/rest/v1/tiktok_comments",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpCustomAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "on_conflict",
+              "value": "platform_id,tiktok_comment_id"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Prefer",
+              "value": "resolution=ignore-duplicates,return=representation"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ {\n  client_id: $json.client_id,\n  branch_id: $json.branch_id ?? null,\n  platform_id: $json.platform_id,\n  video_url: $json.video_url ?? null,\n  video_id: $json.video_id ?? null,\n  tiktok_comment_id: $json.tiktok_comment_id,\n  commenter_username: $json.author_username ?? null,\n  comment_text: $json.comment_text,\n  comment_date: $json.posted_at ?? null,\n  like_count: Number($json.public_metrics?.like_count || 0),\n  is_reply: Boolean($json.is_reply),\n  reply_to_comment_id: $json.reply_to_comment_id ?? null,\n  is_author_reply: false,\n  analysis_status: $json.analysis_status || 'pending',\n  raw_data: $json.raw_data,\n  updated_at: $now.toUTC().toISO()\n} }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        3344,
+        -48
+      ],
+      "id": "338c1312-9029-492d-a927-a8d886d904f9",
+      "name": "Upsert TikTok Comments",
+      "alwaysOutputData": true,
+      "credentials": {
+        "httpCustomAuth": {
+          "id": "zG0oLxK9PlldN0gl",
+          "name": "Supabase Backend"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "edc3dc3e-5253-4970-be97-2e743a1b16ec",
+              "leftValue": "={{ $json.has_comments }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        3152,
+        -48
+      ],
+      "id": "4750afcd-c271-4b45-b6d1-afea36b93a3d",
+      "name": "Has TikTok Comments?"
+    },
+    {
+      "parameters": {
+        "url": "https://dhryldlprpdmsixhlaqe.supabase.co/rest/v1/tiktok_comments",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpCustomAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "select",
+              "value": "id,client_id,branch_id,platform_id,tiktok_comment_id,video_id,comment_text,commenter_username,video_url,comment_date,like_count"
+            },
+            {
+              "name": "client_id",
+              "value": "={{ 'eq.' + $json.client_id }}"
+            },
+            {
+              "name": "platform_id",
+              "value": "={{ 'eq.' + $json.platform_id }}"
+            },
+            {
+              "name": "analysis_status",
+              "value": "eq.pending"
+            },
+            {
+              "name": "order",
+              "value": "comment_date.asc"
+            },
+            {
+              "name": "limit",
+              "value": "1000"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        3728,
+        -48
+      ],
+      "id": "99567a64-d71e-4655-a1ec-e887b6847526",
+      "name": "Get Pending TikTok Comments",
+      "alwaysOutputData": true,
+      "credentials": {
+        "httpCustomAuth": {
+          "id": "zG0oLxK9PlldN0gl",
+          "name": "Supabase Backend"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "44175c74-fe2c-4719-ba25-56488b6c7ab5",
+              "leftValue": "={{ !!$json.id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1920,
+        288
+      ],
+      "id": "ec70bd60-c932-4f49-939f-e7204eb07d2b",
+      "name": "Has Pending TikTok Comments?"
+    },
+    {
+      "parameters": {
+        "batchSize": 50,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        2160,
+        48
+      ],
+      "id": "895bd731-8eb4-4377-97f1-b92bf85bcc6b",
+      "name": "Loop TikTok Analysis Batches"
+    },
+    {
+      "parameters": {
+        "jsCode": "const platform =\n  $('Continue TikTok Platform').first().json;\n\nconst comments = items\n  .filter(item =>\n    item.json.id &&\n    item.json.comment_text\n  )\n  .map(item => ({\n    // رقم السجل داخل جدول tiktok_comments\n    source_record_id: item.json.id,\n\n    // معرف التعليق الأصلي في TikTok\n    tiktok_comment_id:\n      item.json.tiktok_comment_id,\n\n    video_id:\n      item.json.video_id || null,\n\n    // اسم العمود في الجدول commenter_username\n    author_username:\n      item.json.commenter_username || null,\n\n    video_url:\n      item.json.video_url || null,\n\n    comment_text:\n      item.json.comment_text,\n\n    // اسم العمود في الجدول comment_date\n    posted_at:\n      item.json.comment_date || null,\n\n    // الجدول يحتوي like_count كعمود منفصل\n    public_metrics: {\n      like_count: Number(\n        item.json.like_count || 0\n      )\n    }\n  }));\n\nif (!comments.length) {\n  return [];\n}\n\nreturn [\n  {\n    json: {\n      client_id: platform.client_id,\n      branch_id:\n        platform.branch_id ?? null,\n      platform_id:\n        platform.platform_id,\n\n      platform_name: 'tiktok',\n      source_table: 'tiktok_comments',\n\n      comments\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2400,
+        112
+      ],
+      "id": "b165ddfd-112e-4390-8703-06891119efa5",
+      "name": "Create TikTok AI Batch"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-4O-MINI"
+        },
+        "responses": {
+          "values": [
+            {
+              "content": "=أنت محلل متخصص في تصنيف تعليقات العملاء على منصة TikTok للمنشآت التجارية والخدمية.\n\nالهدف الأساسي: تحديد الحالات التي تحتاج ردًا فعليًا من المنشأة بدقة عالية. الأصل هو needs_reply = false، ولا تجعله true إلا عند تحقق سبب واضح من القائمة أدناه.\n\nحلل جميع تعليقات العملاء التالية، وأرجع JSON صالحًا فقط دون شرح أو Markdown:\n\n{{ JSON.stringify($json.comments) }}\n\nلكل تعليق أرجع:\n- source_record_id: نفس القيمة الموجودة في البيانات\n- sentiment: positive أو negative أو neutral\n- category: مصفوفة من التصنيفات المناسبة\n- severity: low أو medium أو high\n- reply_intent: complaint أو direct_question أو support_request أو sales_inquiry أو none\n- needs_reply: true أو false\n- is_sales_opportunity: true أو false\n- is_complaint: true أو false\n- suggested_reply: رد عربي مختصر إذا كان يحتاج ردًا، وإلا null\n- reason: سبب التصنيف بجملة قصيرة\n- analysis_summary: ملخص تعليق بجملة قصيرة\n\nالتصنيفات المسموحة فقط:\nجودة الخدمة، جودة المنتج، تعامل الموظفين، سرعة الخدمة، وقت الانتظار، المواعيد والحجز، الأسعار، النظافة، الموقع، التواصل والرد، التوصيل، الدفع والفوترة، التجربة الطبية، تجربة عامة، أخرى\n\nقواعد needs_reply الصارمة:\n1. اجعل needs_reply = true فقط إذا كان تعليق يتضمن واحدًا من الآتي:\n   - شكوى واضحة عن تجربة أو مشكلة فعلية مع المنشأة.\n   - سؤالًا مباشرًا قابلًا للإجابة وموجهًا للمنشأة.\n   - طلب مساعدة أو متابعة بسبب مشكلة في طلب أو دفع أو حجز أو خدمة.\n   - استفسار شراء واضح عن السعر أو التوفر أو الحجز أو تنفيذ الطلب.\n2. اجعل needs_reply = false للمدح والشكر والتفاعل الإيجابي، حتى لو كان الرد اللطيف ممكنًا.\n3. اجعل needs_reply = false للملاحظات العامة، الاقتراحات، التمنيات، طلب فتح فرع، طلب إضافة ميزة، المشاركة في مسابقة، الوسوم، الإيموجي، والمنشور غير الواضح.\n4. ذكر الحساب أو الرد على مستخدم آخر لا يعني أن المنشأة مطالبة بالرد.\n5. السؤال البلاغي أو العبارة التي لا تنتظر معلومة من المنشأة ليست سؤالًا مباشرًا.\n6. إذا لم تكن متأكدًا أن النص ينتظر جوابًا من المنشأة، اختر false و reply_intent = none.\n\nقواعد الاتساق الإلزامية:\n- needs_reply = true فقط عندما reply_intent ليست none.\n- needs_reply = false عندما reply_intent = none.\n- suggested_reply يجب أن يكون null عندما needs_reply = false.\n- is_complaint = true فقط لشكوى فعلية، ولا يجوز أن يكون true لمجرد المدح أو الاقتراح.\n- كل شكوى واضحة تكون sentiment = negative و reply_intent = complaint.\n- is_sales_opportunity = true فقط لاستفسار شراء أو حجز واضح، وليس لاقتراح أو طلب فتح فرع أو المشاركة في مسابقة.\n- أرجع نتيجة لكل source_record_id دون حذف أي عنصر.\n- category يجب أن تكون مصفوفة، واستخدم true وfalse كقيم Boolean، ولا تخترع معلومات.\n\nأمثلة حاسمة:\n- «الأكل ممتاز» => needs_reply false، is_complaint false.\n- «ياليت تفتحون فرع عندنا» => needs_reply false، is_sales_opportunity false.\n- «يارب أفوز معكم» => needs_reply false، is_sales_opportunity false.\n- «شفت المنيو الجديد» => needs_reply false.\n- «كم السعر وهل المنتج متوفر؟» => needs_reply true، reply_intent sales_inquiry.\n- «طلبي لم يصل وأحتاج مساعدة» => needs_reply true، reply_intent support_request أو complaint.\n\nأرجع بهذا الشكل فقط:\n{\n  \"results\": [\n    {\n      \"source_record_id\": 123,\n      \"sentiment\": \"negative\",\n      \"category\": [\"سرعة الخدمة\"],\n      \"severity\": \"medium\",\n      \"reply_intent\": \"complaint\",\n      \"needs_reply\": true,\n      \"is_sales_opportunity\": false,\n      \"is_complaint\": true,\n      \"suggested_reply\": \"نعتذر عن تجربتك، ونأمل تزويدنا بتفاصيل الطلب لمراجعة المشكلة.\",\n      \"reason\": \"يتضمن النص شكوى واضحة تحتاج متابعة.\",\n      \"analysis_summary\": \"العميل يشتكي من بطء الخدمة.\"\n    }\n  ]\n}"
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2.3,
+      "position": [
+        2576,
+        32
+      ],
+      "id": "4a5f25b6-deae-4772-be48-af054e452130",
+      "name": "Analyze TikTok Comments",
+      "retryOnFail": true,
+      "waitBetweenTries": 5000,
+      "credentials": {
+        "openAiApi": {
+          "id": "m1JKJ5EDpBNf733H",
+          "name": "n8n free OpenAI API credits"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const batch = $('Create TikTok AI Batch').item.json;\n\nlet text =\n  $json.text ||\n  $json.output?.[0]?.content?.[0]?.text ||\n  $json.message?.content ||\n  $json.content?.find(\n    item => item.type === 'output_text'\n  )?.text ||\n  '';\n\ntext = String(text)\n  .replace(/```json/gi, '')\n  .replace(/```/g, '')\n  .trim();\n\nif (!text) {\n  throw new Error(\n    'لم يتم العثور على نتيجة تحليل تعليقات TikTok'\n  );\n}\n\nlet parsed;\n\ntry {\n  parsed = JSON.parse(text);\n} catch (error) {\n  throw new Error(\n    'نتيجة الذكاء الاصطناعي ليست JSON صالحًا'\n  );\n}\n\nif (!Array.isArray(parsed.results)) {\n  throw new Error(\n    'الحقل results غير موجود أو ليس مصفوفة'\n  );\n}\n\nconst comments = Array.isArray(batch.comments)\n  ? batch.comments\n  : [];\n\nconst commentMap = new Map(\n  comments.map(comment => [\n    String(comment.source_record_id),\n    comment\n  ])\n);\n\n// التعليقات التي أُرسلت للنموذج\nconst expectedIds = new Set(\n  comments.map(comment =>\n    String(comment.source_record_id)\n  )\n);\n\n// التعليقات التي أعاد النموذج تحليلها\nconst returnedIds = new Set(\n  parsed.results\n    .map(result =>\n      result.source_record_id ?? result.id\n    )\n    .filter(id =>\n      id !== undefined && id !== null\n    )\n    .map(id => String(id))\n);\n\n// أي تعليق ناقص سيبقى pending ويعاد تحليله\nconst missingIds = [...expectedIds].filter(\n  id => !returnedIds.has(id)\n);\n\nif (missingIds.length > 0) {\n  console.log(\n    `سيعاد تحليل تعليقات TikTok الناقصة: ${missingIds.join(', ')}`\n  );\n}\n\nconst toBoolean = value =>\n  value === true || value === 'true';\n\nconst allowedSentiments = [\n  'positive',\n  'negative',\n  'neutral'\n];\n\nconst allowedSeverities = [\n  'low',\n  'medium',\n  'high'\n];\n\nconst output = [];\n\nfor (const result of parsed.results) {\n  const sourceRecordId =\n    result.source_record_id ??\n    result.id;\n\n  if (\n    sourceRecordId === undefined ||\n    sourceRecordId === null\n  ) {\n    console.log(\n      'تم تجاهل نتيجة لا تحتوي على source_record_id'\n    );\n    continue;\n  }\n\n  const originalComment = commentMap.get(\n    String(sourceRecordId)\n  );\n\n  // تجاهل أي معرف اخترعه النموذج\n  if (!originalComment) {\n    console.log(\n      `تم تجاهل معرف غير موجود في الدفعة: ${sourceRecordId}`\n    );\n    continue;\n  }\n\n  const sentiment = allowedSentiments.includes(\n    result.sentiment\n  )\n    ? result.sentiment\n    : 'neutral';\n\n  const severity = allowedSeverities.includes(\n    result.severity\n  )\n    ? result.severity\n    : 'low';\n\n  const category = Array.isArray(result.category)\n    ? result.category\n    : [result.category || 'أخرى'];\n\n  output.push({\n    json: {\n      client_id: batch.client_id,\n      branch_id: batch.branch_id ?? null,\n      platform_id: batch.platform_id,\n\n      platform_name: 'tiktok',\n      source_table: 'tiktok_comments',\n\n      // رقم السجل داخل جدول tiktok_comments\n      source_record_id: Number(sourceRecordId),\n\n      // معرف تعليق TikTok الأصلي\n      external_id:\n        originalComment.tiktok_comment_id ||\n        null,\n\n      sentiment,\n      category,\n      severity,\n\n      needs_reply:\n        toBoolean(result.needs_reply),\n\n      is_sales_opportunity:\n        toBoolean(result.is_sales_opportunity),\n\n      is_complaint:\n        toBoolean(result.is_complaint),\n\n      suggested_reply:\n        result.suggested_reply || null,\n\n      reason:\n        result.reason || null,\n\n      analysis_summary:\n        result.analysis_summary || null,\n\n      analysis_status: 'completed',\n      model_name: 'gpt-4o-mini',\n      analyzed_at: new Date().toISOString()\n    }\n  });\n}\n\nreturn output;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2864,
+        16
+      ],
+      "id": "87595b68-8456-4c6f-b29a-756b15c2ba2b",
+      "name": "Parse TikTok AI Result"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://dhryldlprpdmsixhlaqe.supabase.co/rest/v1/feedback_analysis",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpCustomAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "on_conflict",
+              "value": "source_table,source_record_id"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Prefer",
+              "value": "resolution=merge-duplicates,return=representation"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ {\n  client_id: $json.client_id,\n  branch_id: $json.branch_id,\n  platform_id: $json.platform_id,\n\n  platform_name: $json.platform_name,\n  source_table: $json.source_table,\n  source_record_id: $json.source_record_id,\n  external_id: $json.external_id,\n\n  sentiment: $json.sentiment,\n  category: $json.category,\n  severity: $json.severity,\n\n  needs_reply: $json.needs_reply,\n  is_sales_opportunity: $json.is_sales_opportunity,\n  is_complaint: $json.is_complaint,\n\n  suggested_reply: $json.suggested_reply,\n  reason: $json.reason,\n  analysis_summary: $json.analysis_summary,\n\n  analysis_status: 'completed',\n  model_name: $json.model_name,\n  analyzed_at: $json.analyzed_at,\n  updated_at: $now.toUTC().toISO()\n} }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        3040,
+        144
+      ],
+      "id": "097157d7-f6fc-4049-b439-83882dfac466",
+      "name": "Save TikTok Analysis",
+      "credentials": {
+        "httpCustomAuth": {
+          "id": "zG0oLxK9PlldN0gl",
+          "name": "Supabase Backend"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "https://dhryldlprpdmsixhlaqe.supabase.co/rest/v1/tiktok_comments",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpCustomAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "id",
+              "value": "={{ 'eq.' + $json.source_record_id }}\n"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Prefer",
+              "value": "return=representation"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ {\n  analysis_status: 'completed',\n  updated_at: $now.toUTC().toISO()\n} }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        2784,
+        368
+      ],
+      "id": "b1201f19-855b-4f67-8ee7-93fe2f459cbc",
+      "name": "Mark TikTok Comments Completed",
+      "credentials": {
+        "httpCustomAuth": {
+          "id": "zG0oLxK9PlldN0gl",
+          "name": "Supabase Backend"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const platform =\n  $('Determine TikTok Sync Period').first().json;\n\nreturn [\n  {\n    json: {\n      client_id: platform.client_id,\n      branch_id: platform.branch_id ?? null,\n      platform_id: platform.id,\n      platform_name: 'tiktok'\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3536,
+        -48
+      ],
+      "id": "a9a21d6e-7ead-4880-86cc-11f23243ec66",
+      "name": "Continue TikTok Platform"
+    },
+    {
+      "id": "1c8fa915-4462-4922-9e85-d3513051feef",
+      "typeVersion": 2.3,
+      "name": "TikTok Fetch Succeeded?",
+      "type": "n8n-nodes-base.if",
+      "position": [
+        2960,
+        -48
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "c43a965d-edd4-4a4e-8017-425832e04118",
+              "leftValue": "={{ $json.fetch_succeeded === true }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "f7bffaa1-9307-4367-8b22-0bdd0781e32c",
+      "typeVersion": 4.2,
+      "name": "Complete TikTok Sync",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        2112,
+        464
+      ],
+      "credentials": {
+        "httpCustomAuth": {
+          "id": "zG0oLxK9PlldN0gl",
+          "name": "Supabase Backend"
+        }
+      },
+      "parameters": {
+        "method": "POST",
+        "url": "https://dhryldlprpdmsixhlaqe.supabase.co/rest/v1/rpc/complete_platform_sync",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpCustomAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { p_platform_id: Number($('Loop Over Items').item.json.id) } }}",
+        "options": {}
+      }
+    },
+    {
+      "id": "688a9051-5086-423b-a2cf-e3319c172885",
+      "typeVersion": 4.2,
+      "name": "Fail TikTok Sync",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        1200,
+        -96
+      ],
+      "credentials": {
+        "httpCustomAuth": {
+          "id": "zG0oLxK9PlldN0gl",
+          "name": "Supabase Backend"
+        }
+      },
+      "parameters": {
+        "method": "POST",
+        "url": "https://dhryldlprpdmsixhlaqe.supabase.co/rest/v1/rpc/fail_platform_sync",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpCustomAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { p_platform_id: Number($('Loop Over Items').item.json.id), p_error: 'تعذر سحب تعليقات TikTok' } }}",
+        "options": {}
+      }
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "platform-sync-tiktok",
+        "authentication": "headerAuth",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -900,
+        520
+      ],
+      "id": "40782c55-00da-4312-aa4a-809863e55886",
+      "name": "Platform Added Webhook",
+      "webhookId": "40782c55-00da-4312-aa4a-809863e55886",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "eFNS3qZC0EtzE65c",
+          "name": "Authorization"
+        }
+      }
+    },
+    {
+      "id": "clockworks-video-fetch-ok",
+      "typeVersion": 2.3,
+      "name": "TikTok Videos Fetch Succeeded?",
+      "type": "n8n-nodes-base.if",
+      "position": [
+        1232,
+        80
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "clockworks-video-fetch-ok-condition",
+              "leftValue": "={{ $json.fetch_succeeded === true }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "clockworks-has-videos",
+      "typeVersion": 2.3,
+      "name": "Has TikTok Videos?",
+      "type": "n8n-nodes-base.if",
+      "position": [
+        1424,
+        80
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "clockworks-has-videos-condition",
+              "leftValue": "={{ $json.has_videos === true }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "parameters": {
+        "url": "https://dhryldlprpdmsixhlaqe.supabase.co/rest/v1/tiktok_videos",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpCustomAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "select",
+              "value": "video_id,comment_count"
+            },
+            {
+              "name": "platform_id",
+              "value": "={{ 'eq.' + $('Normalize TikTok Videos').first().json.id }}"
+            },
+            {
+              "name": "limit",
+              "value": "1000"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1616,
+        16
+      ],
+      "id": "clockworks-get-existing-videos",
+      "name": "Get Existing TikTok Videos",
+      "alwaysOutputData": true,
+      "credentials": {
+        "httpCustomAuth": {
+          "id": "zG0oLxK9PlldN0gl",
+          "name": "Supabase Backend"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const platform = $('Normalize TikTok Videos').first().json;\nconst rows = items.flatMap(item => Array.isArray(item.json) ? item.json : [item.json]);\nconst existingCounts = new Map(rows.filter(row => row?.video_id).map(row => [String(row.video_id), Number(row.comment_count || 0)]));\nconst now = new Date().toISOString();\nconst videos = platform.videos ?? [];\nconst videoRows = videos.map(video => ({\n  client_id: platform.client_id,\n  branch_id: platform.branch_id ?? null,\n  platform_id: platform.id,\n  video_id: video.video_id,\n  video_url: video.video_url,\n  description: video.description,\n  published_at: video.published_at,\n  play_count: video.play_count,\n  digg_count: video.digg_count,\n  comment_count: video.comment_count,\n  share_count: video.share_count,\n  last_scraped_at: now,\n  raw_data: video.raw_data,\n  updated_at: now\n}));\nconst commentTargets = videos.filter(video => {\n  const oldCount = existingCounts.get(String(video.video_id));\n  return video.comment_count > 0 && (oldCount === undefined || video.comment_count > oldCount);\n});\nreturn [{ json: {\n  ...platform,\n  video_rows: videoRows,\n  comment_target_urls: commentTargets.map(video => video.video_url),\n  comment_target_videos: commentTargets\n} }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1808,
+        16
+      ],
+      "id": "clockworks-prepare-video-sync",
+      "name": "Prepare TikTok Video Sync"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://dhryldlprpdmsixhlaqe.supabase.co/rest/v1/tiktok_videos",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpCustomAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "on_conflict",
+              "value": "platform_id,video_id"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Prefer",
+              "value": "resolution=merge-duplicates,return=representation"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json.video_rows }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        2000,
+        16
+      ],
+      "id": "clockworks-upsert-videos",
+      "name": "Upsert TikTok Videos",
+      "alwaysOutputData": true,
+      "credentials": {
+        "httpCustomAuth": {
+          "id": "zG0oLxK9PlldN0gl",
+          "name": "Supabase Backend"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const prepared = $('Prepare TikTok Video Sync').first().json;\nreturn [{ json: prepared }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2192,
+        16
+      ],
+      "id": "clockworks-continue-video-sync",
+      "name": "Continue TikTok Video Sync"
+    },
+    {
+      "id": "clockworks-has-comment-targets",
+      "typeVersion": 2.3,
+      "name": "Has TikTok Comment Targets?",
+      "type": "n8n-nodes-base.if",
+      "position": [
+        2384,
+        16
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "clockworks-has-comment-targets-condition",
+              "leftValue": "={{ Array.isArray($json.comment_target_urls) && $json.comment_target_urls.length > 0 }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.apify.com/v2/acts/clockworks~tiktok-comments-scraper/run-sync-get-dataset-items",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ {\n  postURLs: $json.comment_target_urls,\n  commentsPerPost: Number($json.settings?.max_comments_per_video || 50),\n  maxRepliesPerComment: 0\n} }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        2576,
+        -48
+      ],
+      "id": "clockworks-fetch-comments",
+      "name": "Fetch TikTok Comments",
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "N1vlyfQSWC1Nud6H",
+          "name": "Apify API Token"
+        }
+      },
+      "onError": "continueRegularOutput",
+      "alwaysOutputData": true,
+      "retryOnFail": true,
+      "maxTries": 2
+    },
+    {
+      "parameters": {
+        "jsCode": "const platform = $('Prepare TikTok Video Sync').first().json;\nconst periodStart = new Date(platform.period_start).getTime();\nconst periodEnd = new Date(platform.period_end).getTime();\nconst monitoredUsername = String(platform.tiktok_username || '').replace(/^@/, '').trim().toLowerCase();\nconst videos = platform.comment_target_videos ?? [];\nconst videoByUrl = new Map(videos.map(video => [String(video.video_url).split('?')[0], video]));\nconst output = [];\nconst rawItems = items.map(item => item.json);\nconst failures = rawItems.filter(item => item?.error || item?.errorCode || item?.errorDescription || item?.requestErrorMessages);\nfor (const comment of rawItems) {\n  const commentId = comment.cid ?? comment.commentId ?? comment.id;\n  const text = String(comment.text ?? '').trim();\n  if (!commentId || !text) continue;\n  const rawDate = comment.createTimeISO ?? comment.createTime;\n  const commentDate = typeof rawDate === 'number' ? new Date(rawDate * 1000) : new Date(rawDate);\n  const commentTime = commentDate.getTime();\n  if (Number.isNaN(commentTime) || commentTime < periodStart || commentTime >= periodEnd) continue;\n  const authorUsername = String(comment.uniqueId ?? comment.username ?? '').replace(/^@/, '').trim();\n  if (monitoredUsername && authorUsername.toLowerCase() === monitoredUsername) continue;\n  const videoUrl = String(comment.videoWebUrl ?? comment.videoUrl ?? '').trim();\n  const video = videoByUrl.get(videoUrl.split('?')[0]);\n  const urlVideoId = videoUrl.split('/video/')[1]?.split('?')[0]?.split('/')[0] ?? null;\n  const replyToId = comment.repliesToId ?? comment.replyToCommentId ?? null;\n  output.push({ json: {\n    fetch_succeeded: true,\n    has_comments: true,\n    client_id: platform.client_id,\n    branch_id: platform.branch_id ?? null,\n    platform_id: platform.id,\n    tiktok_comment_id: String(commentId),\n    video_id: String(comment.aweme_id ?? comment.videoId ?? video?.video_id ?? urlVideoId ?? '') || null,\n    comment_text: text,\n    author_username: authorUsername || null,\n    author_name: comment.nickname ?? null,\n    author_avatar_url: comment.avatarThumbnail ?? null,\n    video_url: videoUrl || video?.video_url || null,\n    video_description: video?.description ?? null,\n    posted_at: commentDate.toISOString(),\n    public_metrics: {\n      like_count: Number(comment.diggCount ?? comment.likes ?? 0) || 0,\n      reply_count: Number(comment.replyCommentTotal ?? comment.replies ?? 0) || 0\n    },\n    is_reply: Boolean(replyToId),\n    reply_to_comment_id: replyToId ? String(replyToId) : null,\n    analysis_status: 'pending',\n    raw_data: { comment, monitored_username: platform.tiktok_username || null, client_platform_id: platform.id }\n  } });\n}\nif (output.length === 0) {\n  return [{ json: {\n    fetch_succeeded: failures.length === 0,\n    has_comments: false,\n    client_id: platform.client_id,\n    branch_id: platform.branch_id ?? null,\n    platform_id: platform.id,\n    message: failures.length ? 'تعذر جلب تعليقات TikTok من Clockworks' : 'لا توجد تعليقات TikTok جديدة داخل الفترة المحددة'\n  } }];\n}\nreturn output;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2768,
+        -48
+      ],
+      "id": "clockworks-normalize-comments",
+      "name": "Normalize TikTok Comments"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get Due TikTok Platforms",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Due TikTok Platforms": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Determine TikTok Sync Period",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Determine TikTok Sync Period": {
+      "main": [
+        [
+          {
+            "node": "Fetch TikTok Videos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize TikTok Comments": {
+      "main": [
+        [
+          {
+            "node": "TikTok Fetch Succeeded?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Get Due TikTok Platforms",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has TikTok Comments?": {
+      "main": [
+        [
+          {
+            "node": "Upsert TikTok Comments",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Continue TikTok Platform",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upsert TikTok Comments": {
+      "main": [
+        [
+          {
+            "node": "Continue TikTok Platform",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Pending TikTok Comments": {
+      "main": [
+        [
+          {
+            "node": "Has Pending TikTok Comments?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has Pending TikTok Comments?": {
+      "main": [
+        [
+          {
+            "node": "Loop TikTok Analysis Batches",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Complete TikTok Sync",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop TikTok Analysis Batches": {
+      "main": [
+        [
+          {
+            "node": "Get Pending TikTok Comments",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Create TikTok AI Batch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create TikTok AI Batch": {
+      "main": [
+        [
+          {
+            "node": "Analyze TikTok Comments",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Analyze TikTok Comments": {
+      "main": [
+        [
+          {
+            "node": "Parse TikTok AI Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse TikTok AI Result": {
+      "main": [
+        [
+          {
+            "node": "Save TikTok Analysis",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save TikTok Analysis": {
+      "main": [
+        [
+          {
+            "node": "Mark TikTok Comments Completed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mark TikTok Comments Completed": {
+      "main": [
+        [
+          {
+            "node": "Loop TikTok Analysis Batches",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Continue TikTok Platform": {
+      "main": [
+        [
+          {
+            "node": "Get Pending TikTok Comments",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "TikTok Fetch Succeeded?": {
+      "main": [
+        [
+          {
+            "node": "Has TikTok Comments?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Fail TikTok Sync",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Complete TikTok Sync": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fail TikTok Sync": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Platform Added Webhook": {
+      "main": [
+        [
+          {
+            "node": "Get Due TikTok Platforms",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch TikTok Videos": {
+      "main": [
+        [
+          {
+            "node": "Normalize TikTok Videos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize TikTok Videos": {
+      "main": [
+        [
+          {
+            "node": "TikTok Videos Fetch Succeeded?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "TikTok Videos Fetch Succeeded?": {
+      "main": [
+        [
+          {
+            "node": "Has TikTok Videos?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Fail TikTok Sync",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has TikTok Videos?": {
+      "main": [
+        [
+          {
+            "node": "Get Existing TikTok Videos",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Continue TikTok Platform",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Existing TikTok Videos": {
+      "main": [
+        [
+          {
+            "node": "Prepare TikTok Video Sync",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare TikTok Video Sync": {
+      "main": [
+        [
+          {
+            "node": "Upsert TikTok Videos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upsert TikTok Videos": {
+      "main": [
+        [
+          {
+            "node": "Continue TikTok Video Sync",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Continue TikTok Video Sync": {
+      "main": [
+        [
+          {
+            "node": "Has TikTok Comment Targets?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has TikTok Comment Targets?": {
+      "main": [
+        [
+          {
+            "node": "Fetch TikTok Comments",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Continue TikTok Platform",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch TikTok Comments": {
+      "main": [
+        [
+          {
+            "node": "Normalize TikTok Comments",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "58663d0d-1000-4d3a-9512-68c7357a3acb",
+  "meta": {
+    "instanceId": "e1e4029b67152d8f11cad1a051ea4bcd8762986d9b2b088b75e5e7f6d7aa4a0b"
+  },
+  "nodeGroups": [],
+  "id": "UOmLxWk7rY63ec7s",
+  "tags": []
+}

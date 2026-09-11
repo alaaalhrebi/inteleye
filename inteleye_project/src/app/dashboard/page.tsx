@@ -15,6 +15,7 @@ import {
   getDashboardPeriodRange,
   normalizeDashboardPeriod,
   type DashboardFeedbackRow,
+  type DashboardTikTokMetrics,
 } from "@/lib/dashboard-analytics";
 
 export default async function DashboardPage({
@@ -107,6 +108,11 @@ export default async function DashboardPage({
   )
     ? requestedPlatformId
     : null;
+  const selectedPlatformName =
+    selectedPlatform === null
+      ? null
+      : platforms.find((platform) => platform.id === selectedPlatform)
+          ?.platform_name ?? null;
   const periodRange = getDashboardPeriodRange(selectedPeriod);
   const dataScope = {
     clientId: client.id,
@@ -119,6 +125,7 @@ export default async function DashboardPage({
     comparisonFeedbackResult,
     reportsResult,
     alertsResult,
+    tiktokMetricsResult,
   ] = await Promise.all([
     loadDashboardFeedback(supabase, {
       ...dataScope,
@@ -132,6 +139,13 @@ export default async function DashboardPage({
     }),
     loadDashboardReports(supabase, dataScope),
     loadDashboardAlerts(supabase, dataScope),
+    selectedPlatform !== null && selectedPlatformName === "tiktok"
+      ? loadTikTokMetrics(supabase, {
+          ...dataScope,
+          start: periodRange.start,
+          end: periodRange.end,
+        })
+      : Promise.resolve({ data: null, error: null }),
   ]);
 
   const dashboardErrors = [
@@ -139,6 +153,7 @@ export default async function DashboardPage({
     comparisonFeedbackResult.error,
     reportsResult.error,
     alertsResult.error,
+    tiktokMetricsResult.error,
   ].filter(Boolean);
 
   if (dashboardErrors.length > 0) {
@@ -152,6 +167,7 @@ export default async function DashboardPage({
   const comparisonFeedback = comparisonFeedbackResult.data;
   const reports = reportsResult.data;
   const alerts = alertsResult.data;
+  const tiktokMetrics = tiktokMetricsResult.data;
 
  const currentPlatformsCount = new Set(
   platforms.map((platform) => platform.platform_name)
@@ -168,11 +184,6 @@ const topActions = buildTopActions(currentFeedback, recommendations);
 const branchNames = Object.fromEntries(
   (branches ?? []).map((branch) => [String(branch.id), branch.name])
 );
-const selectedPlatformName =
-  selectedPlatform === null
-    ? null
-    : platforms.find((platform) => platform.id === selectedPlatform)
-        ?.platform_name ?? null;
 const activePlatforms = Array.from(
   new Set(platforms.map((platform) => platform.platform_name).filter(Boolean))
 );
@@ -212,6 +223,7 @@ const selectedBranchName =
             periodStart={periodRange.start.toISOString()}
             periodEnd={periodRange.end.toISOString()}
             hasError={dashboardErrors.length > 0}
+            tiktokMetrics={tiktokMetrics}
             priorityContent={
               <section className="mt-4 grid gap-4 xl:grid-cols-2">
                 <SmartAlerts alerts={alerts} />
@@ -599,7 +611,7 @@ async function loadDashboardFeedback(
     let query = supabase
       .from("unified_feedback")
       .select(
-        "source_table, source_record_id, branch_id, platform_id, platform_name, feedback_text, rating, published_at, sentiment, category, severity, needs_reply, is_sales_opportunity, is_complaint, suggested_reply"
+        "source_table, source_record_id, branch_id, platform_id, platform_name, feedback_text, rating, published_at, sentiment, category, severity, needs_reply, is_sales_opportunity, is_complaint, suggested_reply, analysis_status, source_url"
       )
       .eq("client_id", scope.clientId)
       .gte("published_at", scope.start.toISOString())
@@ -629,6 +641,54 @@ async function loadDashboardFeedback(
       return { data: rows, error: null };
     }
   }
+}
+
+async function loadTikTokMetrics(
+  supabase: ReturnType<typeof createSupabaseServerClient>,
+  scope: DashboardFeedbackScope
+): Promise<{ data: DashboardTikTokMetrics; error: QueryError }> {
+  const empty: DashboardTikTokMetrics = {
+    videoCount: 0,
+    playCount: 0,
+    diggCount: 0,
+    commentCount: 0,
+    shareCount: 0,
+  };
+
+  if (scope.platformId === null) return { data: empty, error: null };
+
+  let query = supabase
+    .from("tiktok_videos")
+    .select("play_count, digg_count, comment_count, share_count")
+    .eq("client_id", scope.clientId)
+    .eq("platform_id", scope.platformId)
+    .gte("published_at", scope.start.toISOString())
+    .lte("published_at", scope.end.toISOString());
+
+  if (scope.branchId !== null) {
+    query = query.or(`branch_id.eq.${scope.branchId},branch_id.is.null`);
+  }
+
+  const { data, error } = await query.limit(1000);
+  if (error) return { data: empty, error: { message: error.message } };
+
+  const metrics = (data ?? []).reduce<DashboardTikTokMetrics>(
+    (totals, row) => ({
+      videoCount: totals.videoCount + 1,
+      playCount: totals.playCount + toSafeMetric(row.play_count),
+      diggCount: totals.diggCount + toSafeMetric(row.digg_count),
+      commentCount: totals.commentCount + toSafeMetric(row.comment_count),
+      shareCount: totals.shareCount + toSafeMetric(row.share_count),
+    }),
+    empty
+  );
+
+  return { data: metrics, error: null };
+}
+
+function toSafeMetric(value: unknown) {
+  const number = Number(value);
+  return Number.isFinite(number) && number > 0 ? number : 0;
 }
 
 async function loadDashboardReports(

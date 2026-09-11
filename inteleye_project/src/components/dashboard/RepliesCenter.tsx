@@ -5,6 +5,7 @@ import {
   Check,
   Clipboard,
   Filter,
+  ExternalLink,
   MessageSquareText,
   Search,
   Sparkles,
@@ -20,6 +21,7 @@ export type ReplyItem = {
   severity: string;
   categories: string[];
   publishedAt: string | null;
+  sourceUrl: string | null;
 };
 
 export default function RepliesCenter({ items }: { items: ReplyItem[] }) {
@@ -168,9 +170,25 @@ export default function RepliesCenter({ items }: { items: ReplyItem[] }) {
               <div className="grid gap-5 p-5 lg:grid-cols-2 lg:p-6">
                 <div>
                   <p className="text-xs font-bold text-gray-400">تعليق العميل</p>
-                  <blockquote className="mt-3 rounded-2xl border-r-4 border-[#DFAEA1] bg-[#DFAEA1]/15 p-4 text-sm leading-8 text-gray-700">
-                    “{item.feedbackText || "لا يتوفر نص للتعليق."}”
-                  </blockquote>
+                  {item.sourceUrl ? (
+                    <a
+                      href={item.sourceUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label={`فتح التعليق الأصلي في ${item.platformName}`}
+                      className="mt-3 block rounded-2xl border-r-4 border-[#DFAEA1] bg-[#DFAEA1]/15 p-4 text-sm leading-8 text-gray-700 transition hover:bg-[#DFAEA1]/25"
+                    >
+                      “{item.feedbackText || "لا يتوفر نص للتعليق."}”
+                      <span className="mt-2 flex items-center gap-1 text-xs font-bold text-[#895159]">
+                        <ExternalLink size={13} />
+                        فتح التعليق الأصلي
+                      </span>
+                    </a>
+                  ) : (
+                    <blockquote className="mt-3 rounded-2xl border-r-4 border-[#DFAEA1] bg-[#DFAEA1]/15 p-4 text-sm leading-8 text-gray-700">
+                      “{item.feedbackText || "لا يتوفر نص للتعليق."}”
+                    </blockquote>
+                  )}
                 </div>
 
                 <div className="rounded-2xl bg-[#BABDE2]/18 p-4">

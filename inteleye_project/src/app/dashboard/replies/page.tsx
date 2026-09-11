@@ -11,6 +11,7 @@ import DashboardSectionHeader from "@/components/dashboard/DashboardSectionHeade
 import RepliesCenter, { type ReplyItem } from "@/components/dashboard/RepliesCenter";
 import { getSubscriptionPermissions } from "@/lib/subscription-permissions";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
+import { getSafeFeedbackUrl } from "@/lib/feedback-source-url";
 
 export const dynamic = "force-dynamic";
 
@@ -25,6 +26,7 @@ type FeedbackRow = {
   severity: string | null;
   suggested_reply: string | null;
   published_at: string | null;
+  source_url: string | null;
 };
 
 export default async function RepliesPage() {
@@ -54,7 +56,7 @@ export default async function RepliesPage() {
     supabase
       .from("unified_feedback")
       .select(
-        "source_table, source_record_id, branch_id, platform_name, feedback_text, sentiment, category, severity, suggested_reply, published_at",
+        "source_table, source_record_id, branch_id, platform_name, feedback_text, sentiment, category, severity, suggested_reply, published_at, source_url",
         { count: "exact" }
       )
       .eq("client_id", client.id)
@@ -85,6 +87,7 @@ export default async function RepliesPage() {
       ? row.category.filter((value): value is string => typeof value === "string")
       : [],
     publishedAt: row.published_at,
+    sourceUrl: getSafeFeedbackUrl(row.source_url, row.platform_name),
   }));
 
   const totalPending = feedbackResult.count ?? items.length;
