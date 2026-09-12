@@ -29,6 +29,16 @@ test("trial السارية تصل إلى لوحة التحكم ولا تصل إ�
   assert.equal(value.canChoosePlatformScope, false);
 });
 
+test("trial السارية لا تضيف ربط منصة ثاني حتى لو كان من النوع نفسه", () => {
+  const value = getSubscriptionPermissions(
+    { subscription_status: "trial", trial_ends_at: "2026-08-03T00:00:00Z" },
+    { now, currentPlatformsCount: 1, currentPlatformLinksCount: 1 }
+  );
+  assert.equal(value.canUsePlatform, true);
+  assert.equal(value.canAddPlatform, false);
+  assert.equal(value.canAddPlatformLink, false);
+});
+
 test("trial المنتهية لا تصل إلى لوحة التحكم أو التقارير", () => {
   const value = getSubscriptionPermissions(
     { subscription_status: "trial", trial_ends_at: "2026-08-01T00:00:00Z" },
@@ -48,6 +58,14 @@ test("Basic السارية تعرض التقارير ولا تنشئ تقرير�
   assert.equal(value.branchLimit, 1);
   assert.equal(value.platformLimit, 1);
   assert.equal(value.canChoosePlatformScope, false);
+});
+
+test("Basic السارية لا تضيف أكثر من ربط منصة واحد", () => {
+  const value = getSubscriptionPermissions(
+    { subscription_status: "active", plan: "basic" },
+    { now, currentPlatformsCount: 1, currentPlatformLinksCount: 1 }
+  );
+  assert.equal(value.canAddPlatformLink, false);
 });
 
 test("Pro السارية تعرض وتنشئ تقريرًا مخصصًا", () => {

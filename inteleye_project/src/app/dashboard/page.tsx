@@ -175,10 +175,11 @@ export default async function DashboardPage({
 
 const permissions = getSubscriptionPermissions(client, {
   currentPlatformsCount,
+  currentPlatformLinksCount: platforms.length,
 });
 
 const plan = permissions.plan;
-const canManagePlatformLinks = permissions.canUsePlatform;
+const canManagePlatformLinks = permissions.canAddPlatformLink;
 const recommendations = extractRecommendations(reports);
 const topActions = buildTopActions(currentFeedback, recommendations);
 const branchNames = Object.fromEntries(

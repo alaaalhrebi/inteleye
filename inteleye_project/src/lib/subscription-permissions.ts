@@ -10,6 +10,7 @@ type PermissionContext = {
   now?: Date | number | string;
   currentBranchesCount?: number;
   currentPlatformsCount?: number;
+  currentPlatformLinksCount?: number;
 };
 
 const BRANCH_LIMITS: Record<string, number> = {
@@ -76,6 +77,12 @@ export function getSubscriptionPermissions(
     context.currentPlatformsCount ?? 0,
     0
   );
+  const currentPlatformLinksCount = Math.max(
+    context.currentPlatformLinksCount ?? 0,
+    0
+  );
+  const hasSinglePlatformLinkLimit =
+    isTrialActive || (hasActiveSubscription && plan === "basic");
 
   return {
     status,
@@ -95,6 +102,10 @@ export function getSubscriptionPermissions(
     canUsePlatform: canAccessDashboard && platformLimit > 0,
     canAddPlatform:
       canAccessDashboard && currentPlatformsCount < platformLimit,
+    canAddPlatformLink:
+      canAccessDashboard &&
+      platformLimit > 0 &&
+      (!hasSinglePlatformLinkLimit || currentPlatformLinksCount < 1),
     branchLimit,
     platformLimit,
   };

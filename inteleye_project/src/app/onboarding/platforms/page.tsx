@@ -102,6 +102,7 @@ export default function PlatformsOnboardingPage() {
   const [branches, setBranches] = useState<BranchOption[]>([]);
   const [canCreateBranch, setCanCreateBranch] = useState(false);
   const [canChoosePlatformScope, setCanChoosePlatformScope] = useState(false);
+  const [canAddPlatformLink, setCanAddPlatformLink] = useState(true);
   const [scope, setScope] = useState<PlatformScope>("");
   const [selectedBranchId, setSelectedBranchId] = useState("");
   const [newBranchName, setNewBranchName] = useState("");
@@ -174,6 +175,7 @@ export default function PlatformsOnboardingPage() {
       const permissionsWithUsage = getSubscriptionPermissions(client, {
         currentBranchesCount: currentBranches.length,
         currentPlatformsCount: uniquePlatformNames.size,
+        currentPlatformLinksCount: (platformsResult.data ?? []).length,
       });
 
       setPlatformLimit(permissions.platformLimit);
@@ -182,6 +184,7 @@ export default function PlatformsOnboardingPage() {
       setBranches(currentBranches);
       setCanCreateBranch(permissionsWithUsage.canAddBranch);
       setCanChoosePlatformScope(permissionsWithUsage.canChoosePlatformScope);
+      setCanAddPlatformLink(permissionsWithUsage.canAddPlatformLink);
 
       setLoading(false);
     }
@@ -316,9 +319,39 @@ export default function PlatformsOnboardingPage() {
 </p>
         </div>
 
+        {!canAddPlatformLink && (
+          <section className="mx-auto max-w-3xl rounded-[2rem] border border-[#DFAEA1]/50 bg-white p-6 text-center shadow-xl sm:p-8">
+            <h2 className="text-xl font-extrabold text-[#895159] sm:text-2xl">
+              وصلت إلى الحد الأعلى من الفروع والمنصات
+            </h2>
+            <p className="mt-3 text-sm font-bold leading-7 text-gray-500 sm:text-base">
+              باقتك الحالية تسمح بفرع واحد ومنصة واحدة، ولا يمكن إضافة حساب آخر من المنصة نفسها إلى فرع ثانٍ.
+            </p>
+            <p className="mt-2 text-sm text-gray-400">
+              تستخدم حاليًا {branches.length} من أصل 1 فرع، و{existingPlatformsCount} من أصل {platformLimit} منصة.
+            </p>
+            <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row">
+              <Link
+                href="/dashboard"
+                className="rounded-full bg-[#374375] px-6 py-3 text-sm font-bold text-white transition hover:bg-[#895159]"
+              >
+                العودة إلى الداشبورد
+              </Link>
+              <Link
+                href="/pricing"
+                className="rounded-full border border-[#374375] bg-white px-6 py-3 text-sm font-bold text-[#374375] transition hover:bg-[#BABDE2]/20"
+              >
+                عرض الباقات
+              </Link>
+            </div>
+          </section>
+        )}
+
         <form
           onSubmit={handleSave}
-          className="mx-auto max-w-5xl rounded-[2rem] border border-[#BABDE2]/40 bg-white/90 p-4 sm:p-6 lg:p-8 shadow-2xl"
+          className={`mx-auto max-w-5xl rounded-[2rem] border border-[#BABDE2]/40 bg-white/90 p-4 shadow-2xl sm:p-6 lg:p-8 ${
+            canAddPlatformLink ? "" : "hidden"
+          }`}
         >
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {platforms.map((platform) => {

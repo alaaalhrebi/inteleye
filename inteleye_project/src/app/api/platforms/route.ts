@@ -142,11 +142,22 @@ export async function POST(request: Request) {
   const permissions = getSubscriptionPermissions(client, {
     currentBranchesCount: branchRows.length,
     currentPlatformsCount: platformTypes.size,
+    currentPlatformLinksCount: platformRows.length,
   });
 
   if (!permissions.canAccessDashboard || !permissions.canUsePlatform) {
     return NextResponse.json(
       { message: "ربط المنصات غير متاح في اشتراكك الحالي" },
+      { status: 403 }
+    );
+  }
+
+  if (!permissions.canAddPlatformLink) {
+    return NextResponse.json(
+      {
+        message:
+          "وصلت إلى الحد الأعلى من الفروع والمنصات في باقتك الحالية",
+      },
       { status: 403 }
     );
   }

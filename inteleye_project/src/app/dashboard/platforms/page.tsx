@@ -99,6 +99,7 @@ export default async function PlatformsPage() {
   const currentPlatformTypes = new Set(platforms.map((row) => row.platform_name));
   const permissions = getSubscriptionPermissions(client, {
     currentPlatformsCount: currentPlatformTypes.size,
+    currentPlatformLinksCount: platforms.length,
   });
 
   const cards = platformDefinitions.map((definition) => {
@@ -108,7 +109,9 @@ export default async function PlatformsPage() {
       linkedRows.flatMap((row) => (row.branch_id === null ? [] : [row.branch_id]))
     );
     const isLinked = linkedRows.length > 0;
-    const isAvailable = isLinked || permissions.canAddPlatform;
+    const isAvailable =
+      isLinked ||
+      (permissions.canAddPlatform && permissions.canAddPlatformLink);
     const hasConnectionError = linkedRows.some(
       (row) =>
         Boolean(row.last_error) ||
@@ -214,11 +217,11 @@ export default async function PlatformsPage() {
             </p>
           </div>
           <Link
-            href={permissions.canUsePlatform ? "/onboarding/platforms" : "/pricing"}
+            href={permissions.canAddPlatformLink ? "/onboarding/platforms" : "/pricing"}
             className="inline-flex shrink-0 items-center justify-center gap-2 rounded-full bg-white px-6 py-3 text-sm font-bold text-[#374375] transition hover:bg-[#DFAEA1]"
           >
-            {permissions.canUsePlatform ? <Plus size={18} /> : <LockKeyhole size={18} />}
-            {permissions.canUsePlatform ? "إضافة أو ربط منصة" : "عرض الباقات"}
+            {permissions.canAddPlatformLink ? <Plus size={18} /> : <LockKeyhole size={18} />}
+            {permissions.canAddPlatformLink ? "إضافة أو ربط منصة" : "عرض الباقات"}
           </Link>
         </section>
       </main>
