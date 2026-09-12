@@ -210,13 +210,23 @@ export default async function PlatformsPage() {
         </section>
 
         <section className="mt-6 flex flex-col gap-4 rounded-[1.75rem] border border-[#BABDE2]/35 bg-[#374375] p-6 text-white shadow-sm sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <p className="text-xs font-bold text-[#BABDE2]">تغطية الحساب</p>
-            <h2 className="mt-2 text-xl font-extrabold">هل تريد ربط منصة جديدة؟</h2>
-            <p className="mt-2 text-sm leading-7 text-white/70">
-              باقتك الحالية تسمح باستخدام {permissions.platformLimit} منصة، وتستخدم الآن {currentPlatformTypes.size}.
-            </p>
-          </div>
+         <div>
+  <p className="text-xs font-bold text-[#BABDE2]">تغطية الحساب</p>
+
+  <h2 className="mt-2 text-xl font-extrabold">
+    ربط منصة جديدة
+  </h2>
+
+  <p className="mt-2 text-sm leading-7 text-white/70">
+    تستخدم حاليًا {currentPlatformTypes.size} من أصل {permissions.platformLimit} منصة متاحة ضمن باقتك.
+  </p>
+
+  {currentPlatformTypes.size >= permissions.platformLimit && (
+    <p className="mt-1 text-sm text-white/60">
+      وصلت للحد المتاح في باقتك. يمكنك ترقية الباقة لربط منصة إضافية.
+    </p>
+  )}
+</div>
           <Link
             href={permissions.canAddPlatformLink ? "/onboarding/platforms" : "/pricing"}
             className="inline-flex shrink-0 items-center justify-center gap-2 rounded-full bg-white px-6 py-3 text-sm font-bold text-[#374375] transition hover:bg-[#DFAEA1]"
