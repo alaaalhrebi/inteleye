@@ -103,7 +103,8 @@ export default async function RepliesPage() {
         plan={permissions.plan}
         eyebrow="مركز الردود والمعالجة"
         title="الردود المقترحة"
-        description="راجع التعليقات التي تحتاج إلى متابعة، وانسخ الرد المقترح ثم انشره يدويًا من المنصة الأصلية. IntelEye لا ينشر الرد تلقائيًا."
+        description="راجع التعليقات التي تحتاج إلى رد، وانسخ الرد المقترح ثم انشره من المنصة الأصلية.
+IntelEye لا ينشر الردود تلقائيًا."
         icon={<MessageSquareText size={29} />}
       />
 
