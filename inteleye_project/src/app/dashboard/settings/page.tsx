@@ -76,7 +76,7 @@ export default async function SettingsPage() {
         plan={permissions.plan}
         eyebrow="الحساب والاشتراك"
         title="الإعدادات"
-        description="راجع معلومات المنشأة وحالة اشتراكك وحدود الباقة. إدارة الفروع وربط المنصات متاحة من صفحاتها المخصصة."
+description="راجع معلومات حسابك، وحالة الاشتراك، وحدود باقتك. ويمكنك إدارة الفروع والمنصات من صفحاتها المخصصة."
         icon={<Settings size={29} />}
       />
 
