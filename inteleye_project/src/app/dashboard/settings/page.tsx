@@ -164,19 +164,7 @@ description="راجع معلومات حسابك، وحالة الاشتراك، 
               </div>
             </section>
 
-            <section className="rounded-[2rem] border border-[#DFAEA1]/40 bg-[#DFAEA1]/14 p-6 sm:p-7">
-              <div className="flex items-start gap-4">
-                <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white text-[#895159]">
-                  <ShieldCheck size={23} />
-                </span>
-                <div>
-                  <h2 className="text-lg font-extrabold text-[#374375]">حسابك محمي بجلسة Supabase</h2>
-                  <p className="mt-2 text-sm leading-7 text-gray-600">
-                    تسجيل الدخول والجلسة تتم إدارتها بصورة آمنة. لتغيير كلمة المرور استخدم رابط استعادة كلمة المرور من صفحة الدخول.
-                  </p>
-                </div>
-              </div>
-            </section>
+           
           </div>
         </section>
       </main>
