@@ -4,6 +4,7 @@ import Link from "next/link";
 import {
   AlertTriangle,
   BarChart3,
+  ExternalLink,
   Lightbulb,
 } from "lucide-react";
 import LogoutButton from "@/components/dashboard/LogoutButton";
@@ -166,7 +167,7 @@ export default async function DashboardPage({
   const currentFeedback = currentFeedbackResult.data;
   const comparisonFeedback = comparisonFeedbackResult.data;
   const reports = reportsResult.data;
-  const alerts = alertsResult.data;
+  const alertRows = alertsResult.data;
   const tiktokMetrics = tiktokMetricsResult.data;
 
  const currentPlatformsCount = new Set(
@@ -185,6 +186,7 @@ const topActions = buildTopActions(currentFeedback, recommendations);
 const branchNames = Object.fromEntries(
   (branches ?? []).map((branch) => [String(branch.id), branch.name])
 );
+const alerts = buildDashboardAlerts(alertRows, currentFeedback, branchNames);
 const activePlatforms = Array.from(
   new Set(platforms.map((platform) => platform.platform_name).filter(Boolean))
 );
@@ -331,15 +333,10 @@ function ActiveScopeBar({
 function SmartAlerts({
   alerts,
 }: {
-  alerts: {
-    id: number;
-    title: string | null;
-    message: string | null;
-    priority: string | null;
-  }[];
+  alerts: DashboardAlert[];
 }) {
   return (
-    <Panel eyebrow="تنبيهات ذكية" title="تنبيهات تحتاج انتباهك" icon={<Lightbulb size={22} />}>
+    <Panel eyebrow="متابعة فورية" title="تنبيهات تحتاج انتباهك" icon={<Lightbulb size={22} />}>
       {alerts.length === 0 ? (
         <div className="rounded-2xl bg-[#F8F7F3] p-6 text-center text-sm font-bold text-gray-500">
           لا توجد تنبيهات مفتوحة تحتاج إلى متابعة.
@@ -352,6 +349,11 @@ function SmartAlerts({
               title={alert.title || "تنبيه يحتاج متابعة"}
               text={alert.message || "راجع الحالة من مركز الردود."}
               priority={alert.priority}
+              platformName={alert.platformName}
+              branchName={alert.branchName}
+              publishedAt={alert.publishedAt}
+              feedbackText={alert.feedbackText}
+              sourceUrl={alert.sourceUrl}
             />
           ))}
         </div>
@@ -512,26 +514,83 @@ function AlertItem({
   title,
   text,
   priority,
+  platformName,
+  branchName,
+  publishedAt,
+  feedbackText,
+  sourceUrl,
 }: {
   title: string;
   text: string;
   priority: string | null;
+  platformName: string;
+  branchName: string;
+  publishedAt: string | null;
+  feedbackText: string;
+  sourceUrl: string | null;
 }) {
+  const safeSourceUrl = safePlatformUrl(sourceUrl);
+  const isHighPriority = priority?.trim().toLowerCase() === "high";
+
   return (
-    <div className="flex items-start gap-3 rounded-2xl bg-[#F8F7F3] p-4">
-      <AlertTriangle size={18} className="mt-1 text-[#895159]" />
-      <div className="min-w-0">
-        <div className="flex flex-wrap items-center gap-2">
-          <p className="font-extrabold text-[#374375]">{title}</p>
+    <article
+      className={`rounded-2xl border-r-4 p-4 sm:p-5 ${
+        isHighPriority
+          ? "border-r-[#895159] bg-[#DFAEA1]/12"
+          : "border-r-amber-500 bg-amber-50/70"
+      }`}
+    >
+      <div className="flex items-start gap-3">
+        <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white text-[#895159] shadow-sm">
+          <AlertTriangle size={18} />
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <h3 className="font-extrabold text-[#374375]">{title}</h3>
           {priority && (
             <span className="rounded-full bg-[#DFAEA1]/25 px-2.5 py-1 text-xs font-bold text-[#895159]">
               {formatPriority(priority)}
             </span>
           )}
+          </div>
+          <div className="mt-2 flex flex-wrap items-center gap-2 text-xs font-bold text-gray-500">
+            <span>{formatPlatform(platformName)}</span>
+            <span className="text-[#BABDE2]">•</span>
+            <span>{branchName}</span>
+            {publishedAt ? (
+              <>
+                <span className="text-[#BABDE2]">•</span>
+                <time dateTime={publishedAt}>{formatAlertDate(publishedAt)}</time>
+              </>
+            ) : null}
+          </div>
         </div>
-        <p className="mt-1 whitespace-pre-line leading-7 text-gray-600">{text}</p>
       </div>
-    </div>
+
+      <blockquote className="mt-4 rounded-xl border border-[#BABDE2]/30 bg-white px-4 py-3 font-bold leading-7 text-[#374375]">
+        “{feedbackText}”
+      </blockquote>
+
+      <p className="mt-3 whitespace-pre-line text-sm leading-7 text-gray-600">{text}</p>
+
+      <div className="mt-4 flex justify-end">
+        {safeSourceUrl ? (
+          <a
+            href={safeSourceUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 rounded-full bg-[#374375] px-4 py-2 text-sm font-bold text-white transition hover:bg-[#895159]"
+          >
+            <ExternalLink size={16} />
+            فتح التعليق الأصلي
+          </a>
+        ) : (
+          <span className="rounded-full bg-white px-4 py-2 text-xs font-bold text-gray-400">
+            رابط التعليق غير متوفر
+          </span>
+        )}
+      </div>
+    </article>
   );
 }
 
@@ -600,6 +659,29 @@ type DashboardFeedbackScope = DashboardQueryScope & {
 };
 
 type QueryError = { message: string } | null;
+
+type DashboardAlertRow = {
+  id: number;
+  title: string | null;
+  message: string | null;
+  priority: string | null;
+  source_table: string;
+  source_record_id: number;
+  created_at: string | null;
+};
+
+type DashboardAlert = {
+  id: number;
+  title: string | null;
+  message: string | null;
+  priority: string | null;
+  platformName: string;
+  branchName: string;
+  publishedAt: string | null;
+  feedbackText: string;
+  sourceUrl: string | null;
+  createdAt: string | null;
+};
 
 async function loadDashboardFeedback(
   supabase: ReturnType<typeof createSupabaseServerClient>,
@@ -725,21 +807,18 @@ async function loadDashboardAlerts(
   supabase: ReturnType<typeof createSupabaseServerClient>,
   scope: DashboardQueryScope
 ): Promise<{
-  data: {
-    id: number;
-    title: string | null;
-    message: string | null;
-    priority: string | null;
-  }[];
+  data: DashboardAlertRow[];
   error: QueryError;
 }> {
   let query = supabase
     .from("alerts")
-    .select("id, title, message, priority")
+    .select(
+      "id, title, message, priority, source_table, source_record_id, created_at"
+    )
     .eq("client_id", scope.clientId)
     .in("status", ["new", "sent"])
     .order("created_at", { ascending: false })
-    .limit(5);
+    .limit(200);
 
   if (scope.branchId !== null) {
     query = query.or(`branch_id.eq.${scope.branchId},branch_id.is.null`);
@@ -751,9 +830,83 @@ async function loadDashboardAlerts(
 
   const { data, error } = await query;
   return {
-    data: data ?? [],
+    data: (data ?? []) as DashboardAlertRow[],
     error: error ? { message: error.message } : null,
   };
+}
+
+function buildDashboardAlerts(
+  alertRows: DashboardAlertRow[],
+  feedback: DashboardFeedbackRow[],
+  branchNames: Record<string, string>
+): DashboardAlert[] {
+  const feedbackBySource = new Map(
+    feedback
+      .filter((row) => row.needs_reply === true)
+      .map((row) => [feedbackSourceKey(row.source_table, row.source_record_id), row])
+  );
+  const seenSources = new Set<string>();
+  const priorityRank: Record<string, number> = { high: 3, medium: 2, low: 1 };
+
+  return alertRows
+    .flatMap((alert) => {
+      const sourceKey = feedbackSourceKey(
+        alert.source_table,
+        alert.source_record_id
+      );
+      const originalFeedback = feedbackBySource.get(sourceKey);
+
+      if (!originalFeedback || seenSources.has(sourceKey)) return [];
+      seenSources.add(sourceKey);
+
+      return [
+        {
+          id: alert.id,
+          title: alert.title,
+          message: alert.message,
+          priority: alert.priority,
+          platformName: originalFeedback.platform_name || "منصة غير محددة",
+          branchName:
+            originalFeedback.branch_id === null
+              ? "جميع الفروع"
+              : branchNames[String(originalFeedback.branch_id)] || "فرع غير محدد",
+          publishedAt: originalFeedback.published_at,
+          feedbackText:
+            originalFeedback.feedback_text?.trim() || "نص التعليق غير متوفر",
+          sourceUrl: originalFeedback.source_url,
+          createdAt: alert.created_at,
+        },
+      ];
+    })
+    .sort((left, right) => {
+      const priorityDelta =
+        (priorityRank[right.priority?.toLowerCase() ?? ""] ?? 0) -
+        (priorityRank[left.priority?.toLowerCase() ?? ""] ?? 0);
+      if (priorityDelta !== 0) return priorityDelta;
+
+      return timestampValue(right.createdAt) - timestampValue(left.createdAt);
+    })
+    .slice(0, 5);
+}
+
+function feedbackSourceKey(
+  sourceTable: string | null,
+  sourceRecordId: number
+) {
+  return `${sourceTable ?? "unknown"}:${sourceRecordId}`;
+}
+
+function timestampValue(value: string | null) {
+  const timestamp = value ? new Date(value).getTime() : 0;
+  return Number.isFinite(timestamp) ? timestamp : 0;
+}
+
+function formatAlertDate(value: string) {
+  return new Intl.DateTimeFormat("ar-SA-u-nu-latn", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  }).format(new Date(value));
 }
 
 function latestReportsByPlatform(reports: any[]) {
