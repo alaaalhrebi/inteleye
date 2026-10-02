@@ -2,7 +2,9 @@ export type DashboardPeriodKey =
   | "this_week"
   | "last_week"
   | "this_month"
-  | "last_60_days";
+  | "last_60_days"
+  | "last_90_days"
+  | "last_180_days";
 
 export type DashboardFeedbackRow = {
   source_table: string | null;
@@ -62,7 +64,9 @@ export function normalizeDashboardPeriod(
   if (
     value === "last_week" ||
     value === "this_month" ||
-    value === "last_60_days"
+    value === "last_60_days" ||
+    value === "last_90_days" ||
+    value === "last_180_days"
   ) {
     return value;
   }
@@ -76,10 +80,21 @@ export function getDashboardPeriodRange(
 ): DateRange {
   const end = new Date(now);
 
-  if (period === "last_60_days") {
-    const start = startOfUtcDay(addDays(end, -59));
+  const rollingDays =
+    period === "last_180_days"
+      ? 180
+      : period === "last_90_days"
+        ? 90
+        : period === "last_60_days"
+          ? 60
+          : null;
+
+  if (rollingDays !== null) {
+    const start = startOfUtcDay(addDays(end, -(rollingDays - 1)));
     const comparisonEnd = endOfUtcDay(addDays(start, -1));
-    const comparisonStart = startOfUtcDay(addDays(comparisonEnd, -59));
+    const comparisonStart = startOfUtcDay(
+      addDays(comparisonEnd, -(rollingDays - 1))
+    );
 
     return { start, end, comparisonStart, comparisonEnd };
   }

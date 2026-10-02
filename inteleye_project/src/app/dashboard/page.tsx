@@ -16,6 +16,7 @@ import {
   getDashboardPeriodRange,
   normalizeDashboardPeriod,
   type DashboardFeedbackRow,
+  type DashboardPeriodKey,
   type DashboardTikTokMetrics,
 } from "@/lib/dashboard-analytics";
 
@@ -292,13 +293,15 @@ function ActiveScopeBar({
 }: {
   branchName: string | null;
   platformName: string | null;
-  period: "this_week" | "last_week" | "this_month" | "last_60_days";
+  period: DashboardPeriodKey;
 }) {
   const periodLabels = {
     this_week: "هذا الأسبوع",
     last_week: "الأسبوع الماضي",
     this_month: "هذا الشهر",
     last_60_days: "آخر شهرين",
+    last_90_days: "آخر 3 أشهر",
+    last_180_days: "آخر 6 أشهر",
   };
   const hasFilters = Boolean(branchName || platformName || period !== "this_week");
 

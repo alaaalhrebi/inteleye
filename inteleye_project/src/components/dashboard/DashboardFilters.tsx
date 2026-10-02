@@ -191,6 +191,14 @@ export default function DashboardFilters({
         <option value="last_60_days">
           آخر شهرين
         </option>
+
+        <option value="last_90_days">
+          آخر 3 أشهر
+        </option>
+
+        <option value="last_180_days">
+          آخر 6 أشهر
+        </option>
       </FilterSelect>
     </div>
   );

@@ -80,6 +80,15 @@ type ExecutiveIntelligenceValue = {
   improving: boolean;
 };
 
+type ActivityPoint = {
+  date: string;
+  startDate: string;
+  endDate: string;
+  label: string;
+  count: number;
+  granularity: "day" | "week";
+};
+
 export default function InteractiveDashboard({
   clientName,
   feedback,
@@ -110,6 +119,10 @@ export default function InteractiveDashboard({
   const activity = useMemo(
     () => buildActivity(feedback, periodStart, periodEnd),
     [feedback, periodStart, periodEnd]
+  );
+  const activityGranularity = activity[0]?.granularity ?? "day";
+  const selectedActivityPoint = activity.find(
+    (point) => point.date === selectedDay
   );
   const sentiment = useMemo(() => buildSentiment(feedback), [feedback]);
   const ratingDistribution = useMemo(
@@ -157,7 +170,15 @@ export default function InteractiveDashboard({
           sentimentFilter === "all" ||
           normalizeSentiment(row.sentiment) === sentimentFilter
       )
-      .filter((row) => !selectedDay || dateKey(row.published_at) === selectedDay)
+      .filter(
+        (row) =>
+          !selectedActivityPoint ||
+          isWithinDateKeys(
+            row.published_at,
+            selectedActivityPoint.startDate,
+            selectedActivityPoint.endDate
+          )
+      )
       .filter(
         (row) =>
           !selectedTopic ||
@@ -170,11 +191,17 @@ export default function InteractiveDashboard({
           selectedRating === null || Number(row.rating) === selectedRating
       )
       .slice(0, 6);
-  }, [feedback, selectedDay, selectedRating, selectedTopic, sentimentFilter]);
+  }, [
+    feedback,
+    selectedActivityPoint,
+    selectedRating,
+    selectedTopic,
+    sentimentFilter,
+  ]);
 
   const hasInteractiveFilter =
     sentimentFilter !== "all" ||
-    selectedDay !== null ||
+    selectedActivityPoint !== undefined ||
     selectedTopic !== null ||
     selectedRating !== null;
 
@@ -251,7 +278,11 @@ export default function InteractiveDashboard({
       <section className="mt-4 grid gap-4 xl:grid-cols-[minmax(0,1.65fr)_minmax(300px,0.85fr)]">
         <DashboardPanel
           eyebrow="حركة التفاعل"
-          title={`النشاط اليومي — ${profile.volumeLabel}`}
+          title={`${
+            activityGranularity === "week"
+              ? "النشاط الأسبوعي"
+              : "النشاط اليومي"
+          } — ${profile.volumeLabel}`}
           icon={<Activity size={21} />}
         >
           <ActivityChart
@@ -263,6 +294,7 @@ export default function InteractiveDashboard({
               )
             }
             insight={activityInsight}
+            granularity={activityGranularity}
           />
         </DashboardPanel>
 
@@ -745,55 +777,66 @@ function ActivityChart({
   selectedDay,
   onSelectDay,
   insight,
+  granularity,
 }: {
-  points: { date: string; label: string; count: number }[];
+  points: ActivityPoint[];
   selectedDay: string | null;
   onSelectDay: (day: string) => void;
   insight: string | null;
+  granularity: ActivityPoint["granularity"];
 }) {
   const max = Math.max(...points.map((point) => point.count), 1);
 
   return (
     <div>
-      <div className="flex h-56 items-end gap-1.5 rounded-3xl bg-[#F8F7F3] px-3 pb-4 pt-6 sm:gap-2 sm:px-5">
-        {points.map((point) => {
-          const selected = point.date === selectedDay;
-          const height = point.count === 0 ? 4 : Math.max(10, (point.count / max) * 100);
+      <div className="overflow-x-auto rounded-3xl bg-[#F8F7F3]">
+        <div
+          className="flex h-56 items-end gap-1.5 px-3 pb-4 pt-6 sm:gap-2 sm:px-5"
+          style={{ minWidth: `${Math.max(points.length * 48, 320)}px` }}
+        >
+          {points.map((point) => {
+            const selected = point.date === selectedDay;
+            const height =
+              point.count === 0
+                ? 4
+                : Math.max(10, (point.count / max) * 100);
 
-          return (
-            <button
-              key={point.date}
-              type="button"
-              onClick={() => onSelectDay(point.date)}
-              className="group flex h-full min-w-0 flex-1 flex-col items-center justify-end"
-              title={`${point.label}: ${point.count}`}
-            >
-              <span
-                className={`mb-2 text-xs font-extrabold transition ${
-                  selected ? "text-[#895159]" : "text-[#374375]"
-                }`}
+            return (
+              <button
+                key={point.date}
+                type="button"
+                onClick={() => onSelectDay(point.date)}
+                className="group flex h-full min-w-0 flex-1 flex-col items-center justify-end"
+                title={`${point.label}: ${point.count}`}
               >
-                {point.count}
-              </span>
-              <span
-                className={`w-full max-w-10 rounded-t-xl transition-all duration-300 group-hover:bg-[#895159] ${
-                  selected ? "bg-[#895159]" : "bg-[#BABDE2]"
-                }`}
-                style={{ height: `${height}%` }}
-              />
-              <span
-                className={`mt-2 w-full truncate text-[11px] sm:text-xs ${
-                  selected ? "font-bold text-[#895159]" : "text-gray-400"
-                }`}
-              >
-                {point.label}
-              </span>
-            </button>
-          );
-        })}
+                <span
+                  className={`mb-2 text-xs font-extrabold transition ${
+                    selected ? "text-[#895159]" : "text-[#374375]"
+                  }`}
+                >
+                  {point.count}
+                </span>
+                <span
+                  className={`w-full max-w-10 rounded-t-xl transition-all duration-300 group-hover:bg-[#895159] ${
+                    selected ? "bg-[#895159]" : "bg-[#BABDE2]"
+                  }`}
+                  style={{ height: `${height}%` }}
+                />
+                <span
+                  className={`mt-2 w-full truncate text-[11px] sm:text-xs ${
+                    selected ? "font-bold text-[#895159]" : "text-gray-400"
+                  }`}
+                >
+                  {point.label}
+                </span>
+              </button>
+            );
+          })}
+        </div>
       </div>
       <p className="mt-3 text-sm text-gray-500">
-        اضغط على أي يوم لعرض التعليقات المسجلة فيه.
+        اضغط على أي {granularity === "week" ? "أسبوع" : "يوم"} لعرض
+        التعليقات المسجلة فيه.
       </p>
       {insight ? (
         <p className="mt-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-bold leading-6 text-amber-900">
@@ -1440,38 +1483,53 @@ function buildActivity(
   feedback: DashboardFeedbackRow[],
   periodStart: string,
   periodEnd: string
-) {
-  const counts = new Map<string, number>();
-  for (const row of feedback) {
-    const key = dateKey(row.published_at);
-    if (!key) continue;
-    counts.set(key, (counts.get(key) ?? 0) + 1);
-  }
-
+): ActivityPoint[] {
   const start = startOfUtcDay(new Date(periodStart));
   const end = startOfUtcDay(new Date(periodEnd));
   const totalDays = Math.max(
     1,
     Math.floor((end.getTime() - start.getTime()) / 86_400_000) + 1
   );
-  const visibleDays = Math.min(totalDays, 14);
-  const visibleStart = new Date(end);
-  visibleStart.setUTCDate(end.getUTCDate() - visibleDays + 1);
+  const granularity = totalDays > 14 ? "week" : "day";
+  const points: ActivityPoint[] = [];
 
-  return Array.from({ length: visibleDays }, (_, index) => {
-    const date = new Date(visibleStart);
-    date.setUTCDate(visibleStart.getUTCDate() + index);
-    const key = date.toISOString().slice(0, 10);
-    return {
-      date: key,
-      label: new Intl.DateTimeFormat("ar-SA-u-nu-latn", {
-        day: "numeric",
-        month: "short",
-        timeZone: "UTC",
-      }).format(date),
-      count: counts.get(key) ?? 0,
-    };
-  });
+  for (
+    let cursor = new Date(start);
+    cursor.getTime() <= end.getTime();
+    cursor.setUTCDate(cursor.getUTCDate() + (granularity === "week" ? 7 : 1))
+  ) {
+    const pointStart = new Date(cursor);
+    const pointEnd = new Date(cursor);
+    if (granularity === "week") {
+      pointEnd.setUTCDate(pointEnd.getUTCDate() + 6);
+    }
+    if (pointEnd.getTime() > end.getTime()) pointEnd.setTime(end.getTime());
+
+    const startKey = pointStart.toISOString().slice(0, 10);
+    const endKey = pointEnd.toISOString().slice(0, 10);
+    points.push({
+      date: startKey,
+      startDate: startKey,
+      endDate: endKey,
+      label:
+        granularity === "week"
+          ? `${formatShortDate(startKey)}–${formatShortDate(endKey)}`
+          : formatShortDate(startKey),
+      count: 0,
+      granularity,
+    });
+  }
+
+  for (const row of feedback) {
+    const key = dateKey(row.published_at);
+    if (!key) continue;
+    const point = points.find(
+      (candidate) => key >= candidate.startDate && key <= candidate.endDate
+    );
+    if (point) point.count += 1;
+  }
+
+  return points;
 }
 
 function buildSentiment(feedback: DashboardFeedbackRow[]) {
@@ -1688,7 +1746,7 @@ function isWithin(value: string | null, start: Date, end: Date) {
 }
 
 function buildActivityInsight(
-  activity: { date: string; label: string; count: number }[],
+  activity: ActivityPoint[],
   feedback: DashboardFeedbackRow[],
   selectedPlatformName: string | null
 ) {
@@ -1697,7 +1755,9 @@ function buildActivityInsight(
   const peak = [...activity].sort((left, right) => right.count - left.count)[0];
   if (!peak || peak.count < 5 || peak.count < average * 1.8) return null;
 
-  const peakRows = feedback.filter((row) => dateKey(row.published_at) === peak.date);
+  const peakRows = feedback.filter((row) =>
+    isWithinDateKeys(row.published_at, peak.startDate, peak.endDate)
+  );
   const platform = leadingValue(peakRows.map((row) => row.platform_name));
   const topic = leadingValue(peakRows.flatMap((row) => row.category ?? []));
   const reason = selectedPlatformName
@@ -1843,6 +1903,15 @@ function dateKey(value: string | null) {
   if (!value) return null;
   const date = new Date(value);
   return Number.isNaN(date.getTime()) ? null : date.toISOString().slice(0, 10);
+}
+
+function isWithinDateKeys(
+  value: string | null,
+  startDate: string,
+  endDate: string
+) {
+  const key = dateKey(value);
+  return key !== null && key >= startDate && key <= endDate;
 }
 
 function startOfUtcDay(date: Date) {
