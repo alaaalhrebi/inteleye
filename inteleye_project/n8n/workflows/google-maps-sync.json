@@ -1,0 +1,798 @@
+{
+  "name": "Google Maps Sync - Webhook & Weekly",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -48,
+        -96
+      ],
+      "id": "afca527b-edad-4f34-8321-42732fdf9c69",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $json.body?.platform_id ? 'https://dhryldlprpdmsixhlaqe.supabase.co/rest/v1/rpc/claim_platform_sync' : 'https://dhryldlprpdmsixhlaqe.supabase.co/rest/v1/rpc/claim_due_platform_syncs' }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpCustomAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json.body?.platform_id ? { p_platform_id: Number($json.body.platform_id), p_platform_name: 'google_maps' } : { p_platform_name: 'google_maps', p_batch_size: 25 } }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        224,
+        0
+      ],
+      "id": "ea05ca84-8445-4e58-a6be-7ffc180b8cff",
+      "name": "HTTP Request",
+      "credentials": {
+        "httpCustomAuth": {
+          "id": "zG0oLxK9PlldN0gl",
+          "name": "Supabase Backend"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        464,
+        0
+      ],
+      "id": "c3650b99-1faa-45fa-8513-6fb28d18a254",
+      "name": "Loop Over Items"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.apify.com/v2/acts/nwua9Gu5YrADL7ZDj/run-sync-get-dataset-items",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"enableCompetitorAnalysis\": false,\n  \"includeWebResults\": false,\n  \"language\": \"ar\",\n  \"locationQuery\": \"Saudi Arabia\",\n  \"maxCrawledPlacesPerSearch\": 1,\n  \"maxReviews\": 99999,\n  \"maximumLeadsEnrichmentRecords\": 0,\n  \"reviewsStartDate\": \"30 days\",\n  \"scrapeContacts\": false,\n  \"scrapeDirectories\": false,\n  \"scrapeImageAuthors\": false,\n  \"scrapeOrderOnline\": false,\n  \"scrapePlaceDetailPage\": false,\n  \"scrapeReviewsPersonalData\": true,\n  \"scrapeSocialMediaProfiles\": {\n    \"facebooks\": false,\n    \"instagrams\": false,\n    \"tiktoks\": false,\n    \"twitters\": false,\n    \"youtubes\": false\n  },\n  \"scrapeTableReservationProvider\": false,\n  \"skipClosedPlaces\": false,\n  \"startUrls\": [\n    {\n      \"url\": \"{{ $json.platform_url.trim() }}\"\n    }\n  ],\n  \"verifyLeadsEnrichmentEmails\": false\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        752,
+        0
+      ],
+      "id": "b4d1ab39-f063-4c22-b45d-a1ea65287e9a",
+      "name": "Fetch Google Reviews from Apify",
+      "retryOnFail": true,
+      "waitBetweenTries": 5000,
+      "alwaysOutputData": true,
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "N1vlyfQSWC1Nud6H",
+          "name": "Apify API Token"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "// السجل الحالي القادم من جدول client_platforms\nconst platform = $('Loop Over Items').item.json;\n\nif (!platform.id) {\n  throw new Error('platform_id غير موجود');\n}\n\nconst output = [];\n\nfor (const item of items) {\n  const place = item.json;\n\n  // بعض Actors تضع التقييمات داخل مصفوفة،\n  // وبعضها يعيد كل تقييم كسجل مستقل\n  let reviews =\n    place.reviews ||\n    place.reviewsData ||\n    place.reviewData ||\n    place.reviewsPersonalData ||\n    [];\n\n  if (!Array.isArray(reviews)) {\n    reviews = [];\n  }\n\n  // إذا كان العنصر نفسه يمثل تقييمًا\n  if (\n    reviews.length === 0 &&\n    (\n      place.reviewId ||\n      place.reviewText ||\n      place.text ||\n      place.rating ||\n      place.stars\n    )\n  ) {\n    reviews = [place];\n  }\n\n  for (let i = 0; i < reviews.length; i++) {\n    const review = reviews[i];\n\n    const reviewText =\n      review.text ||\n      review.reviewText ||\n      review.textTranslated ||\n      review.comment ||\n      '';\n\n    // تجاهل التقييمات التي لا تحتوي على نص\n    if (!reviewText.trim()) {\n      continue;\n    }\n\n    const reviewDate =\n      review.publishedAtDate ||\n      review.date ||\n      review.publishedAt ||\n      null;\n\n    const reviewId =\n      review.reviewId ||\n      review.id ||\n      review.reviewUrl ||\n      `${platform.id}_${reviewDate || 'no-date'}_${i}_${reviewText.slice(0, 40)}`;\n\n    const starsValue =\n      review.stars ??\n      review.rating ??\n      review.reviewRating ??\n      null;\n\n    output.push({\n      json: {\n        // بيانات الربط\n        branch_id: platform.branch_id,\n        platform_id: platform.id,\n\n        // بيانات تقييم Google\n        review_id: String(reviewId),\n        reviewer_name:\n          review.name ||\n          review.reviewerName ||\n          review.userName ||\n          null,\n\n        stars:\n          starsValue !== null && starsValue !== ''\n            ? Number(starsValue)\n            : null,\n\n        review_text: reviewText.trim(),\n        review_date: reviewDate,\n\n        review_url:\n          review.reviewUrl ||\n          review.url ||\n          platform.platform_url ||\n          null,\n\n        owner_reply:\n          review.responseFromOwnerText ||\n          review.ownerReply ||\n          review.ownerResponse ||\n          null,\n\n        // حالة التحليل\n        analysis_status: 'pending',\n\n        // البيانات الأصلية القادمة من Apify\n        raw_data: review\n      }\n    });\n  }\n}\n\nconst fetchFailed = items.some(({ json }) =>\n  Boolean(json?.error || json?.errorDescription || json?.requestErrorMessages)\n);\n\nif (output.length === 0) {\n  return [{ json: {\n    fetch_succeeded: !fetchFailed,\n    has_scraped_reviews: false,\n    client_id: platform.client_id,\n    branch_id: platform.branch_id ?? null,\n    platform_id: platform.id\n  } }];\n}\n\nreturn output.map(({ json }) => ({\n  json: {\n    ...json,\n    fetch_succeeded: true,\n    has_scraped_reviews: true\n  }\n}));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        496,
+        224
+      ],
+      "id": "52142a18-6be5-405d-a9d5-df92bdb3f537",
+      "name": "Normalize Reviews"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://dhryldlprpdmsixhlaqe.supabase.co/rest/v1/google_reviews?on_conflict=platform_id,review_id",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpCustomAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Prefer",
+              "value": "resolution=ignore-duplicates,return=representation"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "branch_id",
+              "value": "={{ $json.branch_id }}"
+            },
+            {
+              "name": "review_id",
+              "value": "={{ $json.review_id }}"
+            },
+            {
+              "name": "reviewer_name",
+              "value": "={{ $json.reviewer_name }}"
+            },
+            {
+              "name": "stars",
+              "value": "={{ $json.stars }}"
+            },
+            {
+              "name": "review_text",
+              "value": "={{ $json.review_text }}"
+            },
+            {
+              "name": "review_date",
+              "value": "={{ $json.review_date }}"
+            },
+            {
+              "name": "platform_id",
+              "value": "={{ $json.platform_id }}"
+            },
+            {
+              "name": "review_url",
+              "value": "={{ $json.review_url }}"
+            },
+            {
+              "name": "owner_reply",
+              "value": "={{ $json.owner_reply }}"
+            },
+            {
+              "name": "analysis_status",
+              "value": "={{ $json.analysis_status }}"
+            },
+            {
+              "name": "raw_data",
+              "value": "={{ $json.raw_data }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        656,
+        224
+      ],
+      "id": "f447b2b4-218e-4075-9142-67ba99916c07",
+      "name": "Insert Reviews to Supabase",
+      "alwaysOutputData": true,
+      "credentials": {
+        "httpCustomAuth": {
+          "id": "zG0oLxK9PlldN0gl",
+          "name": "Supabase Backend"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const batch = $('Create AI Batch').item.json;\n\nlet text =\n  $json.output?.[0]?.content?.[0]?.text ||\n  $json.message?.content ||\n  $json.content?.[0]?.text ||\n  $json.text ||\n  '';\n\ntext = String(text)\n  .replace(/```json/gi, '')\n  .replace(/```/g, '')\n  .trim();\n\nif (!text) {\n  throw new Error('لم يتم العثور على نتيجة التحليل');\n}\n\nlet parsed;\n\ntry {\n  parsed = JSON.parse(text);\n} catch (error) {\n  throw new Error('نتيجة الذكاء الاصطناعي ليست JSON صالحًا');\n}\n\nif (!Array.isArray(parsed.results)) {\n  throw new Error('الحقل results غير موجود أو ليس مصفوفة');\n}\n\nconst reviews = batch.reviews || [];\n\nconst toBoolean = (value) => {\n  if (value === true || value === 'true') return true;\n  return false;\n};\n\nreturn parsed.results.map(result => {\n  const sourceRecordId =\n    result.source_record_id ??\n    result.id;\n\n  const originalReview = reviews.find(\n    review => String(review.google_review_id) === String(sourceRecordId)\n  );\n\n  return {\n    json: {\n      client_id: batch.client_id,\n      branch_id: batch.branch_id,\n      platform_id: batch.platform_id,\n\n      platform_name: 'google_maps',\n      source_table: 'google_reviews',\n      source_record_id: Number(sourceRecordId),\n\n      external_id: originalReview?.review_id || null,\n\n      sentiment: result.sentiment || 'neutral',\n\n      category: Array.isArray(result.category)\n        ? result.category\n        : [result.category || 'أخرى'],\n\n      severity: result.severity || 'low',\n\n      needs_reply: toBoolean(result.needs_reply),\n      is_sales_opportunity: toBoolean(result.is_sales_opportunity),\n      is_complaint: toBoolean(result.is_complaint),\n\n      suggested_reply: result.suggested_reply || null,\n      reason: result.reason || null,\n      analysis_summary: result.analysis_summary || null,\n\n      analysis_status: 'completed',\n      model_name: 'gpt-4o-mini',\n      analyzed_at: new Date().toISOString()\n    }\n  };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1392,
+        224
+      ],
+      "id": "7c386bf3-6d39-4b08-944b-f2e355d367a8",
+      "name": "Parse AI Result"
+    },
+    {
+      "parameters": {
+        "jsCode": "// بيانات المنصة الحالية القادمة من client_platforms\nconst platform = $('Loop Over Items').item.json;\n\nconst reviews = items\n  .filter(item => item.json.id && item.json.review_text)\n  .map(item => ({\n    // رقم السجل داخل جدول google_reviews\n    google_review_id: item.json.id,\n\n    // معرف التقييم الأصلي من Google\n    review_id: item.json.review_id,\n\n    reviewer_name: item.json.reviewer_name || null,\n    stars: item.json.stars ?? null,\n    review_text: item.json.review_text,\n    review_date: item.json.review_date || null,\n\n    branch_id: item.json.branch_id,\n    platform_id: item.json.platform_id,\n\n    // يؤخذ من سجل client_platforms\n    client_id: platform.client_id\n  }));\n\nreturn [\n  {\n    json: {\n      platform_name: 'google_maps',\n      source_table: 'google_reviews',\n      client_id: platform.client_id,\n      branch_id: platform.branch_id,\n      platform_id: platform.id,\n      reviews\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        992,
+        224
+      ],
+      "id": "18353218-1db3-47eb-9d22-908d4c05bb48",
+      "name": "Create AI Batch"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-5-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-5-MINI",
+          "cachedResultUrl": ""
+        },
+        "responses": {
+          "values": [
+            {
+              "content": "=أنت محلل متخصص في تصنيف تقييمات Google Maps للمنشآت التجارية والخدمية.\n\nالهدف الأساسي: تحديد الحالات التي تحتاج ردًا فعليًا من المنشأة بدقة عالية. الأصل هو needs_reply = false، ولا تجعله true إلا عند تحقق سبب واضح من القائمة أدناه.\n\nحلل جميع التقييمات التالية، وأرجع JSON صالحًا فقط دون شرح أو Markdown:\n\n{{ JSON.stringify($json.reviews) }}\n\nلكل تقييم أرجع:\n- source_record_id: نفس قيمة google_review_id\n- sentiment: positive أو negative أو neutral\n- category: مصفوفة من التصنيفات المناسبة\n- severity: low أو medium أو high\n- reply_intent: complaint أو direct_question أو support_request أو sales_inquiry أو none\n- needs_reply: true أو false\n- is_sales_opportunity: true أو false\n- is_complaint: true أو false\n- suggested_reply: رد عربي مختصر إذا كان يحتاج ردًا، وإلا null\n- reason: سبب التصنيف بجملة قصيرة\n- analysis_summary: ملخص التقييم بجملة قصيرة\n\nالتصنيفات المسموحة فقط:\nجودة الخدمة، جودة المنتج، تعامل الموظفين، سرعة الخدمة، وقت الانتظار، المواعيد والحجز، الأسعار، النظافة، الموقع، التواصل والرد، التوصيل، الدفع والفوترة، التجربة الطبية، تجربة عامة، أخرى\n\nقواعد needs_reply الصارمة:\n1. اجعل needs_reply = true فقط إذا كان التقييم يتضمن واحدًا من الآتي:\n   - شكوى واضحة عن تجربة أو مشكلة فعلية مع المنشأة.\n   - سؤالًا مباشرًا قابلًا للإجابة وموجهًا للمنشأة.\n   - طلب مساعدة أو متابعة بسبب مشكلة في طلب أو دفع أو حجز أو خدمة.\n   - استفسار شراء واضح عن السعر أو التوفر أو الحجز أو تنفيذ الطلب.\n2. اجعل needs_reply = false للمدح والشكر والتقييم الإيجابي، حتى لو كان الرد اللطيف ممكنًا.\n3. اجعل needs_reply = false للملاحظات العامة، الاقتراحات، التمنيات، طلب فتح فرع، طلب إضافة ميزة، المشاركة في مسابقة، الإيموجي، والمنشور غير الواضح.\n4. السؤال البلاغي أو العبارة التي لا تنتظر معلومة من المنشأة ليست سؤالًا مباشرًا.\n5. إذا لم تكن متأكدًا أن التعليق ينتظر جوابًا من المنشأة، اختر false و reply_intent = none.\n6. إذا كان هناك owner_reply غير فارغ، اختر false لأن المنشأة ردت مسبقًا.\n\nقواعد الاتساق الإلزامية:\n- needs_reply = true فقط عندما reply_intent ليست none.\n- needs_reply = false عندما reply_intent = none.\n- suggested_reply يجب أن يكون null عندما needs_reply = false.\n- is_complaint = true فقط لشكوى فعلية، ولا يجوز أن يكون true لمجرد المدح أو الاقتراح.\n- كل شكوى واضحة تكون sentiment = negative و reply_intent = complaint.\n- is_sales_opportunity = true فقط لاستفسار شراء أو حجز واضح، وليس لاقتراح أو طلب فتح فرع.\n- استخدم النص والنجوم معًا، ولا تخترع معلومات.\n- أرجع نتيجة لكل تقييم دون حذف أي عنصر.\n- category يجب أن تكون مصفوفة، واستخدم true وfalse كقيم Boolean.\n\nأمثلة حاسمة:\n- «الأكل ممتاز والأسعار جميلة» => needs_reply false، is_complaint false.\n- «ياليت تفتحون فرع عندنا» => needs_reply false، is_sales_opportunity false.\n- «كم سعر الوجبة وهل هي متوفرة؟» => needs_reply true، reply_intent sales_inquiry.\n- «طلبي لم يصل وأحتاج مساعدة» => needs_reply true، reply_intent support_request أو complaint.\n\nأرجع بهذا الشكل فقط:\n{\n  \"results\": [\n    {\n      \"source_record_id\": 123,\n      \"sentiment\": \"negative\",\n      \"category\": [\"سرعة الخدمة\"],\n      \"severity\": \"medium\",\n      \"reply_intent\": \"complaint\",\n      \"needs_reply\": true,\n      \"is_sales_opportunity\": false,\n      \"is_complaint\": true,\n      \"suggested_reply\": \"نعتذر عن تجربتك، ونأمل تزويدنا بتفاصيل الطلب لمراجعة المشكلة.\",\n      \"reason\": \"يتضمن التقييم شكوى واضحة تحتاج متابعة.\",\n      \"analysis_summary\": \"العميل يشتكي من بطء الخدمة.\"\n    }\n  ]\n}"
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2.3,
+      "position": [
+        1120,
+        224
+      ],
+      "id": "ff0eea1a-698a-4ba7-95f3-748fbb724441",
+      "name": "Analyze Reviews Batch",
+      "retryOnFail": true,
+      "waitBetweenTries": 5000,
+      "credentials": {
+        "openAiApi": {
+          "id": "YL3zdWbXhbX2hL1V",
+          "name": "OpenAI key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://dhryldlprpdmsixhlaqe.supabase.co/rest/v1/feedback_analysis?on_conflict=source_table,source_record_id",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpCustomAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "on_conflict",
+              "value": "source_table,source_record_id"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Prefer",
+              "value": "resolution=merge-duplicates,return=representation"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ {\n  client_id: $json.client_id,\n  branch_id: $json.branch_id,\n  platform_id: $json.platform_id,\n  platform_name: $json.platform_name,\n  source_table: $json.source_table,\n  source_record_id: $json.source_record_id,\n  external_id: $json.external_id,\n  sentiment: $json.sentiment,\n  category: $json.category,\n  severity: $json.severity,\n  needs_reply: $json.needs_reply,\n  is_sales_opportunity: $json.is_sales_opportunity,\n  is_complaint: $json.is_complaint,\n  suggested_reply: $json.suggested_reply,\n  reason: $json.reason,\n  analysis_summary: $json.analysis_summary,\n  analysis_status: $json.analysis_status,\n  model_name: $json.model_name,\n  analyzed_at: $json.analyzed_at\n} }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1568,
+        224
+      ],
+      "id": "cc7da321-f918-4f88-9232-080a1ecbe82b",
+      "name": "Save Analysis to feedback_analysis",
+      "credentials": {
+        "httpCustomAuth": {
+          "id": "zG0oLxK9PlldN0gl",
+          "name": "Supabase Backend"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "https://dhryldlprpdmsixhlaqe.supabase.co/rest/v1/google_reviews",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpCustomAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "id",
+              "value": "={{ 'eq.' + $json.source_record_id }}"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Prefer",
+              "value": "return=representation"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "analysis_status",
+              "value": "completed"
+            },
+            {
+              "name": "updated_at",
+              "value": "={{ $now.toUTC().toISO() }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1728,
+        224
+      ],
+      "id": "298045ab-c02a-4c6f-b379-f9b49e8b50e8",
+      "name": "Mark Reviews Completed",
+      "credentials": {
+        "httpCustomAuth": {
+          "id": "zG0oLxK9PlldN0gl",
+          "name": "Supabase Backend"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 1
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        0,
+        176
+      ],
+      "id": "9262f48d-2735-4c61-a04b-73b8b2d9b289",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "65d5d9b2-26e2-4d40-91ec-a8762dc76367",
+              "leftValue": "={{ !!$json.id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "b6e4e016-dcfe-4264-b17f-943b5b93fe2d",
+      "name": "Has New Google Reviews?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        800,
+        224
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "1882f6ea-1ae7-4027-a306-484d679f7004",
+              "leftValue": "={{ $json.fetch_succeeded === true }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "6f35d684-d544-44ce-b281-66e2bd261857",
+      "typeVersion": 2.3,
+      "name": "Google Fetch Succeeded?",
+      "type": "n8n-nodes-base.if",
+      "position": [
+        560,
+        160
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "8ab0ea50-f32f-4840-8425-f81b0f9bd079",
+              "leftValue": "={{ $json.has_scraped_reviews === true }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "d94b049d-64b9-4119-9d66-75ef52765f75",
+      "typeVersion": 2.3,
+      "name": "Has Scraped Google Reviews?",
+      "type": "n8n-nodes-base.if",
+      "position": [
+        720,
+        160
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://dhryldlprpdmsixhlaqe.supabase.co/rest/v1/rpc/complete_platform_sync",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpCustomAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { p_platform_id: Number($('Loop Over Items').item.json.id) } }}",
+        "options": {}
+      },
+      "id": "e0cb113f-c379-41ba-aed7-2fdee5a77ad4",
+      "typeVersion": 4.2,
+      "name": "Complete Google Sync",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        1888,
+        224
+      ],
+      "credentials": {
+        "httpCustomAuth": {
+          "id": "zG0oLxK9PlldN0gl",
+          "name": "Supabase Backend"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://dhryldlprpdmsixhlaqe.supabase.co/rest/v1/rpc/fail_platform_sync",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpCustomAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { p_platform_id: Number($('Loop Over Items').item.json.id), p_error: 'تعذر سحب تقييمات Google Maps' } }}",
+        "options": {}
+      },
+      "id": "f4e12ec7-182d-4752-abb8-9a1323841956",
+      "typeVersion": 4.2,
+      "name": "Fail Google Sync",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        720,
+        352
+      ],
+      "credentials": {
+        "httpCustomAuth": {
+          "id": "zG0oLxK9PlldN0gl",
+          "name": "Supabase Backend"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "platform-sync-google_maps",
+        "authentication": "headerAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -896,
+        528
+      ],
+      "id": "e73efebf-760e-47a7-8d66-52b2c74ac535",
+      "name": "Platform Added Webhook",
+      "webhookId": "f34f1056-d22a-40e8-8aa3-acde31361951",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "21Us8qDaS5zhvSdM",
+          "name": "Header Auth account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Fetch Google Reviews from Apify",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Google Reviews from Apify": {
+      "main": [
+        [
+          {
+            "node": "Normalize Reviews",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Reviews": {
+      "main": [
+        [
+          {
+            "node": "Google Fetch Succeeded?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert Reviews to Supabase": {
+      "main": [
+        [
+          {
+            "node": "Has New Google Reviews?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse AI Result": {
+      "main": [
+        [
+          {
+            "node": "Save Analysis to feedback_analysis",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create AI Batch": {
+      "main": [
+        [
+          {
+            "node": "Analyze Reviews Batch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Analyze Reviews Batch": {
+      "main": [
+        [
+          {
+            "node": "Parse AI Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Analysis to feedback_analysis": {
+      "main": [
+        [
+          {
+            "node": "Mark Reviews Completed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mark Reviews Completed": {
+      "main": [
+        [
+          {
+            "node": "Complete Google Sync",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has New Google Reviews?": {
+      "main": [
+        [
+          {
+            "node": "Create AI Batch",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Complete Google Sync",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Fetch Succeeded?": {
+      "main": [
+        [
+          {
+            "node": "Has Scraped Google Reviews?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Fail Google Sync",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has Scraped Google Reviews?": {
+      "main": [
+        [
+          {
+            "node": "Insert Reviews to Supabase",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Complete Google Sync",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Complete Google Sync": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fail Google Sync": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Platform Added Webhook": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "4ed6cac5-fcd5-40ef-b25c-704be93f05eb",
+  "meta": {
+    "instanceId": "e1e4029b67152d8f11cad1a051ea4bcd8762986d9b2b088b75e5e7f6d7aa4a0b"
+  },
+  "nodeGroups": [],
+  "id": "yc5JwU2hPfFdRK9K",
+  "tags": []
+}

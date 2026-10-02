@@ -170,6 +170,10 @@ export default async function DashboardPage({
   const reports = reportsResult.data;
   const alertRows = alertsResult.data;
   const tiktokMetrics = tiktokMetricsResult.data;
+  const dashboardSyncState = getDashboardSyncState(
+    platforms,
+    selectedPlatform
+  );
 
  const currentPlatformsCount = new Set(
   platforms.map((platform) => platform.platform_name)
@@ -227,6 +231,7 @@ const selectedBranchName =
             periodStart={periodRange.start.toISOString()}
             periodEnd={periodRange.end.toISOString()}
             hasError={dashboardErrors.length > 0}
+            syncState={dashboardSyncState}
             tiktokMetrics={tiktokMetrics}
             priorityContent={
               <section className="mt-4 grid gap-4 xl:grid-cols-2">
@@ -632,10 +637,45 @@ function getPlatformConnectionState(platform: {
   if (["reauth_required", "needs_reconnect", "disconnected"].includes(value ?? "")) {
     return { label: "يحتاج إعادة ربط", className: "bg-amber-100 text-amber-800" };
   }
-  if (platform.is_active) {
+  if (value === "syncing") {
+    return { label: "جاري جمع البيانات", className: "bg-blue-50 text-blue-700" };
+  }
+  if (value === "pending") {
+    return { label: "بانتظار المزامنة", className: "bg-amber-50 text-amber-700" };
+  }
+  if (value === "connected") {
     return { label: "متصل", className: "bg-emerald-50 text-emerald-700" };
   }
+  if (platform.is_active) {
+    return { label: "قيد التحقق", className: "bg-gray-100 text-gray-600" };
+  }
   return { label: "غير متصل", className: "bg-gray-100 text-gray-500" };
+}
+
+function getDashboardSyncState(
+  platforms: Array<{
+    id: number;
+    connection_status?: string | null;
+    last_error?: string | null;
+  }>,
+  selectedPlatformId: number | null
+) {
+  const scopedPlatforms =
+    selectedPlatformId === null
+      ? platforms
+      : platforms.filter((platform) => platform.id === selectedPlatformId);
+  const statuses = scopedPlatforms.map((platform) =>
+    platform.last_error
+      ? "error"
+      : platform.connection_status?.trim().toLowerCase() ?? "pending"
+  );
+
+  if (statuses.includes("syncing")) return "syncing" as const;
+  if (statuses.includes("pending")) return "pending" as const;
+  if (statuses.includes("error") || statuses.includes("failed")) {
+    return "error" as const;
+  }
+  return null;
 }
 
 function asObject(value: unknown): Record<string, any> {

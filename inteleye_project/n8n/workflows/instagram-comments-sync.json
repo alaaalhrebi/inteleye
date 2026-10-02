@@ -1,0 +1,1269 @@
+{
+  "name": "Instagram Comments Sync - Webhook & Weekly",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -2304,
+        176
+      ],
+      "id": "84f49575-8434-4ac6-ab32-88c43922eecf",
+      "name": "Manual Trigger"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 4
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -2016,
+        176
+      ],
+      "id": "f4163bfb-2bff-4e1d-9350-cb5f67f4e17a",
+      "name": "Daily Schedule"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $json.body?.platform_id ? 'https://dhryldlprpdmsixhlaqe.supabase.co/rest/v1/rpc/claim_platform_sync' : 'https://dhryldlprpdmsixhlaqe.supabase.co/rest/v1/rpc/claim_due_platform_syncs' }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpCustomAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json.body?.platform_id ? { p_platform_id: Number($json.body.platform_id), p_platform_name: 'instagram' } : { p_platform_name: 'instagram', p_batch_size: 25 } }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -1744,
+        176
+      ],
+      "id": "1be49956-2cf5-4476-ac0d-b37744f85f94",
+      "name": "Get Active Instagram Platforms",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000,
+      "credentials": {
+        "httpCustomAuth": {
+          "id": "zG0oLxK9PlldN0gl",
+          "name": "Supabase Backend"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        -1456,
+        176
+      ],
+      "id": "fb09b2e5-1f4d-458d-8d4f-761abdb69cfd",
+      "name": "Loop Instagram Accounts"
+    },
+    {
+      "parameters": {
+        "jsCode": "const platform = $json;\nconst profileUrl = String(platform.platform_url || '').trim();\n\nif (!platform.id || !platform.client_id) {\n  throw new Error('سياق منصة Instagram غير مكتمل');\n}\n\nif (!/^https?:\\/\\/(www\\.)?instagram\\.com\\/[^/?#]+/i.test(profileUrl)) {\n  throw new Error('رابط حساب Instagram غير صالح');\n}\n\nreturn [{ json: {\n  ...platform,\n  platform_url: profileUrl.replace(/\\/+$|\\?.*$/g, '') + '/',\n  branch_id: platform.branch_id ?? null,\n  settings: platform.settings && typeof platform.settings === 'object' ? platform.settings : {},\n} }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1184,
+        176
+      ],
+      "id": "04b214a2-db28-40e5-9691-4e5db78d1f21",
+      "name": "Normalize Instagram Account"
+    },
+    {
+      "parameters": {
+        "url": "https://dhryldlprpdmsixhlaqe.supabase.co/rest/v1/instagram_posts",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpCustomAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "select",
+              "value": "id,platform_id,post_id,post_url,last_comment_count,last_scraped_at,published_at"
+            },
+            {
+              "name": "platform_id",
+              "value": "={{ 'eq.' + $json.id }}"
+            },
+            {
+              "name": "published_at",
+              "value": "={{ 'gte.' + $now.minus({ days: 30 }).toUTC().toISO() }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -896,
+        400
+      ],
+      "id": "cfa1b752-9065-49d8-ac7b-c60406bd2507",
+      "name": "Get Known Instagram Posts",
+      "alwaysOutputData": true,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000,
+      "credentials": {
+        "httpCustomAuth": {
+          "id": "zG0oLxK9PlldN0gl",
+          "name": "Supabase Backend"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const platform = $('Normalize Instagram Account').item.json;\nconst knownPosts = items\n  .map(item => item.json)\n  .filter(row => row && row.post_id);\n\nreturn [{ json: { platform, known_posts: knownPosts } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -2304,
+        400
+      ],
+      "id": "ff07546b-27dd-46f5-aef1-478cf5fcc1ef",
+      "name": "Collect Instagram Context"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.apify.com/v2/acts/apify~instagram-api-scraper/run-sync-get-dataset-items",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ {\n  directUrls: [$json.platform.platform_url],\n  resultsType: 'posts',\n  resultsLimit: Number($json.platform.settings?.instagram_max_posts || 100),\n  onlyPostsNewerThan: '30 days',\n  addParentData: true\n} }}",
+        "options": {
+          "timeout": 300000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -2016,
+        400
+      ],
+      "id": "d61cf765-14cb-4395-8f19-efe1daff8fa3",
+      "name": "Fetch Recent Instagram Media",
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 5000,
+      "alwaysOutputData": true,
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "N1vlyfQSWC1Nud6H",
+          "name": "Apify API Token"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const context = $('Collect Instagram Context').item.json;\nconst platform = context.platform;\nconst knownById = new Map((context.known_posts || []).map(post => [String(post.post_id), post]));\nconst cutoff = Date.now() - 30 * 24 * 60 * 60 * 1000;\nconst posts = [];\nlet accountError = null;\n\nfor (const item of items) {\n  const media = item.json || {};\n  if (media.error || media.errorDescription || media.requestErrorMessages) {\n    accountError = String(media.errorDescription || media.error || 'تعذر جلب منشورات حساب Instagram');\n    continue;\n  }\n\n  const publishedAt = media.timestamp || media.publishedAt || media.takenAt || null;\n  const publishedTime = publishedAt ? new Date(publishedAt).getTime() : NaN;\n  const mediaType = String(media.type || media.productType || '').toLowerCase();\n  const isVideo = mediaType === 'video' || mediaType === 'clips' || mediaType === 'reel';\n  if (!isVideo || Number.isNaN(publishedTime) || publishedTime < cutoff) continue;\n\n  const postId = String(media.id || media.mediaId || media.shortCode || '').trim();\n  const postUrl = String(media.url || (media.shortCode ? 'https://www.instagram.com/reel/' + media.shortCode + '/' : '')).trim();\n  if (!postId || !postUrl) continue;\n\n  const commentCount = Math.max(0, Number(media.commentsCount ?? media.commentCount ?? 0));\n  const known = knownById.get(postId);\n  if (known && commentCount <= Number(known.last_comment_count || 0)) continue;\n\n  posts.push({\n    client_id: platform.client_id,\n    branch_id: platform.branch_id ?? null,\n    platform_id: platform.id,\n    post_id: postId,\n    post_url: postUrl,\n    media_type: media.type || media.productType || 'Video',\n    published_at: new Date(publishedTime).toISOString(),\n    comment_count: commentCount,\n    previous_comment_count: Number(known?.last_comment_count || 0),\n    settings: platform.settings || {},\n  });\n}\n\nif (!posts.length) {\n  return [{ json: {\n    has_posts: false,\n    account_error: accountError,\n    platform,\n  } }];\n}\n\nreturn posts.map(post => ({ json: { has_posts: true, ...post } }));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1744,
+        400
+      ],
+      "id": "5b1cf42e-d0a2-4a39-8963-0c4262389a86",
+      "name": "Select Instagram Videos To Scrape"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "3ace7080-6f0f-4013-890b-85d55e36bf27",
+              "leftValue": "={{ $json.has_posts }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -1456,
+        400
+      ],
+      "id": "f1549d8e-7530-4ed5-8c49-7e9790b19585",
+      "name": "Has Instagram Videos To Scrape?"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        -1184,
+        400
+      ],
+      "id": "36f10bb2-57a9-4702-8f53-907b8d53197b",
+      "name": "Loop Instagram Posts"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.apify.com/v2/acts/apify~instagram-comment-scraper/run-sync-get-dataset-items",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ {\n  directUrls: [$json.post_url],\n  resultsLimit: Math.max(1, Math.min(\n    Number($json.settings?.instagram_max_comments_per_post || $json.comment_count || 100),\n    10000\n  )),\n  includeNestedComments: false\n} }}",
+        "options": {
+          "timeout": 300000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -896,
+        624
+      ],
+      "id": "caae9cc1-5c76-49f5-b49e-26f6f1f3422a",
+      "name": "Fetch Instagram Post Comments",
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 5000,
+      "alwaysOutputData": true,
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "N1vlyfQSWC1Nud6H",
+          "name": "Apify API Token"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const post = $('Loop Instagram Posts').item.json;\nconst comments = [];\nlet scrapeError = null;\n\nconst appendComment = (comment, parentId = null) => {\n  const commentId = String(comment.id || comment.commentId || '').trim();\n  const text = String(comment.text || comment.commentText || '').trim();\n  if (!commentId || !text) return;\n\n  comments.push({\n    comment_id: commentId,\n    commenter_username: comment.ownerUsername || comment.username || comment.owner?.username || null,\n    comment_text: text,\n    comment_date: comment.timestamp || comment.createdAt || comment.created_at || null,\n    like_count: Math.max(0, Number(comment.likesCount ?? comment.likeCount ?? 0)),\n    is_reply: Boolean(parentId || comment.parentCommentUrl),\n    reply_to_comment_id: parentId,\n    is_author_reply: false,\n    raw_data: comment,\n  });\n\n  for (const reply of Array.isArray(comment.replies) ? comment.replies : []) {\n    appendComment(reply, commentId);\n  }\n};\n\nfor (const item of items) {\n  const result = item.json || {};\n  if (result.error || result.errorDescription || result.requestErrorMessages) {\n    scrapeError = String(result.errorDescription || result.error || 'تعذر جلب تعليقات الفيديو');\n    continue;\n  }\n  appendComment(result);\n}\n\nreturn [{ json: {\n  scrape_ok: !scrapeError,\n  scrape_error: scrapeError,\n  post,\n  comments,\n} }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -2304,
+        624
+      ],
+      "id": "4684b23d-003c-4ca9-8c4a-7ecbee6487bf",
+      "name": "Normalize Instagram Post Comments"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "4cc1639c-25b0-4ee6-9dff-1d7f0a53d8ff",
+              "leftValue": "={{ $json.scrape_ok }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -2016,
+        624
+      ],
+      "id": "148b556e-3e2c-4aac-b75f-00820d924fdb",
+      "name": "Instagram Scrape Succeeded?"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://dhryldlprpdmsixhlaqe.supabase.co/rest/v1/rpc/ingest_instagram_post_comments",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpCustomAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Prefer",
+              "value": "return=representation"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ {\n  p_client_id: $json.post.client_id,\n  p_branch_id: $json.post.branch_id,\n  p_platform_id: $json.post.platform_id,\n  p_post_id: $json.post.post_id,\n  p_post_url: $json.post.post_url,\n  p_media_type: $json.post.media_type,\n  p_published_at: $json.post.published_at,\n  p_comment_count: $json.post.comment_count,\n  p_comments: $json.comments\n} }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -1744,
+        624
+      ],
+      "id": "f41c0c62-ec68-4a72-9c3f-538ad5a3451b",
+      "name": "Ingest Instagram Post And New Comments",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000,
+      "alwaysOutputData": true,
+      "credentials": {
+        "httpCustomAuth": {
+          "id": "zG0oLxK9PlldN0gl",
+          "name": "Supabase Backend"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{ json: { continue: true } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1456,
+        624
+      ],
+      "id": "27959f80-f3f2-4aeb-b7dc-db74128ba53c",
+      "name": "Continue Instagram Post"
+    },
+    {
+      "parameters": {
+        "jsCode": "const platform = $('Normalize Instagram Account').item.json;\nreturn [{ json: {\n  client_id: platform.client_id,\n  branch_id: platform.branch_id ?? null,\n  platform_id: platform.id,\n} }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1184,
+        624
+      ],
+      "id": "79d3ce64-55d2-42b6-a2f1-435aa177bcb8",
+      "name": "Prepare Instagram Pending Analysis"
+    },
+    {
+      "parameters": {
+        "url": "https://dhryldlprpdmsixhlaqe.supabase.co/rest/v1/instagram_comments",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpCustomAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "select",
+              "value": "id,client_id,branch_id,platform_id,instagram_comment_id,media_id,post_url,comment_text,commenter_username,comment_date,like_count"
+            },
+            {
+              "name": "platform_id",
+              "value": "={{ 'eq.' + $json.platform_id }}"
+            },
+            {
+              "name": "analysis_status",
+              "value": "eq.pending"
+            },
+            {
+              "name": "order",
+              "value": "comment_date.asc"
+            },
+            {
+              "name": "limit",
+              "value": "500"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -896,
+        848
+      ],
+      "id": "9b3f5218-3440-4237-bfa7-1c2ef3240cba",
+      "name": "Get Pending Instagram Comments",
+      "alwaysOutputData": true,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000,
+      "credentials": {
+        "httpCustomAuth": {
+          "id": "zG0oLxK9PlldN0gl",
+          "name": "Supabase Backend"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "5e540d55-0938-4cb8-b6e6-7677c91cf832",
+              "leftValue": "={{ !!$json.id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -2304,
+        848
+      ],
+      "id": "23c86e97-3750-49b7-97ad-5a72336d89de",
+      "name": "Has Pending Instagram Comments?"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        -2016,
+        848
+      ],
+      "id": "8cab1f93-0072-4abd-9b3d-e67bbf00c576",
+      "name": "Loop Instagram Analysis"
+    },
+    {
+      "parameters": {
+        "jsCode": "const comment = $json;\nreturn [{ json: {\n  source_record_id: comment.id,\n  client_id: comment.client_id,\n  branch_id: comment.branch_id ?? null,\n  platform_id: comment.platform_id,\n  external_id: comment.instagram_comment_id,\n  post_id: comment.media_id,\n  post_url: comment.post_url,\n  commenter_username: comment.commenter_username,\n  comment_text: comment.comment_text,\n  comment_date: comment.comment_date,\n  like_count: Number(comment.like_count || 0),\n} }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1744,
+        848
+      ],
+      "id": "ecbfbc1c-e1fc-46b5-8581-1c7d009315eb",
+      "name": "Prepare Instagram AI Comment"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-4O-MINI"
+        },
+        "responses": {
+          "values": [
+            {
+              "content": "=أنت محلل لتعليقات العملاء على Instagram. حلل التعليق التالي فقط:\n\n{{ JSON.stringify($json) }}\n\nأرجع JSON صالحًا فقط دون Markdown:\n{\n  \"sentiment\": \"positive|negative|neutral\",\n  \"category\": [\"تصنيف\"],\n  \"severity\": \"low|medium|high\",\n  \"needs_reply\": false,\n  \"is_sales_opportunity\": false,\n  \"is_complaint\": false,\n  \"suggested_reply\": null,\n  \"reason\": \"سبب مختصر\",\n  \"analysis_summary\": \"ملخص مختصر\"\n}\n\nالقواعد:\n- المدح أو الإيموجي الإيجابي أو التعليق الاجتماعي الذي لا يحتوي سؤالًا أو شكوى لا يحتاج ردًا.\n- needs_reply=true فقط عند وجود سؤال واضح، شكوى، طلب مساعدة، أو فرصة بيع تستحق المتابعة.\n- لا تقترح ردًا عندما needs_reply=false.\n- السؤال عن السعر أو التوفر قد يكون فرصة بيع.\n- الشكوى negative وis_complaint=true.\n- لا تخترع معلومات غير موجودة.\n- category مصفوفة عربية قصيرة."
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2.3,
+      "position": [
+        -1456,
+        848
+      ],
+      "id": "ce31a23e-aefe-4218-8ef3-1ed177133a71",
+      "name": "Analyze New Instagram Comment",
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 3000,
+      "credentials": {
+        "openAiApi": {
+          "id": "YL3zdWbXhbX2hL1V",
+          "name": "OpenAI key"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const original = $('Prepare Instagram AI Comment').item.json;\nlet text = $json.text || $json.output?.[0]?.content?.[0]?.text || $json.message?.content || '';\ntext = String(text)\n  .replace(new RegExp('\\\\x60{3}json', 'gi'), '')\n  .replace(new RegExp('\\\\x60{3}', 'g'), '')\n  .trim();\n\nif (!text) {\n  return [{ json: { analysis_ok: false, ...original, analysis_error: 'empty_ai_response' } }];\n}\n\ntry {\n  const result = JSON.parse(text);\n  const allowedSentiments = ['positive', 'negative', 'neutral'];\n  const allowedSeverities = ['low', 'medium', 'high'];\n  const needsReply = result.needs_reply === true;\n  return [{ json: {\n    analysis_ok: true,\n    ...original,\n    sentiment: allowedSentiments.includes(result.sentiment) ? result.sentiment : 'neutral',\n    category: Array.isArray(result.category) ? result.category : [result.category || 'أخرى'],\n    severity: allowedSeverities.includes(result.severity) ? result.severity : 'low',\n    needs_reply: needsReply,\n    is_sales_opportunity: result.is_sales_opportunity === true,\n    is_complaint: result.is_complaint === true,\n    suggested_reply: needsReply ? (result.suggested_reply || null) : null,\n    reason: result.reason || null,\n    analysis_summary: result.analysis_summary || null,\n  } }];\n} catch {\n  return [{ json: { analysis_ok: false, ...original, analysis_error: 'invalid_ai_json' } }];\n}"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1184,
+        848
+      ],
+      "id": "092bdaf1-4ccd-4efa-8847-7e2a53f321a4",
+      "name": "Parse Instagram AI Result"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "1aad3ed4-15c1-48c7-8c55-17d54449d850",
+              "leftValue": "={{ $json.analysis_ok }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -896,
+        1056
+      ],
+      "id": "19de3664-032b-41eb-bf3c-3051bed996ae",
+      "name": "Instagram AI Analysis Succeeded?"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://dhryldlprpdmsixhlaqe.supabase.co/rest/v1/feedback_analysis",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpCustomAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "on_conflict",
+              "value": "source_table,source_record_id"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Prefer",
+              "value": "resolution=merge-duplicates,return=representation"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ {\n  client_id: $json.client_id,\n  branch_id: $json.branch_id,\n  platform_id: $json.platform_id,\n  platform_name: 'instagram',\n  source_table: 'instagram_comments',\n  source_record_id: $json.source_record_id,\n  external_id: $json.external_id,\n  sentiment: $json.sentiment,\n  category: $json.category,\n  severity: $json.severity,\n  needs_reply: $json.needs_reply,\n  is_sales_opportunity: $json.is_sales_opportunity,\n  is_complaint: $json.is_complaint,\n  suggested_reply: $json.suggested_reply,\n  reason: $json.reason,\n  analysis_summary: $json.analysis_summary,\n  analysis_status: 'completed',\n  model_name: 'gpt-4o-mini',\n  analyzed_at: $now.toUTC().toISO(),\n  updated_at: $now.toUTC().toISO()\n} }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -2304,
+        1056
+      ],
+      "id": "0a310cfb-de7d-4bf0-9e4a-874bfdfccadc",
+      "name": "Save Instagram Analysis",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000,
+      "credentials": {
+        "httpCustomAuth": {
+          "id": "zG0oLxK9PlldN0gl",
+          "name": "Supabase Backend"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "https://dhryldlprpdmsixhlaqe.supabase.co/rest/v1/instagram_comments",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpCustomAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "id",
+              "value": "={{ 'eq.' + $json.source_record_id }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { analysis_status: 'completed', updated_at: $now.toUTC().toISO() } }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -2016,
+        1056
+      ],
+      "id": "add80640-0447-478e-950f-fd942ae78462",
+      "name": "Mark Instagram Comment Completed",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000,
+      "credentials": {
+        "httpCustomAuth": {
+          "id": "zG0oLxK9PlldN0gl",
+          "name": "Supabase Backend"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "https://dhryldlprpdmsixhlaqe.supabase.co/rest/v1/instagram_comments",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpCustomAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "id",
+              "value": "={{ 'eq.' + $json.source_record_id }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { analysis_status: 'failed', updated_at: $now.toUTC().toISO() } }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -1744,
+        1056
+      ],
+      "id": "4193dba9-f132-4b09-a843-fc6483febef3",
+      "name": "Mark Instagram Comment Failed",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000,
+      "credentials": {
+        "httpCustomAuth": {
+          "id": "zG0oLxK9PlldN0gl",
+          "name": "Supabase Backend"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{ json: { continue: true } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1456,
+        1056
+      ],
+      "id": "3e2d2e17-8eed-4193-b892-edfebdff3c6b",
+      "name": "Continue Instagram Analysis"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "2dde3d1a-0d57-4008-88f2-d07b87ab6e82",
+              "leftValue": "={{ !$json.account_error }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "e8375827-1896-444a-bc0a-0784d86b5cf0",
+      "typeVersion": 2.3,
+      "name": "Instagram Account Fetch Succeeded?",
+      "type": "n8n-nodes-base.if",
+      "position": [
+        -192,
+        176
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://dhryldlprpdmsixhlaqe.supabase.co/rest/v1/rpc/complete_platform_sync",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpCustomAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { p_platform_id: Number($('Loop Instagram Accounts').item.json.id) } }}",
+        "options": {}
+      },
+      "id": "e94437e1-f367-4483-b6eb-39b282a6f84f",
+      "typeVersion": 4.2,
+      "name": "Complete Instagram Sync",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        -1824,
+        768
+      ],
+      "credentials": {
+        "httpCustomAuth": {
+          "id": "zG0oLxK9PlldN0gl",
+          "name": "Supabase Backend"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://dhryldlprpdmsixhlaqe.supabase.co/rest/v1/rpc/fail_platform_sync",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpCustomAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { p_platform_id: Number($('Loop Instagram Accounts').item.json.id), p_error: 'تعذر سحب منشورات Instagram' } }}",
+        "options": {}
+      },
+      "id": "f8a68324-908d-471a-ab86-c2d206a57210",
+      "typeVersion": 4.2,
+      "name": "Fail Instagram Sync",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        0,
+        0
+      ],
+      "credentials": {
+        "httpCustomAuth": {
+          "id": "zG0oLxK9PlldN0gl",
+          "name": "Supabase Backend"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "platform-sync-instagram",
+        "authentication": "headerAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -3200,
+        704
+      ],
+      "id": "eb8e3df0-bf98-453d-85a0-304bd5dc1436",
+      "name": "Platform Added Webhook",
+      "webhookId": "4f1222df-3228-4602-8757-7811c2f8357c",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "21Us8qDaS5zhvSdM",
+          "name": "Header Auth account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Manual Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get Active Instagram Platforms",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Daily Schedule": {
+      "main": [
+        [
+          {
+            "node": "Get Active Instagram Platforms",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Active Instagram Platforms": {
+      "main": [
+        [
+          {
+            "node": "Loop Instagram Accounts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Instagram Accounts": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Normalize Instagram Account",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Instagram Account": {
+      "main": [
+        [
+          {
+            "node": "Get Known Instagram Posts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Known Instagram Posts": {
+      "main": [
+        [
+          {
+            "node": "Collect Instagram Context",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Collect Instagram Context": {
+      "main": [
+        [
+          {
+            "node": "Fetch Recent Instagram Media",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Recent Instagram Media": {
+      "main": [
+        [
+          {
+            "node": "Select Instagram Videos To Scrape",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Select Instagram Videos To Scrape": {
+      "main": [
+        [
+          {
+            "node": "Instagram Account Fetch Succeeded?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has Instagram Videos To Scrape?": {
+      "main": [
+        [
+          {
+            "node": "Loop Instagram Posts",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Prepare Instagram Pending Analysis",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Instagram Posts": {
+      "main": [
+        [
+          {
+            "node": "Prepare Instagram Pending Analysis",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Fetch Instagram Post Comments",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Instagram Post Comments": {
+      "main": [
+        [
+          {
+            "node": "Normalize Instagram Post Comments",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Instagram Post Comments": {
+      "main": [
+        [
+          {
+            "node": "Instagram Scrape Succeeded?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Instagram Scrape Succeeded?": {
+      "main": [
+        [
+          {
+            "node": "Ingest Instagram Post And New Comments",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Continue Instagram Post",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ingest Instagram Post And New Comments": {
+      "main": [
+        [
+          {
+            "node": "Continue Instagram Post",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Continue Instagram Post": {
+      "main": [
+        [
+          {
+            "node": "Loop Instagram Posts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Instagram Pending Analysis": {
+      "main": [
+        [
+          {
+            "node": "Get Pending Instagram Comments",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Pending Instagram Comments": {
+      "main": [
+        [
+          {
+            "node": "Has Pending Instagram Comments?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has Pending Instagram Comments?": {
+      "main": [
+        [
+          {
+            "node": "Loop Instagram Analysis",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Complete Instagram Sync",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Instagram Analysis": {
+      "main": [
+        [
+          {
+            "node": "Complete Instagram Sync",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Prepare Instagram AI Comment",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Instagram AI Comment": {
+      "main": [
+        [
+          {
+            "node": "Analyze New Instagram Comment",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Analyze New Instagram Comment": {
+      "main": [
+        [
+          {
+            "node": "Parse Instagram AI Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Instagram AI Result": {
+      "main": [
+        [
+          {
+            "node": "Instagram AI Analysis Succeeded?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Instagram AI Analysis Succeeded?": {
+      "main": [
+        [
+          {
+            "node": "Save Instagram Analysis",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Mark Instagram Comment Failed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Instagram Analysis": {
+      "main": [
+        [
+          {
+            "node": "Mark Instagram Comment Completed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mark Instagram Comment Completed": {
+      "main": [
+        [
+          {
+            "node": "Continue Instagram Analysis",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mark Instagram Comment Failed": {
+      "main": [
+        [
+          {
+            "node": "Continue Instagram Analysis",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Continue Instagram Analysis": {
+      "main": [
+        [
+          {
+            "node": "Loop Instagram Analysis",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Instagram Account Fetch Succeeded?": {
+      "main": [
+        [
+          {
+            "node": "Has Instagram Videos To Scrape?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Fail Instagram Sync",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Complete Instagram Sync": {
+      "main": [
+        [
+          {
+            "node": "Loop Instagram Accounts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fail Instagram Sync": {
+      "main": [
+        [
+          {
+            "node": "Loop Instagram Accounts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Platform Added Webhook": {
+      "main": [
+        [
+          {
+            "node": "Get Active Instagram Platforms",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "a26e218a-5d58-4e34-b93c-03f5d58672e2",
+  "meta": {
+    "instanceId": "e1e4029b67152d8f11cad1a051ea4bcd8762986d9b2b088b75e5e7f6d7aa4a0b"
+  },
+  "nodeGroups": [],
+  "id": "zdF2H77Fgs0ET17b",
+  "tags": []
+}

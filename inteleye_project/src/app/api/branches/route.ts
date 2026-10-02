@@ -195,6 +195,8 @@ export async function POST(request: Request) {
       username: cleanUsername,
       business_activity: businessActivity,
       is_active: true,
+      connection_status: "pending",
+      last_error: null,
     })
     .select("id")
     .single();

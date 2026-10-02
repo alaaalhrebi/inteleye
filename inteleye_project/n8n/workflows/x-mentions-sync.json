@@ -1,0 +1,955 @@
+{
+  "name": "X Mentions Sync - Webhook & Weekly",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -1664,
+        272
+      ],
+      "id": "31214711-16b5-453b-aa6a-f1a54dde2fb0",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 2
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -1664,
+        432
+      ],
+      "id": "8ea9afca-571c-4477-bacc-fad2a37be4e1",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $json.body?.platform_id ? 'https://dhryldlprpdmsixhlaqe.supabase.co/rest/v1/rpc/claim_platform_sync' : 'https://dhryldlprpdmsixhlaqe.supabase.co/rest/v1/rpc/claim_due_platform_syncs' }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpCustomAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json.body?.platform_id ? { p_platform_id: Number($json.body.platform_id), p_platform_name: 'x' } : { p_platform_name: 'x', p_batch_size: 25 } }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -1440,
+        384
+      ],
+      "id": "0389edbc-7504-4e37-af4c-5e415ef0d3f9",
+      "name": "Get Due X Platforms",
+      "credentials": {
+        "httpCustomAuth": {
+          "id": "zG0oLxK9PlldN0gl",
+          "name": "Supabase Backend"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        -1184,
+        176
+      ],
+      "id": "90248fc7-9156-4181-837e-e56fba5c1353",
+      "name": "Loop Over Items"
+    },
+    {
+      "parameters": {
+        "jsCode": "const platform = $json;\nconst now = new Date();\nconst dayMs = 24 * 60 * 60 * 1000;\nconst lastSuccess = platform.last_success_at\n  ? new Date(platform.last_success_at)\n  : null;\nconst isWeekly = lastSuccess && !Number.isNaN(lastSuccess.getTime());\nconst periodEnd = now;\nconst periodStart = isWeekly\n  ? lastSuccess\n  : new Date(now.getTime() - 30 * dayMs);\n\nreturn {\n  json: {\n    ...platform,\n    client_data: Array.isArray(platform.clients)\n      ? platform.clients[0]\n      : platform.clients,\n    sync_type: isWeekly ? 'weekly' : 'initial_historical',\n    period_start: periodStart.toISOString(),\n    period_end: periodEnd.toISOString(),\n    sync_platform: 'x'\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -992,
+        240
+      ],
+      "id": "b2b2c091-fbfb-447e-aa84-c31996339aba",
+      "name": "Determine X Sync Period"
+    },
+    {
+      "parameters": {
+        "jsCode": "const username = String($json.username || '')\n  .replace(/^@/, '')\n  .trim();\n\nif (!username) {\n  throw new Error('اسم حساب X غير موجود');\n}\n\nconst keywords = Array.isArray($json.settings?.keywords)\n  ? $json.settings.keywords\n  : [];\n\nconst searchParts = [`@${username}`];\n\nfor (const keyword of keywords) {\n  const value = String(keyword || '').trim();\n\n  if (value) {\n    searchParts.push(`\"${value}\"`);\n  }\n}\n\nconst startDate = String($json.period_start).slice(0, 10);\nconst endDate = String($json.period_end).slice(0, 10);\n\nconst xQuery = [\n  `(${searchParts.join(' OR ')})`,\n  `-from:${username}`,\n  '-filter:retweets',\n  `since:${startDate}`,\n  `until:${endDate}`\n].join(' ');\n\nreturn {\n  json: {\n    ...$json,\n    x_query: xQuery,\n    max_items:\n      $json.sync_type === 'initial_historical'\n        ? 1000\n        : 200\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -800,
+        208
+      ],
+      "id": "84e02d9f-d1db-4cad-ace5-f0e99eeed29b",
+      "name": "Build X Search Query"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.apify.com/v2/actors/61RPP7dywgiy0JPD0/run-sync-get-dataset-items",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ {\n  customMapFunction: \"(object) => { return {...object} }\",\n\n  includeSearchTerms: true,\n\n  maxItems:\n    $json.sync_type === 'initial_historical'\n      ? 1000\n      : 200,\n\n  onlyImage: false,\n  onlyQuote: false,\n  onlyTwitterBlue: false,\n  onlyVerifiedUsers: false,\n  onlyVideo: false,\n\n  searchTerms: [\n    [\n      $json.x_query,\n      `since:${String($json.period_start).slice(0, 10)}`,\n      `until:${String($json.period_end).slice(0, 10)}`\n    ]\n      .filter(Boolean)\n      .join(' ')\n  ],\n\n  sort: \"Latest\",\n\n  startUrls: [],\n\n  twitterHandles: []\n} }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -608,
+        176
+      ],
+      "id": "4999f5bb-1a68-470c-9072-3e2784ebe4d7",
+      "name": "Fetch X Mentions from Apify",
+      "alwaysOutputData": true,
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "N1vlyfQSWC1Nud6H",
+          "name": "Apify API Token"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const platform = $('Build X Search Query').item.json;\n\nconst monitoredUsername = String(platform.username || '')\n  .replace(/^@/, '')\n  .trim()\n  .toLowerCase();\n\nconst output = [];\n\nfor (const item of items) {\n  const tweet = item.json;\n\n  if (\n    tweet.noResults === true ||\n    tweet.type !== 'tweet' ||\n    !tweet.id\n  ) {\n    continue;\n  }\n\n  const authorUsername = String(\n    tweet.author?.userName || ''\n  ).toLowerCase();\n\n  // تجاهل منشورات حساب المنشأة نفسه\n  if (\n    monitoredUsername &&\n    authorUsername === monitoredUsername\n  ) {\n    continue;\n  }\n\n  const mentionText =\n    tweet.fullText ||\n    tweet.text ||\n    '';\n\n  if (!mentionText.trim()) {\n    continue;\n  }\n\n  let postedAt = null;\n\n  if (tweet.createdAt) {\n    const parsedDate = new Date(tweet.createdAt);\n\n    if (!Number.isNaN(parsedDate.getTime())) {\n      postedAt = parsedDate.toISOString();\n    }\n  }\n\n  output.push({\n    json: {\n      client_id: platform.client_id,\n      branch_id: platform.branch_id ?? null,\n      platform_id: platform.id,\n\n      tweet_id: String(tweet.id),\n      author_username:\n      tweet.author?.userName ||\n      null,\n    \n    tweet_url:\n      tweet.url ||\n      tweet.twitterUrl ||\n      null,\n      mention_text: mentionText.trim(),\n      posted_at: postedAt,\n\n      public_metrics: {\n        like_count: Number(tweet.likeCount || 0),\n        reply_count: Number(tweet.replyCount || 0),\n        retweet_count: Number(tweet.retweetCount || 0),\n        quote_count: Number(tweet.quoteCount || 0),\n        view_count: Number(tweet.viewCount || 0),\n        bookmark_count: Number(tweet.bookmarkCount || 0)\n      },\n\n      analysis_status: 'pending',\n\n      raw_data: {\n        ...tweet,\n        monitored_username: platform.username,\n        client_platform_id: platform.id\n      }\n    }\n  });\n}\n\nconst fetchFailed = items.some(({ json }) =>\n  Boolean(json?.error || json?.errorDescription || json?.requestErrorMessages)\n);\n\nif (output.length === 0) {\n  return [{ json: {\n    fetch_succeeded: !fetchFailed,\n    has_mentions: false,\n    client_id: platform.client_id,\n    branch_id: platform.branch_id ?? null,\n    platform_id: platform.id\n  } }];\n}\n\nreturn output.map(({ json }) => ({\n  json: { ...json, fetch_succeeded: true, has_mentions: true }\n}));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -400,
+        176
+      ],
+      "id": "4e516129-531c-4589-ac80-64ef3acfe619",
+      "name": "Normalize X Mentions"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://dhryldlprpdmsixhlaqe.supabase.co/rest/v1/x_mentions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpCustomAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "on_conflict",
+              "value": "platform_id,tweet_id"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Prefer",
+              "value": "resolution=ignore-duplicates,return=representation"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json.rows }}",
+        "options": {
+          "batching": {
+            "batch": {
+              "batchSize": 1
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        0,
+        176
+      ],
+      "id": "1ddc6147-595b-4a40-a82b-52ffc8dcecd3",
+      "name": "Upsert X Mentions",
+      "alwaysOutputData": true,
+      "credentials": {
+        "httpCustomAuth": {
+          "id": "zG0oLxK9PlldN0gl",
+          "name": "Supabase Backend"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const platform = $('Build X Search Query').first().json;\n\nreturn [\n  {\n    json: {\n      client_id: platform.client_id,\n      branch_id: platform.branch_id ?? null,\n      platform_id: platform.id\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        208,
+        208
+      ],
+      "id": "2a0e4b6c-88a2-441a-b059-e909fe24c9ba",
+      "name": "Continue X Platform"
+    },
+    {
+      "parameters": {
+        "url": "https://dhryldlprpdmsixhlaqe.supabase.co/rest/v1/x_mentions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpCustomAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "select",
+              "value": "id,client_id,branch_id,platform_id,tweet_id,author_username,tweet_url,mention_text,posted_at,public_metrics"
+            },
+            {
+              "name": "client_id",
+              "value": "={{ 'eq.' + $json.client_id }}"
+            },
+            {
+              "name": "platform_id",
+              "value": "={{ 'eq.' + $json.platform_id }}"
+            },
+            {
+              "name": "analysis_status",
+              "value": "eq.pending"
+            },
+            {
+              "name": "order",
+              "value": "posted_at.asc"
+            },
+            {
+              "name": "limit",
+              "value": "1000"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        400,
+        256
+      ],
+      "id": "22f7397a-e4b8-4593-a170-6b930a188b12",
+      "name": "Get Pending X Mentions",
+      "alwaysOutputData": true,
+      "credentials": {
+        "httpCustomAuth": {
+          "id": "zG0oLxK9PlldN0gl",
+          "name": "Supabase Backend"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "638905a8-a5b7-48eb-9681-6c42c2afec3a",
+              "leftValue": "={{ $json.id !== undefined && $json.id !== null }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        624,
+        288
+      ],
+      "id": "7811957c-d338-4c6c-96d6-c17eabae0928",
+      "name": "Has Pending X Mentions?"
+    },
+    {
+      "parameters": {
+        "batchSize": 50,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        848,
+        368
+      ],
+      "id": "c0bc617e-2166-4a24-b008-d659c4d9f29a",
+      "name": "Loop X Analysis Batches"
+    },
+    {
+      "parameters": {
+        "jsCode": "const platform = $('Continue X Platform').first().json;\n\nconst mentions = items\n  .filter(item => item.json.id && item.json.mention_text)\n  .map(item => ({\n    // رقم السجل داخل جدول x_mentions\n    source_record_id: item.json.id,\n\n    // معرف التغريدة الأصلي من X\n    tweet_id: item.json.tweet_id,\n\n    author_username:\n      item.json.author_username ||\n      null,\n\n    tweet_url:\n      item.json.tweet_url ||\n      null,\n\n    mention_text:\n      item.json.mention_text,\n\n    posted_at:\n      item.json.posted_at ||\n      null,\n\n    public_metrics:\n      item.json.public_metrics ||\n      {}\n  }));\n\nif (!mentions.length) {\n  return [];\n}\n\nreturn [\n  {\n    json: {\n      client_id: platform.client_id,\n      branch_id: platform.branch_id ?? null,\n      platform_id: platform.platform_id,\n\n      platform_name: 'x',\n      source_table: 'x_mentions',\n\n      mentions\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1104,
+        496
+      ],
+      "id": "51e83a7e-5c6f-4de3-86f3-f5195f0e049d",
+      "name": "Create X AI Batch"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-4O-MINI",
+          "cachedResultUrl": ""
+        },
+        "responses": {
+          "values": [
+            {
+              "content": "=أنت محلل متخصص في تصنيف منشورات العملاء على منصة X للمنشآت التجارية والخدمية.\n\nالهدف الأساسي: تحديد الحالات التي تحتاج ردًا فعليًا من المنشأة بدقة عالية. الأصل هو needs_reply = false، ولا تجعله true إلا عند تحقق سبب واضح من القائمة أدناه.\n\nحلل جميع منشورات العملاء التالية، وأرجع JSON صالحًا فقط دون شرح أو Markdown:\n\n{{ JSON.stringify($json.mentions) }}\n\nلكل منشور أرجع:\n- source_record_id: نفس القيمة الموجودة في البيانات\n- sentiment: positive أو negative أو neutral\n- category: مصفوفة من التصنيفات المناسبة\n- severity: low أو medium أو high\n- reply_intent: complaint أو direct_question أو support_request أو sales_inquiry أو none\n- needs_reply: true أو false\n- is_sales_opportunity: true أو false\n- is_complaint: true أو false\n- suggested_reply: رد عربي مختصر إذا كان يحتاج ردًا، وإلا null\n- reason: سبب التصنيف بجملة قصيرة\n- analysis_summary: ملخص منشور بجملة قصيرة\n\nالتصنيفات المسموحة فقط:\nجودة الخدمة، جودة المنتج، تعامل الموظفين، سرعة الخدمة، وقت الانتظار، المواعيد والحجز، الأسعار، النظافة، الموقع، التواصل والرد، التوصيل، الدفع والفوترة، التجربة الطبية، تجربة عامة، أخرى\n\nقواعد needs_reply الصارمة:\n1. اجعل needs_reply = true فقط إذا كان منشور يتضمن واحدًا من الآتي:\n   - شكوى واضحة عن تجربة أو مشكلة فعلية مع المنشأة.\n   - سؤالًا مباشرًا قابلًا للإجابة وموجهًا للمنشأة.\n   - طلب مساعدة أو متابعة بسبب مشكلة في طلب أو دفع أو حجز أو خدمة.\n   - استفسار شراء واضح عن السعر أو التوفر أو الحجز أو تنفيذ الطلب.\n2. اجعل needs_reply = false للمدح والشكر والتفاعل الإيجابي، حتى لو كان الرد اللطيف ممكنًا.\n3. اجعل needs_reply = false للملاحظات العامة، الاقتراحات، التمنيات، طلب فتح فرع، طلب إضافة ميزة، المشاركة في مسابقة، الوسوم، الإيموجي، والمنشور غير الواضح.\n4. ذكر الحساب أو الرد على مستخدم آخر لا يعني أن المنشأة مطالبة بالرد.\n5. السؤال البلاغي أو العبارة التي لا تنتظر معلومة من المنشأة ليست سؤالًا مباشرًا.\n6. إذا لم تكن متأكدًا أن النص ينتظر جوابًا من المنشأة، اختر false و reply_intent = none.\n\nقواعد الاتساق الإلزامية:\n- needs_reply = true فقط عندما reply_intent ليست none.\n- needs_reply = false عندما reply_intent = none.\n- suggested_reply يجب أن يكون null عندما needs_reply = false.\n- is_complaint = true فقط لشكوى فعلية، ولا يجوز أن يكون true لمجرد المدح أو الاقتراح.\n- كل شكوى واضحة تكون sentiment = negative و reply_intent = complaint.\n- is_sales_opportunity = true فقط لاستفسار شراء أو حجز واضح، وليس لاقتراح أو طلب فتح فرع أو المشاركة في مسابقة.\n- أرجع نتيجة لكل source_record_id دون حذف أي عنصر.\n- category يجب أن تكون مصفوفة، واستخدم true وfalse كقيم Boolean، ولا تخترع معلومات.\n\nأمثلة حاسمة:\n- «الأكل ممتاز» => needs_reply false، is_complaint false.\n- «ياليت تفتحون فرع عندنا» => needs_reply false، is_sales_opportunity false.\n- «يارب أفوز معكم» => needs_reply false، is_sales_opportunity false.\n- «شفت المنيو الجديد» => needs_reply false.\n- «كم السعر وهل المنتج متوفر؟» => needs_reply true، reply_intent sales_inquiry.\n- «طلبي لم يصل وأحتاج مساعدة» => needs_reply true، reply_intent support_request أو complaint.\n\nأرجع بهذا الشكل فقط:\n{\n  \"results\": [\n    {\n      \"source_record_id\": 123,\n      \"sentiment\": \"negative\",\n      \"category\": [\"سرعة الخدمة\"],\n      \"severity\": \"medium\",\n      \"reply_intent\": \"complaint\",\n      \"needs_reply\": true,\n      \"is_sales_opportunity\": false,\n      \"is_complaint\": true,\n      \"suggested_reply\": \"نعتذر عن تجربتك، ونأمل تزويدنا بتفاصيل الطلب لمراجعة المشكلة.\",\n      \"reason\": \"يتضمن النص شكوى واضحة تحتاج متابعة.\",\n      \"analysis_summary\": \"العميل يشتكي من بطء الخدمة.\"\n    }\n  ]\n}"
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2.3,
+      "position": [
+        1472,
+        528
+      ],
+      "id": "4429de60-927b-4494-a66f-cef1e296b7aa",
+      "name": "Analyze X Mentions",
+      "retryOnFail": true,
+      "waitBetweenTries": 5000,
+      "credentials": {
+        "openAiApi": {
+          "id": "YL3zdWbXhbX2hL1V",
+          "name": "OpenAI key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const aiItems = $input.all();\n\n// غيّري اسم العقدة هنا إلى العقدة التي جلبت سجلات x_mentions\n// قبل إرسالها إلى Analyze X Mentions\nconst sourceRows = $('Get Pending X Mentions')\n  .all()\n  .map(item => item.json);\n\nconst sourceMap = new Map(\n  sourceRows.map(row => [String(row.id), row])\n);\n\nfunction toBoolean(value) {\n  if (typeof value === 'boolean') return value;\n\n  if (typeof value === 'string') {\n    return ['true', '1', 'yes', 'نعم'].includes(\n      value.trim().toLowerCase()\n    );\n  }\n\n  return Boolean(value);\n}\n\nfunction getAIText(item) {\n  return (\n    item.json.output?.[0]?.content?.[0]?.text ??\n    item.json.output_text ??\n    item.json.text ??\n    ''\n  );\n}\n\nfunction parseJson(rawText) {\n  if (!rawText) {\n    throw new Error('نتيجة الذكاء الاصطناعي فارغة');\n  }\n\n  let cleaned = String(rawText)\n    .trim()\n    .replace(/^\\uFEFF/, '')\n    .replace(/^```json\\s*/i, '')\n    .replace(/^```\\s*/i, '')\n    .replace(/\\s*```$/i, '');\n\n  const objectStart = cleaned.indexOf('{');\n  const arrayStart = cleaned.indexOf('[');\n\n  let startIndex = -1;\n\n  if (objectStart === -1) {\n    startIndex = arrayStart;\n  } else if (arrayStart === -1) {\n    startIndex = objectStart;\n  } else {\n    startIndex = Math.min(objectStart, arrayStart);\n  }\n\n  const endIndex = Math.max(\n    cleaned.lastIndexOf('}'),\n    cleaned.lastIndexOf(']')\n  );\n\n  if (startIndex === -1 || endIndex === -1) {\n    throw new Error('لم يتم العثور على JSON صالح في نتيجة الذكاء الاصطناعي');\n  }\n\n  cleaned = cleaned\n    .slice(startIndex, endIndex + 1)\n    .replace(/,\\s*([}\\]])/g, '$1');\n\n  try {\n    return JSON.parse(cleaned);\n  } catch (error) {\n    throw new Error(`JSON غير صالح: ${error.message}`);\n  }\n}\n\nconst outputItems = [];\n\nfor (const aiItem of aiItems) {\n  const parsed = parseJson(getAIText(aiItem));\n\n  const results = Array.isArray(parsed)\n    ? parsed\n    : Array.isArray(parsed.results)\n      ? parsed.results\n      : [];\n\n  if (results.length === 0) {\n    throw new Error('مصفوفة results غير موجودة أو فارغة');\n  }\n\n  for (const result of results) {\n    const sourceRecordId =\n      result.source_record_id ??\n      result.id ??\n      null;\n\n    if (!sourceRecordId) {\n      throw new Error('source_record_id غير موجود في نتيجة التحليل');\n    }\n\n    const source = sourceMap.get(String(sourceRecordId));\n\n    if (!source) {\n      throw new Error(\n        `لم يتم العثور على منشور X رقم ${sourceRecordId}`\n      );\n    }\n\n    outputItems.push({\n      json: {\n        client_id: source.client_id,\n        branch_id: source.branch_id ?? null,\n        platform_id: source.platform_id,\n        platform_name: 'x',\n\n\n        source_table: 'x_mentions',\n        source_record_id: source.id,\n\n        sentiment: result.sentiment ?? 'neutral',\n\n        category: Array.isArray(result.category)\n          ? result.category\n          : result.category\n            ? [result.category]\n            : ['other'],\n\n        severity: result.severity ?? 'low',\n\n        needs_reply: toBoolean(result.needs_reply),\n\n        is_sales_opportunity: toBoolean(\n          result.is_sales_opportunity\n        ),\n\n        is_complaint: toBoolean(\n          result.is_complaint\n        ),\n\n        suggested_reply: result.suggested_reply ?? null,\n        reason: result.reason ?? null,\n        analysis_summary: result.analysis_summary ?? null,\n\n        analysis_status: 'completed',\n        model_name: 'gpt-4o-mini',\n        analyzed_at: new Date().toISOString()\n      }\n    });\n  }\n}\n\nreturn outputItems;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1824,
+        528
+      ],
+      "id": "bf30e91d-0d1a-42c0-a3ae-96302f33e060",
+      "name": "Parse X AI Result"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://dhryldlprpdmsixhlaqe.supabase.co/rest/v1/feedback_analysis",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpCustomAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "on_conflict",
+              "value": "source_table,source_record_id"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Prefer",
+              "value": "resolution=merge-duplicates,return=representation"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ {\n  client_id: $json.client_id,\n  branch_id: $json.branch_id,\n  platform_id: $json.platform_id,\n  platform_name: $json.platform_name,\n\n\n  source_table: $json.source_table,\n  source_record_id: $json.source_record_id,\n\n  sentiment: $json.sentiment,\ncategory: $json.category,\nseverity: $json.severity,\n\n  needs_reply: $json.needs_reply,\n  is_sales_opportunity: $json.is_sales_opportunity,\n  is_complaint: $json.is_complaint,\n\n  suggested_reply: $json.suggested_reply,\n  reason: $json.reason,\n  analysis_summary: $json.analysis_summary,\n\n  analysis_status: $json.analysis_status,\n  model_name: $json.model_name,\n  analyzed_at: $json.analyzed_at\n}\n}}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        2032,
+        528
+      ],
+      "id": "08475043-c344-4ff9-b2f5-de6d23508c55",
+      "name": "Save X Analysis",
+      "credentials": {
+        "httpCustomAuth": {
+          "id": "zG0oLxK9PlldN0gl",
+          "name": "Supabase Backend"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "https://dhryldlprpdmsixhlaqe.supabase.co/rest/v1/x_mentions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpCustomAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "id",
+              "value": "={{ 'eq.' + $json.source_record_id }}"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Prefer",
+              "value": "return=representation"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ {\n  analysis_status: 'completed',\n  updated_at: $now.toUTC().toISO()\n} }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        2240,
+        528
+      ],
+      "id": "0b25989e-c747-4e91-9029-597f7bbc0881",
+      "name": "Mark X Mentions Completed",
+      "credentials": {
+        "httpCustomAuth": {
+          "id": "zG0oLxK9PlldN0gl",
+          "name": "Supabase Backend"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const inputItems = $input.all();\nconst batchSize = 50;\nconst now = new Date().toISOString();\n\nconst rows = inputItems.map((item) => {\n  const row = item.json;\n\n  return {\n    client_id: row.client_id,\n    branch_id: row.branch_id ?? null,\n    platform_id: row.platform_id,\n\n    tweet_id: String(row.tweet_id),\n    author_username: row.author_username ?? null,\n    tweet_url: row.tweet_url ?? null,\n    mention_text: row.mention_text ?? \"\",\n\n    posted_at: row.posted_at,\n    created_at: row.created_at ?? now,\n\n    public_metrics: row.public_metrics ?? {},\n    analysis_status: row.analysis_status ?? \"pending\",\n    raw_data: row.raw_data ?? {},\n\n    updated_at: row.updated_at ?? now\n  };\n});\n\nconst batches = [];\n\nfor (let i = 0; i < rows.length; i += batchSize) {\n  batches.push({\n    json: {\n      rows: rows.slice(i, i + batchSize),\n      batch_number: Math.floor(i / batchSize) + 1,\n      total_batches: Math.ceil(rows.length / batchSize),\n      total_rows: rows.length\n    }\n  });\n}\n\nreturn batches;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -192,
+        176
+      ],
+      "id": "0dc3bdaf-c4df-4351-9c2f-ea7f205be1e0",
+      "name": "Create Supabase Batches"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "5785e27e-b553-4bea-aae6-8d2f610b303e",
+              "leftValue": "={{ $json.fetch_succeeded === true }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "891a85fb-ebda-4d5c-9ed7-353d479b4517",
+      "typeVersion": 2.3,
+      "name": "X Fetch Succeeded?",
+      "type": "n8n-nodes-base.if",
+      "position": [
+        -192,
+        176
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "d4521fab-70e7-4b1c-8f47-f9d0544a6542",
+              "leftValue": "={{ $json.has_mentions === true }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "6d2eba88-8b0b-49be-b03a-f5b27d62f265",
+      "typeVersion": 2.3,
+      "name": "Has X Mentions?",
+      "type": "n8n-nodes-base.if",
+      "position": [
+        0,
+        176
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://dhryldlprpdmsixhlaqe.supabase.co/rest/v1/rpc/complete_platform_sync",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpCustomAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { p_platform_id: Number($('Loop Over Items').item.json.id) } }}",
+        "options": {}
+      },
+      "id": "adcdea1b-3b44-4ef8-b481-aa8f7e2660a0",
+      "typeVersion": 4.2,
+      "name": "Complete X Sync",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        864,
+        208
+      ],
+      "credentials": {
+        "httpCustomAuth": {
+          "id": "zG0oLxK9PlldN0gl",
+          "name": "Supabase Backend"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://dhryldlprpdmsixhlaqe.supabase.co/rest/v1/rpc/fail_platform_sync",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpCustomAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { p_platform_id: Number($('Loop Over Items').item.json.id), p_error: 'تعذر سحب إشارات X' } }}",
+        "options": {}
+      },
+      "id": "57f21cda-8373-4dae-9365-aa17a7a8dfad",
+      "typeVersion": 4.2,
+      "name": "Fail X Sync",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        0,
+        0
+      ],
+      "credentials": {
+        "httpCustomAuth": {
+          "id": "zG0oLxK9PlldN0gl",
+          "name": "Supabase Backend"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "platform-sync-x",
+        "authentication": "headerAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -2080,
+        704
+      ],
+      "id": "2e852cd3-9130-4150-81ca-94a529d069c0",
+      "name": "Platform Added Webhook",
+      "webhookId": "feaa4fb3-d641-4686-a4f8-f38a7bef60f1",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "21Us8qDaS5zhvSdM",
+          "name": "Header Auth account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get Due X Platforms",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Due X Platforms": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Determine X Sync Period",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Determine X Sync Period": {
+      "main": [
+        [
+          {
+            "node": "Build X Search Query",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build X Search Query": {
+      "main": [
+        [
+          {
+            "node": "Fetch X Mentions from Apify",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch X Mentions from Apify": {
+      "main": [
+        [
+          {
+            "node": "Normalize X Mentions",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize X Mentions": {
+      "main": [
+        [
+          {
+            "node": "X Fetch Succeeded?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upsert X Mentions": {
+      "main": [
+        [
+          {
+            "node": "Continue X Platform",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Continue X Platform": {
+      "main": [
+        [
+          {
+            "node": "Get Pending X Mentions",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Pending X Mentions": {
+      "main": [
+        [
+          {
+            "node": "Has Pending X Mentions?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has Pending X Mentions?": {
+      "main": [
+        [
+          {
+            "node": "Loop X Analysis Batches",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Complete X Sync",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop X Analysis Batches": {
+      "main": [
+        [
+          {
+            "node": "Get Pending X Mentions",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Create X AI Batch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create X AI Batch": {
+      "main": [
+        [
+          {
+            "node": "Analyze X Mentions",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Analyze X Mentions": {
+      "main": [
+        [
+          {
+            "node": "Parse X AI Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse X AI Result": {
+      "main": [
+        [
+          {
+            "node": "Save X Analysis",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save X Analysis": {
+      "main": [
+        [
+          {
+            "node": "Mark X Mentions Completed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mark X Mentions Completed": {
+      "main": [
+        [
+          {
+            "node": "Loop X Analysis Batches",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Get Due X Platforms",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Supabase Batches": {
+      "main": [
+        [
+          {
+            "node": "Upsert X Mentions",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "X Fetch Succeeded?": {
+      "main": [
+        [
+          {
+            "node": "Has X Mentions?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Fail X Sync",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has X Mentions?": {
+      "main": [
+        [
+          {
+            "node": "Create Supabase Batches",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Continue X Platform",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Complete X Sync": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fail X Sync": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Platform Added Webhook": {
+      "main": [
+        [
+          {
+            "node": "Get Due X Platforms",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "9204db4b-430b-46b1-9947-7aa4187a3dd4",
+  "meta": {
+    "instanceId": "e1e4029b67152d8f11cad1a051ea4bcd8762986d9b2b088b75e5e7f6d7aa4a0b"
+  },
+  "nodeGroups": [],
+  "id": "pYtv7n3bQfRvkeJD",
+  "tags": []
+}

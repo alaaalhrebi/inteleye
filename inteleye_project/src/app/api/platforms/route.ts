@@ -312,6 +312,8 @@ export async function POST(request: Request) {
       username: normalizedPlatform.username,
       business_activity: businessActivity,
       is_active: true,
+      connection_status: "pending",
+      last_error: null,
     })
     .select("id")
     .single();

@@ -43,6 +43,7 @@ type InteractiveDashboardProps = {
   periodStart: string;
   periodEnd: string;
   hasError: boolean;
+  syncState: "pending" | "syncing" | "error" | null;
   tiktokMetrics: DashboardTikTokMetrics | null;
   priorityContent?: ReactNode;
 };
@@ -99,6 +100,7 @@ export default function InteractiveDashboard({
   periodStart,
   periodEnd,
   hasError,
+  syncState,
   tiktokMetrics,
   priorityContent,
 }: InteractiveDashboardProps) {
@@ -384,10 +386,22 @@ export default function InteractiveDashboard({
         {samples.length === 0 ? (
           <div className="mt-5 rounded-3xl bg-[#F8F7F3] p-10 text-center">
             <p className="font-extrabold text-[#374375]">
-              لا توجد تعليقات تطابق التصفية الحالية
+              {syncState === "syncing"
+                ? "جاري جمع التعليقات وتحليلها"
+                : syncState === "pending"
+                  ? "تم ربط المنصة والمزامنة في قائمة الانتظار"
+                  : syncState === "error"
+                    ? "تعذر تحديث بيانات المنصة"
+                    : "لا توجد تعليقات تطابق التصفية الحالية"}
             </p>
             <p className="mt-2 text-sm text-gray-500">
-              جرّب اختيار شعور أو يوم أو موضوع آخر.
+              {syncState === "syncing"
+                ? "ستظهر النتائج هنا تلقائيًا بعد اكتمال السحب والتحليل."
+                : syncState === "pending"
+                  ? "ستبدأ المزامنة الفورية، وتوجد جدولة دورية لاستعادة أي عملية لم تبدأ."
+                  : syncState === "error"
+                    ? "راجع حالة المنصة لمعرفة سبب الخطأ، وستحاول الجدولة استعادتها مجددًا."
+                    : "جرّب اختيار شعور أو يوم أو موضوع آخر."}
             </p>
           </div>
         ) : (

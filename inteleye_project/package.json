@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "check:n8n": "node scripts/verify-platform-sync-workflows.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.0",

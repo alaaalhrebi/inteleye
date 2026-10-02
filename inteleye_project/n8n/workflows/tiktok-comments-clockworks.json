@@ -6,10 +6,10 @@
       "type": "n8n-nodes-base.manualTrigger",
       "typeVersion": 1,
       "position": [
-        0,
-        0
+        64,
+        3424
       ],
-      "id": "1e8495e2-7bc4-4fc1-8762-33e0f1032739",
+      "id": "d790a1ee-95d2-4f55-b8d7-de41d0d0c029",
       "name": "When clicking ‘Execute workflow’"
     },
     {
@@ -25,16 +25,16 @@
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.3,
       "position": [
-        0,
-        208
+        64,
+        3632
       ],
-      "id": "72f260f6-f64f-4015-aecf-c48cc4353d82",
+      "id": "c1a476e6-04b2-436f-a609-d06d13f02358",
       "name": "Schedule Trigger"
     },
     {
       "parameters": {
         "method": "POST",
-        "url": "https://dhryldlprpdmsixhlaqe.supabase.co/rest/v1/rpc/claim_due_platform_syncs",
+        "url": "={{ $json.body?.platform_id ? 'https://dhryldlprpdmsixhlaqe.supabase.co/rest/v1/rpc/claim_platform_sync' : 'https://dhryldlprpdmsixhlaqe.supabase.co/rest/v1/rpc/claim_due_platform_syncs' }}",
         "authentication": "genericCredentialType",
         "genericAuthType": "httpCustomAuth",
         "sendHeaders": true,
@@ -48,16 +48,16 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ { p_platform_name: 'tiktok', p_batch_size: 25 } }}",
+        "jsonBody": "={{ $json.body?.platform_id ? { p_platform_id: Number($json.body.platform_id), p_platform_name: 'tiktok' } : { p_platform_name: 'tiktok', p_batch_size: 25 } }}",
         "options": {}
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
       "position": [
-        208,
-        112
+        272,
+        3536
       ],
-      "id": "3c92e3f3-d0c5-43ef-ac14-28d23a1c1562",
+      "id": "24f6fe00-3e6c-4ccc-9526-df6de5038f94",
       "name": "Get Due TikTok Platforms",
       "credentials": {
         "httpCustomAuth": {
@@ -73,10 +73,10 @@
       "type": "n8n-nodes-base.splitInBatches",
       "typeVersion": 3,
       "position": [
-        432,
-        96
+        496,
+        3520
       ],
-      "id": "d43ae365-8e52-483d-9563-ad3dfe10d433",
+      "id": "2eabad24-d5b4-42d8-b86c-c04970174fdd",
       "name": "Loop Over Items"
     },
     {
@@ -86,10 +86,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        656,
-        112
+        720,
+        3536
       ],
-      "id": "05ef65c7-2b21-48ec-80a2-fe4f2085e2dc",
+      "id": "41631ce4-2005-4deb-b78d-791f725e0bf1",
       "name": "Determine TikTok Sync Period"
     },
     {
@@ -115,21 +115,21 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
       "position": [
-        832,
-        80
+        896,
+        3504
       ],
-      "id": "72156083-9ff0-4a4d-8b58-fd53b4991a3e",
+      "id": "1e3dfc36-8050-4200-8c7f-257e4caf4772",
       "name": "Fetch TikTok Videos",
+      "alwaysOutputData": true,
+      "retryOnFail": true,
+      "maxTries": 2,
       "credentials": {
         "httpBearerAuth": {
           "id": "N1vlyfQSWC1Nud6H",
           "name": "Apify API Token"
         }
       },
-      "onError": "continueRegularOutput",
-      "alwaysOutputData": true,
-      "retryOnFail": true,
-      "maxTries": 2
+      "onError": "continueRegularOutput"
     },
     {
       "parameters": {
@@ -138,10 +138,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1040,
-        80
+        1104,
+        3504
       ],
-      "id": "5bf7e7d0-64b9-4987-954c-da16483180c1",
+      "id": "09eb4d11-0a4e-4d45-b3eb-d568e4c982ab",
       "name": "Normalize TikTok Videos"
     },
     {
@@ -176,10 +176,10 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
       "position": [
-        3344,
-        -48
+        3408,
+        3376
       ],
-      "id": "338c1312-9029-492d-a927-a8d886d904f9",
+      "id": "4c3b8a0c-16c8-4555-b49e-0fd1e86165e0",
       "name": "Upsert TikTok Comments",
       "alwaysOutputData": true,
       "retryOnFail": true,
@@ -220,10 +220,10 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        3152,
-        -48
+        3216,
+        3376
       ],
-      "id": "4750afcd-c271-4b45-b6d1-afea36b93a3d",
+      "id": "a00b3a00-3936-4e4a-bc74-1b83cc8a91a7",
       "name": "Has TikTok Comments?"
     },
     {
@@ -265,10 +265,10 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
       "position": [
-        3728,
-        -48
+        3792,
+        3376
       ],
-      "id": "99567a64-d71e-4655-a1ec-e887b6847526",
+      "id": "1ece48d7-e2f8-47e2-a397-e7c5da612819",
       "name": "Get Pending TikTok Comments",
       "alwaysOutputData": true,
       "retryOnFail": true,
@@ -309,10 +309,10 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        1920,
-        288
+        1984,
+        3712
       ],
-      "id": "ec70bd60-c932-4f49-939f-e7204eb07d2b",
+      "id": "1f41e77d-899c-4ad1-b88a-f362c3cdd570",
       "name": "Has Pending TikTok Comments?"
     },
     {
@@ -323,10 +323,10 @@
       "type": "n8n-nodes-base.splitInBatches",
       "typeVersion": 3,
       "position": [
-        2160,
-        48
+        2224,
+        3472
       ],
-      "id": "895bd731-8eb4-4377-97f1-b92bf85bcc6b",
+      "id": "1c0a96cf-e5d1-46dc-9912-fc6276ac1780",
       "name": "Loop TikTok Analysis Batches"
     },
     {
@@ -336,10 +336,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2400,
-        112
+        2464,
+        3536
       ],
-      "id": "b165ddfd-112e-4390-8703-06891119efa5",
+      "id": "cc2536b6-9cd3-4795-b131-4e52cca3a372",
       "name": "Create TikTok AI Batch"
     },
     {
@@ -353,7 +353,7 @@
         "responses": {
           "values": [
             {
-              "content": "=أنت محلل متخصص في تصنيف تعليقات العملاء على TikTok للمنشآت التجارية والخدمية.\n\nحلل جميع التعليقات التالية وأرجع JSON صالحًا فقط دون شرح أو Markdown:\n\n{{ JSON.stringify($json.comments) }}\n\nلكل تعليق أرجع:\n- source_record_id\n- sentiment: positive | negative | neutral\n- category: مصفوفة\n- severity: low | medium | high\n- reply_intent: complaint | direct_question | support_request | sales_inquiry | none\n- needs_reply: true | false\n- is_sales_opportunity: true | false\n- is_complaint: true | false\n- suggested_reply: نص مختصر أو null\n- reason: سبب مختصر\n- analysis_summary: ملخص مختصر\n\nالتصنيفات المسموحة:\nجودة الخدمة، جودة المنتج، تعامل الموظفين، سرعة الخدمة، وقت الانتظار، المواعيد والحجز، الأسعار، النظافة، الموقع، التواصل والرد، التوصيل، الدفع والفوترة، التجربة الطبية، تجربة عامة، أخرى\n\nقواعد التصنيف:\n\n1. needs_reply = true فقط إذا كان التعليق يتضمن:\n- شكوى واضحة ناتجة عن تجربة فعلية مع المنشأة أو المنتج أو الخدمة.\n- سؤالًا مباشرًا موجهًا للمنشأة ويحتاج إجابة.\n- طلب مساعدة أو متابعة لمشكلة في طلب أو دفع أو حجز أو خدمة.\n- استفسار شراء واضح عن السعر أو التوفر أو الحجز أو تنفيذ الطلب.\n\n2. needs_reply = false في:\n- المدح والشكر والتفاعل الإيجابي.\n- الاقتراحات والتمنيات وطلب فتح فرع أو إضافة خدمة.\n- المسابقات والوسوم والإيموجي والمزاح.\n- طلب وجبة أو منتج مجاني أو هدية.\n- سرد ظروف شخصية أو مالية أو عاطفية.\n- التعليقات غير الواضحة أو التي لا تنتظر جوابًا من المنشأة.\n\n3. لا تعتبر مشاعر الكاتب الشخصية شكوى من المنشأة.\nكلمات مثل: جوعان، زعلان، تعبان، محتاج، مفلس، 💔 😔 😭\nلا تجعل التعليق negative أو complaint إلا إذا كانت مرتبطة مباشرة بتجربة سيئة مع المنشأة.\n\n4. sentiment يعبر عن الموقف تجاه المنشأة أو المنتج أو الخدمة:\n- positive = مدح أو رضا.\n- negative = انتقاد أو عدم رضا.\n- neutral = لا يوجد رأي واضح تجاه المنشأة.\n\n5. قواعد الاتساق:\n- needs_reply = true فقط إذا reply_intent ليست none.\n- إذا reply_intent = none فاجعل needs_reply = false.\n- suggested_reply = null عندما needs_reply = false.\n- is_complaint = true فقط لشكوى فعلية مرتبطة بالمنشأة.\n- كل شكوى فعلية: sentiment = negative و reply_intent = complaint.\n- is_sales_opportunity = true فقط لاستفسار شراء أو حجز واضح.\n- أرجع نتيجة لكل source_record_id.\n- استخدم true و false كقيم Boolean.\n\nأمثلة:\n- \"الأكل ممتاز\" => positive, needs_reply false\n- \"ياليت تفتحون فرع عندنا\" => neutral, needs_reply false\n- \"يارب أفوز معكم\" => neutral, needs_reply false\n- \"أنا جوعانه عطوني وجبة 😭\" => neutral, needs_reply false, is_complaint false\n- \"كم السعر وهل المنتج متوفر؟\" => needs_reply true, reply_intent sales_inquiry\n- \"طلبي ما وصل وأحتاج مساعدة\" => negative, needs_reply true, reply_intent complaint\n\nأرجع بهذا الشكل فقط:\n\n{\n  \"results\": [\n    {\n      \"source_record_id\": 123,\n      \"sentiment\": \"negative\",\n      \"category\": [\"التوصيل\"],\n      \"severity\": \"medium\",\n      \"reply_intent\": \"complaint\",\n      \"needs_reply\": true,\n      \"is_sales_opportunity\": false,\n      \"is_complaint\": true,\n      \"suggested_reply\": \"نعتذر عن المشكلة، ونأمل تزويدنا بتفاصيل الطلب لمراجعتها.\",\n      \"reason\": \"شكوى واضحة مرتبطة بالخدمة.\",\n      \"analysis_summary\": \"العميل يشتكي من عدم وصول الطلب.\"\n    }\n  ]\n}"
+              "content": "=أنت محلل متخصص في تصنيف تعليقات العملاء للمنشآت التجارية والخدمية بمختلف القطاعات.\n\nالهدف الأساسي: تحديد التعليقات التي تحتاج ردًا فعليًا من المنشأة بدقة. الأصل هو needs_reply = false، ولا يتحول إلى true إلا عند وجود سبب واضح.\n\nحلل التعليقات التالية وأرجع JSON صالحًا فقط دون شرح أو Markdown:\n\n{{ JSON.stringify($json.comments) }}\n\nلكل تعليق أرجع:\n- source_record_id: نفس القيمة الموجودة في البيانات\n- sentiment: positive | negative | neutral\n- category: مصفوفة من التصنيفات المناسبة\n- severity: low | medium | high\n- reply_intent: complaint | direct_question | support_request | sales_inquiry | none\n- needs_reply: true | false\n- is_sales_opportunity: true | false\n- is_complaint: true | false\n- suggested_reply: رد عربي مختصر عند الحاجة، وإلا null\n- reason: سبب مختصر للتصنيف\n- analysis_summary: ملخص مختصر للتعليق\n\nالتصنيفات المسموحة فقط:\nجودة الخدمة، جودة المنتج، تعامل الموظفين، سرعة الخدمة، وقت الانتظار، المواعيد والحجز، الأسعار، النظافة، الموقع، التواصل والرد، التوصيل، الدفع والفوترة، التجربة الطبية، تجربة عامة، أخرى\n\nقواعد التصنيف:\n\n- complaint:\nشكوى واضحة مرتبطة بتجربة فعلية مع المنشأة أو المنتج أو الخدمة.\nاجعل sentiment = negative و is_complaint = true و needs_reply = true.\n\n- direct_question:\nسؤال مباشر موجه للمنشأة ويحتاج إجابة فعلية.\nاجعل needs_reply = true.\n\n- support_request:\nطلب مساعدة أو متابعة لمشكلة في طلب أو حجز أو دفع أو توصيل أو خدمة.\nاجعل needs_reply = true.\n\n- sales_inquiry:\nاستفسار واضح يدل على نية شراء أو حجز أو طلب خدمة، مثل السعر، التوفر، كود الخصم، موعد متاح أو كيفية الطلب.\nاجعل needs_reply = true و is_sales_opportunity = true.\n\n- none:\nالمدح، الشكر، الاقتراحات، التمنيات، طلب فتح فرع، طلب إضافة خدمة، المسابقات، طلب الهدايا أو المجاني، المزاح، الإيموجي، الوسوم، الرد على مستخدم آخر، أو أي تعليق لا ينتظر جوابًا واضحًا من المنشأة.\nاجعل needs_reply = false.\n\nقواعد مهمة:\n- sentiment يصف موقف العميل تجاه المنشأة أو المنتج أو الخدمة فقط، وليس حالته الشخصية.\n- الحزن أو الغضب أو كلمات مثل \"جوعان\"، \"محتاج\"، \"زعلان\"، أو الإيموجي السلبي لا تعني شكوى ما لم تكن مرتبطة بتجربة سيئة مع المنشأة.\n- السؤال البلاغي لا يعتبر direct_question.\n- suggested_reply = null عندما needs_reply = false.\n- إذا reply_intent = none فاجعل needs_reply = false.\n- is_complaint = true فقط لشكوى فعلية.\n- is_sales_opportunity = true فقط لنية شراء أو حجز واضحة.\n- إذا لم تكن متأكدًا أن التعليق يحتاج جوابًا من المنشأة، اختر reply_intent = none و needs_reply = false.\n- لا تخترع معلومات غير موجودة في التعليق.\n- أرجع نتيجة لكل source_record_id دون حذف أي عنصر.\n- category يجب أن تكون مصفوفة.\n- استخدم true و false كقيم Boolean.\n\nأمثلة:\n- \"الخدمة ممتازة\" => positive, reply_intent none, needs_reply false\n- \"ياليت تفتحون فرع عندنا\" => neutral, reply_intent none, needs_reply false\n- \"يارب أفوز معكم\" => neutral, reply_intent none, needs_reply false\n- \"أنا جوعان عطوني وجبة 😭\" => neutral, reply_intent none, needs_reply false\n- \"عندكم كود خصم؟\" => neutral, reply_intent sales_inquiry, needs_reply true, is_sales_opportunity true\n- \"كم السعر وهل متوفر؟\" => neutral, reply_intent sales_inquiry, needs_reply true\n- \"كيف أحجز موعد؟\" => neutral, reply_intent sales_inquiry, needs_reply true\n- \"طلبي لم يصل وأحتاج مساعدة\" => negative, reply_intent support_request, needs_reply true\n- \"انتظرت ساعة والخدمة سيئة\" => negative, reply_intent complaint, needs_reply true, is_complaint true\n\nأرجع بهذا الشكل فقط:\n\n{\n  \"results\": [\n    {\n      \"source_record_id\": 123,\n      \"sentiment\": \"negative\",\n      \"category\": [\"سرعة الخدمة\"],\n      \"severity\": \"medium\",\n      \"reply_intent\": \"complaint\",\n      \"needs_reply\": true,\n      \"is_sales_opportunity\": false,\n      \"is_complaint\": true,\n      \"suggested_reply\": \"نعتذر عن تجربتك، ونأمل تزويدنا بالتفاصيل لمراجعة المشكلة.\",\n      \"reason\": \"شكوى واضحة مرتبطة بالخدمة.\",\n      \"analysis_summary\": \"العميل يشتكي من بطء الخدمة.\"\n    }\n  ]\n}"
             }
           ]
         },
@@ -363,10 +363,10 @@
       "type": "@n8n/n8n-nodes-langchain.openAi",
       "typeVersion": 2.3,
       "position": [
-        2576,
-        32
+        2640,
+        3456
       ],
-      "id": "4a5f25b6-deae-4772-be48-af054e452130",
+      "id": "0c1a108e-b44c-44fa-bbe6-33ffb78f0ae9",
       "name": "Analyze TikTok Comments",
       "retryOnFail": true,
       "waitBetweenTries": 5000,
@@ -379,15 +379,15 @@
     },
     {
       "parameters": {
-        "jsCode": "const batch = $('Create TikTok AI Batch').item.json;\n\nlet text =\n  $json.text ||\n  $json.output?.[0]?.content?.[0]?.text ||\n  $json.message?.content ||\n  $json.content?.find(\n    item => item.type === 'output_text'\n  )?.text ||\n  '';\n\ntext = String(text)\n  .replace(/```json/gi, '')\n  .replace(/```/g, '')\n  .trim();\n\nif (!text) {\n  throw new Error(\n    'لم يتم العثور على نتيجة تحليل تعليقات TikTok'\n  );\n}\n\nlet parsed;\n\ntry {\n  parsed = JSON.parse(text);\n} catch (error) {\n  throw new Error(\n    'نتيجة الذكاء الاصطناعي ليست JSON صالحًا'\n  );\n}\n\nif (!Array.isArray(parsed.results)) {\n  throw new Error(\n    'الحقل results غير موجود أو ليس مصفوفة'\n  );\n}\n\nconst comments = Array.isArray(batch.comments)\n  ? batch.comments\n  : [];\n\nconst commentMap = new Map(\n  comments.map(comment => [\n    String(comment.source_record_id),\n    comment\n  ])\n);\n\n// التعليقات التي أُرسلت للنموذج\nconst expectedIds = new Set(\n  comments.map(comment =>\n    String(comment.source_record_id)\n  )\n);\n\n// التعليقات التي أعاد النموذج تحليلها\nconst returnedIds = new Set(\n  parsed.results\n    .map(result =>\n      result.source_record_id ?? result.id\n    )\n    .filter(id =>\n      id !== undefined && id !== null\n    )\n    .map(id => String(id))\n);\n\n// أي تعليق ناقص سيبقى pending ويعاد تحليله\nconst missingIds = [...expectedIds].filter(\n  id => !returnedIds.has(id)\n);\n\nif (missingIds.length > 0) {\n  console.log(\n    `سيعاد تحليل تعليقات TikTok الناقصة: ${missingIds.join(', ')}`\n  );\n}\n\nconst toBoolean = value =>\n  value === true || value === 'true';\n\nconst allowedSentiments = [\n  'positive',\n  'negative',\n  'neutral'\n];\n\nconst allowedSeverities = [\n  'low',\n  'medium',\n  'high'\n];\n\nconst output = [];\n\nfor (const result of parsed.results) {\n  const sourceRecordId =\n    result.source_record_id ??\n    result.id;\n\n  if (\n    sourceRecordId === undefined ||\n    sourceRecordId === null\n  ) {\n    console.log(\n      'تم تجاهل نتيجة لا تحتوي على source_record_id'\n    );\n    continue;\n  }\n\n  const originalComment = commentMap.get(\n    String(sourceRecordId)\n  );\n\n  // تجاهل أي معرف اخترعه النموذج\n  if (!originalComment) {\n    console.log(\n      `تم تجاهل معرف غير موجود في الدفعة: ${sourceRecordId}`\n    );\n    continue;\n  }\n\n  const sentiment = allowedSentiments.includes(\n    result.sentiment\n  )\n    ? result.sentiment\n    : 'neutral';\n\n  const severity = allowedSeverities.includes(\n    result.severity\n  )\n    ? result.severity\n    : 'low';\n\n  const category = Array.isArray(result.category)\n    ? result.category\n    : [result.category || 'أخرى'];\n\n  output.push({\n    json: {\n      client_id: batch.client_id,\n      branch_id: batch.branch_id ?? null,\n      platform_id: batch.platform_id,\n\n      platform_name: 'tiktok',\n      source_table: 'tiktok_comments',\n\n      // رقم السجل داخل جدول tiktok_comments\n      source_record_id: Number(sourceRecordId),\n\n      // معرف تعليق TikTok الأصلي\n      external_id:\n        originalComment.tiktok_comment_id ||\n        null,\n\n      sentiment,\n      category,\n      severity,\n\n      needs_reply:\n        toBoolean(result.needs_reply),\n\n      is_sales_opportunity:\n        toBoolean(result.is_sales_opportunity),\n\n      is_complaint:\n        toBoolean(result.is_complaint),\n\n      suggested_reply:\n        result.suggested_reply || null,\n\n      reason:\n        result.reason || null,\n\n      analysis_summary:\n        result.analysis_summary || null,\n\n      analysis_status: 'completed',\n      model_name: 'gpt-4o-mini',\n      analyzed_at: new Date().toISOString()\n    }\n  });\n}\n\nreturn output;"
+        "jsCode": "\nconst batch = $('Create TikTok AI Batch').item.json;\n\nlet text =\n  $json.text ||\n  $json.output?.[0]?.content?.[0]?.text ||\n  $json.message?.content ||\n  $json.content?.find(item => item.type === 'output_text')?.text ||\n  '';\n\ntext = String(text)\n  .replace(/^\\uFEFF/, '')\n  .replace(/```json/gi, '')\n  .replace(/```/g, '')\n  .trim();\n\nif (!text) {\n  throw new Error('لم يتم العثور على نتيجة تحليل تعليقات TikTok');\n}\n\nconst tryParse = value => {\n  try {\n    return JSON.parse(value);\n  } catch {\n    return null;\n  }\n};\n\nconst normalizeJson = value => value\n  .replace(/,\\s*([}\\]])/g, '$1')\n  .trim();\n\nlet parsed = tryParse(text);\n\nif (!parsed) {\n  const firstBrace = text.indexOf('{');\n  const lastBrace = text.lastIndexOf('}');\n  if (firstBrace !== -1 && lastBrace > firstBrace) {\n    parsed = tryParse(normalizeJson(text.slice(firstBrace, lastBrace + 1)));\n  }\n}\n\n// إذا كانت الاستجابة مقطوعة، استخرج كائنات النتائج المكتملة فقط.\nif (!parsed) {\n  const resultsKey = text.search(/\"results\"\\s*:/i);\n  const arrayStart = resultsKey === -1 ? -1 : text.indexOf('[', resultsKey);\n  const recovered = [];\n\n  if (arrayStart !== -1) {\n    let depth = 0;\n    let start = -1;\n    let inString = false;\n    let escaped = false;\n\n    for (let i = arrayStart + 1; i < text.length; i++) {\n      const char = text[i];\n\n      if (inString) {\n        if (escaped) escaped = false;\n        else if (char === '\\\\') escaped = true;\n        else if (char === '\"') inString = false;\n        continue;\n      }\n\n      if (char === '\"') {\n        inString = true;\n        continue;\n      }\n\n      if (char === '{') {\n        if (depth === 0) start = i;\n        depth++;\n      } else if (char === '}') {\n        depth--;\n        if (depth === 0 && start !== -1) {\n          const result = tryParse(normalizeJson(text.slice(start, i + 1)));\n          if (result) recovered.push(result);\n          start = -1;\n        }\n      }\n    }\n  }\n\n  if (recovered.length > 0) {\n    parsed = { results: recovered };\n    console.log('تم استرداد ' + recovered.length + ' نتيجة مكتملة من استجابة TikTok غير مكتملة');\n  }\n}\n\nif (!parsed || !Array.isArray(parsed.results)) {\n  throw new Error('تعذر استخراج نتائج TikTok من استجابة الذكاء الاصطناعي');\n}\n\nconst comments = Array.isArray(batch.comments) ? batch.comments : [];\nconst commentMap = new Map(\n  comments.map(comment => [String(comment.source_record_id), comment])\n);\n\nconst expectedIds = new Set(\n  comments.map(comment => String(comment.source_record_id))\n);\n\nconst returnedIds = new Set(\n  parsed.results\n    .map(result => result.source_record_id ?? result.id)\n    .filter(id => id !== undefined && id !== null)\n    .map(id => String(id))\n);\n\nconst missingIds = [...expectedIds].filter(id => !returnedIds.has(id));\nif (missingIds.length > 0) {\n  console.log('ستبقى تعليقات TikTok الناقصة معلقة لإعادة التحليل: ' + missingIds.join(', '));\n}\n\nconst toBoolean = value => value === true || value === 'true';\nconst allowedSentiments = ['positive', 'negative', 'neutral'];\nconst allowedSeverities = ['low', 'medium', 'high'];\nconst output = [];\n\nfor (const result of parsed.results) {\n  const sourceRecordId = result.source_record_id ?? result.id;\n\n  if (sourceRecordId === undefined || sourceRecordId === null) {\n    console.log('تم تجاهل نتيجة لا تحتوي على source_record_id');\n    continue;\n  }\n\n  const originalComment = commentMap.get(String(sourceRecordId));\n  if (!originalComment) {\n    console.log('تم تجاهل معرف غير موجود في الدفعة: ' + sourceRecordId);\n    continue;\n  }\n\n  const sentiment = allowedSentiments.includes(result.sentiment)\n    ? result.sentiment\n    : 'neutral';\n  const severity = allowedSeverities.includes(result.severity)\n    ? result.severity\n    : 'low';\n  const category = Array.isArray(result.category)\n    ? result.category\n    : [result.category || 'أخرى'];\n\n  output.push({\n    json: {\n      client_id: batch.client_id,\n      branch_id: batch.branch_id ?? null,\n      platform_id: batch.platform_id,\n      platform_name: 'tiktok',\n      source_table: 'tiktok_comments',\n      source_record_id: Number(sourceRecordId),\n      external_id: originalComment.tiktok_comment_id || null,\n      sentiment,\n      category,\n      severity,\n      needs_reply: toBoolean(result.needs_reply),\n      is_sales_opportunity: toBoolean(result.is_sales_opportunity),\n      is_complaint: toBoolean(result.is_complaint),\n      suggested_reply: result.suggested_reply || null,\n      reason: result.reason || null,\n      analysis_summary: result.analysis_summary || null,\n      analysis_status: 'completed',\n      model_name: 'gpt-4o-mini',\n      analyzed_at: new Date().toISOString()\n    }\n  });\n}\n\nif (output.length === 0) {\n  throw new Error('لم تُسترد أي نتيجة صالحة من دفعة TikTok');\n}\n\nreturn output;"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2864,
-        16
+        2928,
+        3440
       ],
-      "id": "87595b68-8456-4c6f-b29a-756b15c2ba2b",
+      "id": "e9563d88-0e79-42ed-96db-44b3fa072309",
       "name": "Parse TikTok AI Result"
     },
     {
@@ -422,10 +422,10 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
       "position": [
-        3040,
-        144
+        3104,
+        3568
       ],
-      "id": "097157d7-f6fc-4049-b439-83882dfac466",
+      "id": "3c0441fb-b749-4cab-882f-67631fb3e50f",
       "name": "Save TikTok Analysis",
       "retryOnFail": true,
       "maxTries": 3,
@@ -469,10 +469,10 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
       "position": [
-        2784,
-        368
+        2848,
+        3792
       ],
-      "id": "b1201f19-855b-4f67-8ee7-93fe2f459cbc",
+      "id": "e804c99d-4c95-461b-8d15-cd4b19ca8c77",
       "name": "Mark TikTok Comments Completed",
       "executeOnce": true,
       "alwaysOutputData": true,
@@ -493,21 +493,13 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        3536,
-        -48
+        3600,
+        3376
       ],
-      "id": "a9a21d6e-7ead-4880-86cc-11f23243ec66",
+      "id": "6ae8e07c-5724-4abc-adcb-9c975d2e8744",
       "name": "Continue TikTok Platform"
     },
     {
-      "id": "1c8fa915-4462-4922-9e85-d3513051feef",
-      "typeVersion": 2.3,
-      "name": "TikTok Fetch Succeeded?",
-      "type": "n8n-nodes-base.if",
-      "position": [
-        2960,
-        -48
-      ],
       "parameters": {
         "conditions": {
           "options": {
@@ -531,26 +523,17 @@
           "combinator": "and"
         },
         "options": {}
-      }
+      },
+      "id": "29d14dab-0f47-4b58-a50f-39d610040c0a",
+      "typeVersion": 2.3,
+      "name": "TikTok Fetch Succeeded?",
+      "type": "n8n-nodes-base.if",
+      "position": [
+        3024,
+        3376
+      ]
     },
     {
-      "id": "f7bffaa1-9307-4367-8b22-0bdd0781e32c",
-      "typeVersion": 4.2,
-      "name": "Complete TikTok Sync",
-      "type": "n8n-nodes-base.httpRequest",
-      "retryOnFail": true,
-      "maxTries": 3,
-      "waitBetweenTries": 3000,
-      "position": [
-        2112,
-        464
-      ],
-      "credentials": {
-        "httpCustomAuth": {
-          "id": "zG0oLxK9PlldN0gl",
-          "name": "Supabase Backend"
-        }
-      },
       "parameters": {
         "method": "POST",
         "url": "https://dhryldlprpdmsixhlaqe.supabase.co/rest/v1/rpc/complete_platform_sync",
@@ -569,26 +552,26 @@
         "specifyBody": "json",
         "jsonBody": "={{ { p_platform_id: Number($('Loop Over Items').item.json.id) } }}",
         "options": {}
-      }
-    },
-    {
-      "id": "688a9051-5086-423b-a2cf-e3319c172885",
+      },
+      "id": "f2d2709a-c818-4851-a1d8-2ae104944ed7",
       "typeVersion": 4.2,
-      "name": "Fail TikTok Sync",
+      "name": "Complete TikTok Sync",
       "type": "n8n-nodes-base.httpRequest",
       "retryOnFail": true,
       "maxTries": 3,
       "waitBetweenTries": 3000,
       "position": [
-        1200,
-        -96
+        2176,
+        3888
       ],
       "credentials": {
         "httpCustomAuth": {
           "id": "zG0oLxK9PlldN0gl",
           "name": "Supabase Backend"
         }
-      },
+      }
+    },
+    {
       "parameters": {
         "method": "POST",
         "url": "https://dhryldlprpdmsixhlaqe.supabase.co/rest/v1/rpc/fail_platform_sync",
@@ -607,6 +590,23 @@
         "specifyBody": "json",
         "jsonBody": "={{ { p_platform_id: Number($('Loop Over Items').item.json.id), p_error: 'تعذر سحب تعليقات TikTok' } }}",
         "options": {}
+      },
+      "id": "befeb065-68bf-4df7-ab20-d28cd78d839f",
+      "typeVersion": 4.2,
+      "name": "Fail TikTok Sync",
+      "type": "n8n-nodes-base.httpRequest",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000,
+      "position": [
+        1264,
+        3328
+      ],
+      "credentials": {
+        "httpCustomAuth": {
+          "id": "zG0oLxK9PlldN0gl",
+          "name": "Supabase Backend"
+        }
       }
     },
     {
@@ -614,34 +614,25 @@
         "httpMethod": "POST",
         "path": "platform-sync-tiktok",
         "authentication": "headerAuth",
-        "responseMode": "onReceived",
         "options": {}
       },
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2.1,
       "position": [
-        -900,
-        520
+        -832,
+        3952
       ],
-      "id": "40782c55-00da-4312-aa4a-809863e55886",
+      "id": "41610bef-692e-4c4c-b292-3cbcd81185df",
       "name": "Platform Added Webhook",
       "webhookId": "40782c55-00da-4312-aa4a-809863e55886",
       "credentials": {
         "httpHeaderAuth": {
-          "id": "eFNS3qZC0EtzE65c",
-          "name": "Authorization"
+          "id": "21Us8qDaS5zhvSdM",
+          "name": "Header Auth account"
         }
       }
     },
     {
-      "id": "clockworks-video-fetch-ok",
-      "typeVersion": 2.3,
-      "name": "TikTok Videos Fetch Succeeded?",
-      "type": "n8n-nodes-base.if",
-      "position": [
-        1232,
-        80
-      ],
       "parameters": {
         "conditions": {
           "options": {
@@ -665,17 +656,17 @@
           "combinator": "and"
         },
         "options": {}
-      }
-    },
-    {
-      "id": "clockworks-has-videos",
+      },
+      "id": "10aee9cd-dde9-475b-8ce8-362a7a910dda",
       "typeVersion": 2.3,
-      "name": "Has TikTok Videos?",
+      "name": "TikTok Videos Fetch Succeeded?",
       "type": "n8n-nodes-base.if",
       "position": [
-        1424,
-        80
-      ],
+        1296,
+        3504
+      ]
+    },
+    {
       "parameters": {
         "conditions": {
           "options": {
@@ -699,7 +690,15 @@
           "combinator": "and"
         },
         "options": {}
-      }
+      },
+      "id": "3151f87e-51af-4e90-a6c9-403133b90242",
+      "typeVersion": 2.3,
+      "name": "Has TikTok Videos?",
+      "type": "n8n-nodes-base.if",
+      "position": [
+        1488,
+        3504
+      ]
     },
     {
       "parameters": {
@@ -728,10 +727,10 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
       "position": [
-        1616,
-        16
+        1680,
+        3440
       ],
-      "id": "clockworks-get-existing-videos",
+      "id": "8064c5f8-6c94-402e-a1cd-cebafeac3b43",
       "name": "Get Existing TikTok Videos",
       "alwaysOutputData": true,
       "retryOnFail": true,
@@ -751,10 +750,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1808,
-        16
+        1872,
+        3440
       ],
-      "id": "clockworks-prepare-video-sync",
+      "id": "f9c4b6cd-2a0b-4c97-81c1-d478444573e1",
       "name": "Prepare TikTok Video Sync"
     },
     {
@@ -789,10 +788,10 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
       "position": [
-        2000,
-        16
+        2064,
+        3440
       ],
-      "id": "clockworks-upsert-videos",
+      "id": "8b3a4855-c68c-4052-afc2-5dd0f299e820",
       "name": "Upsert TikTok Videos",
       "alwaysOutputData": true,
       "retryOnFail": true,
@@ -812,21 +811,13 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2192,
-        16
+        2256,
+        3440
       ],
-      "id": "clockworks-continue-video-sync",
+      "id": "e2c0819f-af48-4402-9f28-7f03a6f7a5cf",
       "name": "Continue TikTok Video Sync"
     },
     {
-      "id": "clockworks-has-comment-targets",
-      "typeVersion": 2.3,
-      "name": "Has TikTok Comment Targets?",
-      "type": "n8n-nodes-base.if",
-      "position": [
-        2384,
-        16
-      ],
       "parameters": {
         "conditions": {
           "options": {
@@ -850,7 +841,15 @@
           "combinator": "and"
         },
         "options": {}
-      }
+      },
+      "id": "538f1403-7215-426c-b06c-c89866528c12",
+      "typeVersion": 2.3,
+      "name": "Has TikTok Comment Targets?",
+      "type": "n8n-nodes-base.if",
+      "position": [
+        2448,
+        3440
+      ]
     },
     {
       "parameters": {
@@ -875,21 +874,21 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
       "position": [
-        2576,
-        -48
+        2640,
+        3376
       ],
-      "id": "clockworks-fetch-comments",
+      "id": "465fce3c-0641-4c3d-8a6b-c3e1130cb7ac",
       "name": "Fetch TikTok Comments",
+      "alwaysOutputData": true,
+      "retryOnFail": true,
+      "maxTries": 2,
       "credentials": {
         "httpBearerAuth": {
           "id": "N1vlyfQSWC1Nud6H",
           "name": "Apify API Token"
         }
       },
-      "onError": "continueRegularOutput",
-      "alwaysOutputData": true,
-      "retryOnFail": true,
-      "maxTries": 2
+      "onError": "continueRegularOutput"
     },
     {
       "parameters": {
@@ -898,14 +897,35 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2768,
-        -48
+        2832,
+        3376
       ],
-      "id": "clockworks-normalize-comments",
+      "id": "9d32f8b4-4027-49aa-92ce-2532d24a11a5",
       "name": "Normalize TikTok Comments"
     }
   ],
-  "pinData": {},
+  "pinData": {
+    "Schedule Trigger": [
+      {
+        "json": {
+          "timestamp": "2026-10-02T03:00:08.000+03:00",
+          "Readable date": "October 2nd 2026, 3:00:08 am",
+          "Readable time": "3:00:08 am",
+          "Day of week": "Friday",
+          "Year": "2026",
+          "Month": "October",
+          "Day of month": "02",
+          "Hour": "03",
+          "Minute": "00",
+          "Second": "08",
+          "Timezone": "Asia/Riyadh (UTC+03:00)"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      }
+    ]
+  },
   "connections": {
     "Schedule Trigger": {
       "main": [
@@ -1302,14 +1322,13 @@
   "active": true,
   "settings": {
     "executionOrder": "v1",
-    "binaryMode": "separate",
-    "availableInMCP": false
+    "binaryMode": "separate"
   },
-  "versionId": "58663d0d-1000-4d3a-9512-68c7357a3acb",
+  "versionId": "0644bd6d-f082-400a-bc03-0fb93e0368b0",
   "meta": {
     "instanceId": "e1e4029b67152d8f11cad1a051ea4bcd8762986d9b2b088b75e5e7f6d7aa4a0b"
   },
   "nodeGroups": [],
-  "id": "UOmLxWk7rY63ec7s",
+  "id": "No89rZIeK39IiI3L",
   "tags": []
 }
