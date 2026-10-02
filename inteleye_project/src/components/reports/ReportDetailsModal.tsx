@@ -51,17 +51,25 @@ const STAT_KEYS = [
   "urgent_cases_count",
 ];
 
-const ADDITIONAL_KEYS = [
-  "customer_needs",
-  "sales_opportunities",
-  "conclusion",
-];
+const ADDITIONAL_KEYS = ["conclusion"];
 
 type InsightItem = {
   title: string;
   description: string | null;
   count: number | null;
   priority: string | null;
+  suggestedAction: string | null;
+};
+
+type CustomerNeedItem = {
+  need: string;
+  evidence: string | null;
+  importance: string | null;
+};
+
+type SalesOpportunityItem = {
+  opportunity: string;
+  reason: string | null;
   suggestedAction: string | null;
 };
 
@@ -82,6 +90,10 @@ export default function ReportDetailsModal({
   const issues = insightItems(merged.top_issues);
   const recommendations = insightItems(merged.recommendations, true);
   const urgentSummary = merged.urgent_cases_summary;
+  const customerNeeds = customerNeedItems(merged.customer_needs);
+  const salesOpportunities = salesOpportunityItems(
+    merged.sales_opportunities
+  );
   const additionalEntries = entriesFor(merged, ADDITIONAL_KEYS);
   const sentimentMetrics = buildSentimentMetrics(report.stats, merged);
 
@@ -188,22 +200,27 @@ export default function ReportDetailsModal({
             <RecommendationsSection items={recommendations} />
           )}
 
+          {(customerNeeds.length > 0 || salesOpportunities.length > 0) && (
+            <AdditionalAnalysesSection
+              customerNeeds={customerNeeds}
+              salesOpportunities={salesOpportunities}
+            />
+          )}
+
           {additionalEntries.length > 0 && (
             <section className="mt-7 rounded-[1.5rem] border border-[#BABDE2]/35 bg-white p-5 shadow-sm sm:p-6">
               <SectionHeading
-                eyebrow="تفاصيل داعمة"
-                title="تحليلات إضافية"
-                icon={<BarChart3 size={20} />}
+                eyebrow="النتيجة النهائية"
+                title="الخلاصة"
+                icon={<MessageSquareQuote size={20} />}
               />
-              <div className="mt-5 grid gap-4 lg:grid-cols-2">
+              <div className="mt-5">
                 {additionalEntries.map(([key, value]) => (
-                  <div key={key} className="rounded-2xl bg-[#F8F7F3] p-4">
-                    <h3 className="font-extrabold text-[#374375]">
-                      {label(key)}
-                    </h3>
-                    <div className="mt-3 leading-8 text-gray-600">
-                      <SafeValue value={value} />
-                    </div>
+                  <div
+                    key={key}
+                    className="rounded-2xl border border-[#BABDE2]/25 bg-[#F8F7F3] p-4 leading-8 text-gray-600 sm:p-5"
+                  >
+                    <SafeValue value={value} />
                   </div>
                 ))}
               </div>
@@ -535,6 +552,156 @@ function RecommendationsSection({ items }: { items: InsightItem[] }) {
   );
 }
 
+function AdditionalAnalysesSection({
+  customerNeeds,
+  salesOpportunities,
+}: {
+  customerNeeds: CustomerNeedItem[];
+  salesOpportunities: SalesOpportunityItem[];
+}) {
+  return (
+    <section className="mt-7 rounded-[1.5rem] border border-[#BABDE2]/35 bg-white p-5 shadow-sm sm:p-6">
+      <SectionHeading
+        eyebrow="تفاصيل داعمة لاتخاذ القرار"
+        title="تحليلات إضافية"
+        icon={<BarChart3 size={20} />}
+      />
+
+      <div className="mt-6 space-y-7">
+        {customerNeeds.length > 0 ? (
+          <div>
+            <div className="flex items-center gap-3 border-b border-[#BABDE2]/25 pb-3">
+              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#BABDE2]/25 text-[#374375]">
+                <Target size={18} />
+              </span>
+              <div>
+                <h3 className="font-black text-[#374375]">احتياجات العملاء</h3>
+                <p className="mt-0.5 text-xs text-gray-500">
+                  الاحتياجات المتكررة والأدلة المستخلصة من تعليقات العملاء
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-4 grid gap-3 lg:grid-cols-2">
+              {customerNeeds.map((item, index) => (
+                <article
+                  key={`${item.need}-${index}`}
+                  className="rounded-2xl border border-[#BABDE2]/30 bg-[#F8F7F3] p-4 sm:p-5"
+                >
+                  <div className="flex items-start gap-3">
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-[#374375] text-sm font-black text-white">
+                      {index + 1}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-start justify-between gap-2">
+                        <h4 className="font-extrabold leading-7 text-[#374375]">
+                          {item.need}
+                        </h4>
+                        {item.importance ? (
+                          <ImportanceBadge importance={item.importance} />
+                        ) : null}
+                      </div>
+                      {item.evidence ? (
+                        <div className="mt-3 rounded-xl border border-white bg-white/85 p-3">
+                          <p className="text-xs font-extrabold text-[#895159]">
+                            الدليل من التعليقات
+                          </p>
+                          <p className="mt-1.5 text-sm leading-7 text-gray-600">
+                            {item.evidence}
+                          </p>
+                        </div>
+                      ) : null}
+                    </div>
+                  </div>
+                </article>
+              ))}
+            </div>
+          </div>
+        ) : null}
+
+        {salesOpportunities.length > 0 ? (
+          <div>
+            <div className="flex items-center gap-3 border-b border-emerald-100 pb-3">
+              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-100 text-emerald-700">
+                <Sparkles size={18} />
+              </span>
+              <div>
+                <h3 className="font-black text-[#374375]">فرص المبيعات</h3>
+                <p className="mt-0.5 text-xs text-gray-500">
+                  فرص قابلة للتنفيذ مبنية على سلوك وطلبات العملاء
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-4 grid gap-3 lg:grid-cols-2">
+              {salesOpportunities.map((item, index) => (
+                <article
+                  key={`${item.opportunity}-${index}`}
+                  className="overflow-hidden rounded-2xl border border-emerald-100 bg-emerald-50/45"
+                >
+                  <div className="p-4 sm:p-5">
+                    <div className="flex items-start gap-3">
+                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-emerald-600 text-sm font-black text-white">
+                        {index + 1}
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs font-extrabold text-emerald-700">
+                          الفرصة
+                        </p>
+                        <h4 className="mt-1 font-extrabold leading-7 text-[#374375]">
+                          {item.opportunity}
+                        </h4>
+                      </div>
+                    </div>
+
+                    {item.reason ? (
+                      <div className="mt-4 border-t border-emerald-100 pt-3">
+                        <p className="text-xs font-extrabold text-gray-500">
+                          سبب اكتشاف الفرصة
+                        </p>
+                        <p className="mt-1.5 text-sm leading-7 text-gray-600">
+                          {item.reason}
+                        </p>
+                      </div>
+                    ) : null}
+                  </div>
+
+                  {item.suggestedAction ? (
+                    <div className="border-t border-emerald-100 bg-white/80 px-4 py-3 sm:px-5">
+                      <p className="text-xs font-extrabold text-emerald-700">
+                        الإجراء المقترح
+                      </p>
+                      <p className="mt-1.5 text-sm font-bold leading-7 text-[#374375]">
+                        {item.suggestedAction}
+                      </p>
+                    </div>
+                  ) : null}
+                </article>
+              ))}
+            </div>
+          </div>
+        ) : null}
+      </div>
+    </section>
+  );
+}
+
+function ImportanceBadge({ importance }: { importance: string }) {
+  const value = importance.trim().toLowerCase();
+  const style =
+    value === "high" || value === "critical" || value === "مرتفعة"
+      ? "bg-red-100 text-red-700"
+      : value === "medium" || value === "متوسطة"
+        ? "bg-amber-100 text-amber-800"
+        : "bg-emerald-100 text-emerald-700";
+
+  return (
+    <span className={`shrink-0 rounded-full px-2.5 py-1 text-[10px] font-extrabold ${style}`}>
+      الأهمية: {priorityLabel(value)}
+    </span>
+  );
+}
+
 function PriorityBadge({ priority }: { priority: string }) {
   const value = priority.trim().toLowerCase();
   const style =
@@ -589,6 +756,88 @@ function insightItems(value: unknown, recommendations = false): InsightItem[] {
       };
     })
     .filter((item): item is InsightItem => item !== null);
+}
+
+function customerNeedItems(value: unknown): CustomerNeedItem[] {
+  return arrayLike(value)
+    .map((item): CustomerNeedItem | null => {
+      if (typeof item === "string" && item.trim()) {
+        return { need: item.trim(), evidence: null, importance: null };
+      }
+
+      const record = asRecord(item);
+      if (!record) return null;
+      const need =
+        readableText(record.need) ||
+        readableText(record.title) ||
+        readableText(record.name) ||
+        readableText(record.description);
+      if (!need) return null;
+
+      return {
+        need,
+        evidence:
+          readableText(record.evidence) ||
+          readableText(record.reason) ||
+          readableText(record.details),
+        importance:
+          textValue(record.importance) || textValue(record.priority),
+      };
+    })
+    .filter((item): item is CustomerNeedItem => item !== null);
+}
+
+function salesOpportunityItems(value: unknown): SalesOpportunityItem[] {
+  return arrayLike(value)
+    .map((item): SalesOpportunityItem | null => {
+      if (typeof item === "string" && item.trim()) {
+        return {
+          opportunity: item.trim(),
+          reason: null,
+          suggestedAction: null,
+        };
+      }
+
+      const record = asRecord(item);
+      if (!record) return null;
+      const opportunity =
+        readableText(record.opportunity) ||
+        readableText(record.title) ||
+        readableText(record.name) ||
+        readableText(record.description);
+      if (!opportunity) return null;
+
+      return {
+        opportunity,
+        reason:
+          readableText(record.reason) ||
+          readableText(record.evidence) ||
+          readableText(record.details),
+        suggestedAction:
+          readableText(record.suggested_action) ||
+          readableText(record.action),
+      };
+    })
+    .filter((item): item is SalesOpportunityItem => item !== null);
+}
+
+function arrayLike(value: unknown) {
+  if (Array.isArray(value)) return value;
+  return hasVisibleValue(value) ? [value] : [];
+}
+
+function readableText(value: unknown): string | null {
+  if (typeof value === "string") return value.trim() || null;
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return new Intl.NumberFormat("en-US").format(value);
+  }
+  if (Array.isArray(value)) {
+    const parts = value
+      .map((item) => readableText(item))
+      .filter((item): item is string => Boolean(item));
+    return parts.length > 0 ? parts.join("، ") : null;
+  }
+  return null;
 }
 
 function buildSentimentMetrics(stats: JsonRecord | null, merged: JsonRecord) {
