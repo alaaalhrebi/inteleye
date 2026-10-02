@@ -1,16 +1,19 @@
 "use client";
 
 import { useState } from "react";
-import type { FormEvent } from "react";
+import type { FormEvent, ReactNode } from "react";
 import {
   Building2,
   CheckCircle2,
+  Globe2,
   Instagram,
   MapPin,
   MessageCircle,
   Music2,
   Plus,
 } from "lucide-react";
+
+type PlatformScope = "global" | "new_branch" | "";
 
 const platformOptions = [
   {
@@ -83,18 +86,26 @@ function normalizeUsername(value: string) {
   return value.trim().replace(/^@/, "");
 }
 
-export default function AddBranchForm() {
+export default function AddBranchForm({
+  canChoosePlatformScope,
+}: {
+  canChoosePlatformScope: boolean;
+}) {
   const [branchName, setBranchName] = useState("");
   const [selectedPlatform, setSelectedPlatform] = useState("google_maps");
+  const [scope, setScope] = useState<PlatformScope>("new_branch");
   const [platformValue, setPlatformValue] = useState("");
   const [businessActivity, setBusinessActivity] = useState("");
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
 
   const inputConfig = getPlatformInputConfig(selectedPlatform);
+  const supportsGlobalScope =
+    canChoosePlatformScope && selectedPlatform !== "google_maps";
 
   function handlePlatformChange(platformKey: string) {
     setSelectedPlatform(platformKey);
+    setScope(platformKey === "google_maps" ? "new_branch" : "");
     setPlatformValue("");
     setMessage("");
   }
@@ -104,6 +115,11 @@ export default function AddBranchForm() {
 
     if (!branchName.trim()) {
       setMessage("الرجاء إدخال اسم الفرع");
+      return;
+    }
+
+    if (supportsGlobalScope && !scope) {
+      setMessage("حدد ما إذا كانت المنصة شاملة لجميع الفروع أو خاصة بالفرع الجديد");
       return;
     }
 
@@ -131,6 +147,7 @@ export default function AddBranchForm() {
             ? normalizeUsername(platformValue)
             : platformValue.trim(),
         businessActivity: businessActivity.trim(),
+        scope: supportsGlobalScope ? scope : "new_branch",
       }),
     });
 
@@ -148,6 +165,7 @@ export default function AddBranchForm() {
     setPlatformValue("");
     setBusinessActivity("");
     setSelectedPlatform("google_maps");
+    setScope("new_branch");
     setSaving(false);
 
     window.location.reload();
@@ -186,7 +204,7 @@ export default function AddBranchForm() {
 
       <div className="mb-6">
         <label className="mb-3 block text-sm font-bold text-[#374375]">
-          اختر المنصة المرتبطة بهذا الفرع
+          اختر المنصة
         </label>
 
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -234,6 +252,40 @@ export default function AddBranchForm() {
           })}
         </div>
       </div>
+
+      {supportsGlobalScope ? (
+        <div className="mb-6 rounded-[1.5rem] border border-[#BABDE2]/35 bg-[#F8F7F3] p-4 sm:p-5">
+          <div className="mb-4">
+            <h4 className="font-extrabold text-[#374375]">حدد نطاق المنصة</h4>
+            <p className="mt-1 text-xs font-bold leading-6 text-gray-500">
+              اختر ما إذا كان الحساب يمثل المنشأة كاملة أو الفرع الجديد فقط.
+            </p>
+          </div>
+
+          <div className="grid gap-3 md:grid-cols-2">
+            <ScopeOption
+              active={scope === "global"}
+              icon={<Globe2 size={20} />}
+              title="شاملة لجميع الفروع"
+              description="تظهر بيانات الحساب على مستوى المنشأة وكل الفروع."
+              onClick={() => {
+                setScope("global");
+                setMessage("");
+              }}
+            />
+            <ScopeOption
+              active={scope === "new_branch"}
+              icon={<Building2 size={20} />}
+              title="خاصة بالفرع الجديد"
+              description="ترتبط بيانات الحساب بهذا الفرع فقط."
+              onClick={() => {
+                setScope("new_branch");
+                setMessage("");
+              }}
+            />
+          </div>
+        </div>
+      ) : null}
 
       <div className="grid gap-5 md:grid-cols-2">
         <div>
@@ -288,5 +340,52 @@ export default function AddBranchForm() {
         {saving ? "جاري إضافة الفرع..." : "إضافة الفرع والمنصة"}
       </button>
     </form>
+  );
+}
+
+function ScopeOption({
+  active,
+  icon,
+  title,
+  description,
+  onClick,
+}: {
+  active: boolean;
+  icon: ReactNode;
+  title: string;
+  description: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`rounded-2xl border p-4 text-right transition ${
+        active
+          ? "border-[#374375] bg-white shadow-sm"
+          : "border-transparent bg-white/65 hover:border-[#BABDE2]"
+      }`}
+    >
+      <div className="flex items-start gap-3">
+        <span
+          className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${
+            active
+              ? "bg-[#374375] text-white"
+              : "bg-[#BABDE2]/30 text-[#374375]"
+          }`}
+        >
+          {icon}
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="flex items-center gap-2 font-extrabold text-[#374375]">
+            {title}
+            {active ? <CheckCircle2 size={16} /> : null}
+          </span>
+          <span className="mt-1 block text-xs font-bold leading-6 text-gray-500">
+            {description}
+          </span>
+        </span>
+      </div>
+    </button>
   );
 }

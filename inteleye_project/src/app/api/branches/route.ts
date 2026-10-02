@@ -14,12 +14,15 @@ const ALLOWED_PLATFORMS = new Set([
   "tiktok",
   "instagram",
 ]);
+const SOCIAL_PLATFORMS = new Set(["x", "tiktok", "instagram"]);
+const ALLOWED_BRANCH_SCOPES = new Set(["global", "new_branch"]);
 
 type BranchRequest = {
   name?: unknown;
   platformName?: unknown;
   platformValue?: unknown;
   businessActivity?: unknown;
+  scope?: unknown;
 };
 
 function textValue(value: unknown) {
@@ -51,6 +54,7 @@ export async function POST(request: Request) {
   const platformName = textValue(body.platformName);
   const platformValue = textValue(body.platformValue);
   const businessActivity = textValue(body.businessActivity);
+  const requestedScope = textValue(body.scope);
 
   if (
     !name ||
@@ -82,7 +86,7 @@ export async function POST(request: Request) {
         .eq("is_active", true),
       supabase
         .from("client_platforms")
-        .select("platform_name, platform_url")
+        .select("id, branch_id, platform_name, platform_url")
         .eq("client_id", client.id)
         .eq("is_active", true),
     ]);
@@ -113,6 +117,21 @@ export async function POST(request: Request) {
     );
   }
 
+  const supportsGlobalScope =
+    permissions.canChoosePlatformScope && SOCIAL_PLATFORMS.has(platformName);
+
+  if (
+    supportsGlobalScope &&
+    !ALLOWED_BRANCH_SCOPES.has(requestedScope)
+  ) {
+    return NextResponse.json(
+      { message: "حدد ما إذا كانت المنصة شاملة لجميع الفروع أو خاصة بالفرع الجديد" },
+      { status: 400 }
+    );
+  }
+
+  const effectiveScope = supportsGlobalScope ? requestedScope : "new_branch";
+
   const cleanUsername =
     platformName === "x" ? platformValue.replace(/^@/, "") : null;
   const finalPlatformUrl =
@@ -120,7 +139,7 @@ export async function POST(request: Request) {
       ? `https://x.com/${cleanUsername}`
       : platformValue.replace(/\/+$/, "");
 
-  const duplicateLink = (activePlatforms ?? []).some(
+  const duplicateLink = (activePlatforms ?? []).find(
     (platform) =>
       platform.platform_name === platformName &&
       normalizeComparableUrl(platform.platform_url) ===
@@ -129,7 +148,25 @@ export async function POST(request: Request) {
 
   if (duplicateLink) {
     return NextResponse.json(
-      { message: "تمت إضافة المنصة مسبقًا" },
+      {
+        message:
+          duplicateLink.branch_id === null
+            ? "تمت إضافة المنصة مسبقًا كمنصة شاملة لجميع الفروع"
+            : "تمت إضافة المنصة مسبقًا لأحد الفروع",
+      },
+      { status: 409 }
+    );
+  }
+
+  if (
+    effectiveScope === "global" &&
+    (activePlatforms ?? []).some(
+      (platform) =>
+        platform.platform_name === platformName && platform.branch_id === null
+    )
+  ) {
+    return NextResponse.json(
+      { message: "هذه المنصة مرتبطة مسبقًا كمنصة شاملة لجميع الفروع" },
       { status: 409 }
     );
   }
@@ -152,7 +189,7 @@ export async function POST(request: Request) {
     .from("client_platforms")
     .insert({
       client_id: client.id,
-      branch_id: branch.id,
+      branch_id: effectiveScope === "global" ? null : branch.id,
       platform_name: platformName,
       platform_url: finalPlatformUrl,
       username: cleanUsername,
@@ -206,7 +243,13 @@ export async function POST(request: Request) {
   }
 
   return NextResponse.json(
-    { id: branch.id, platformId: platform.id, syncQueued },
+    {
+      id: branch.id,
+      platformId: platform.id,
+      branchId: effectiveScope === "global" ? null : branch.id,
+      scope: effectiveScope,
+      syncQueued,
+    },
     { status: 201 }
   );
 }

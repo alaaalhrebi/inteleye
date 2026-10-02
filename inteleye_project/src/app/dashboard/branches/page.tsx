@@ -141,7 +141,9 @@ export default async function BranchesPage() {
           </div>
 
           {canAddBranch ? (
-            <AddBranchForm />
+            <AddBranchForm
+              canChoosePlatformScope={permissions.canChoosePlatformScope}
+            />
           ) : (
             <div className="rounded-3xl bg-[#DFAEA1]/20 p-6 text-center">
               <h3 className="text-lg font-extrabold text-[#895159]">
