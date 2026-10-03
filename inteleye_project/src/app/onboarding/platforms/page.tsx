@@ -158,7 +158,7 @@ export default function PlatformsOnboardingPage() {
           .from("branches")
           .select("id, name")
           .eq("client_id", client.id)
-          .eq("is_active", true)
+          .eq("status", "active")
           .order("created_at", { ascending: true }),
       ]);
 

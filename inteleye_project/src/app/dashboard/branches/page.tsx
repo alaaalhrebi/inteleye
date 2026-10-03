@@ -4,8 +4,6 @@ import { redirect } from "next/navigation";
 import {
   ArrowRight,
   Building2,
-  MapPin,
-  MessageCircle,
   Plus,
   Star,
   FileText,
@@ -13,6 +11,7 @@ import {
 } from "lucide-react";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 import AddBranchForm from "@/components/AddBranchForm";
+import BranchManager from "@/components/BranchManager";
 import LockedFeature from "@/components/dashboard/LockedFeature";
 import { getSubscriptionPermissions } from "@/lib/subscription-permissions";
 
@@ -47,8 +46,10 @@ export default async function BranchesPage() {
 
   const { data: branches } = await supabase
     .from("branches")
-    .select("id, name")
-    .eq("client_id", client.id);
+    .select("id, name, status, business_activity")
+    .eq("client_id", client.id)
+    .in("status", ["active", "suspended"])
+    .order("created_at", { ascending: true });
 
   const currentBranchesCount = branches?.length ?? 0;
   const permissions = getSubscriptionPermissions(client, {
@@ -60,15 +61,27 @@ export default async function BranchesPage() {
   const branchIds = (branches ?? []).map((branch) => branch.id);
 
   let reports: any[] = [];
+  let platforms: any[] = [];
 
   if (branchIds.length > 0) {
-    const { data } = await supabase
-      .from("reports")
-      .select("*")
-      .in("branch_id", branchIds)
-      .order("created_at", { ascending: false });
+    const [reportsResult, platformsResult] = await Promise.all([
+      supabase
+        .from("reports")
+        .select("*")
+        .in("branch_id", branchIds)
+        .order("created_at", { ascending: false }),
+      supabase
+        .from("client_platforms")
+        .select(
+          "id, branch_id, platform_name, platform_url, username, connection_status, last_link_changed_at"
+        )
+        .eq("client_id", client.id)
+        .in("branch_id", branchIds)
+        .is("archived_at", null),
+    ]);
 
-    reports = data ?? [];
+    reports = reportsResult.data ?? [];
+    platforms = platformsResult.data ?? [];
   }
 
   const latestReportByBranch = new Map<number, any>();
@@ -183,6 +196,9 @@ export default async function BranchesPage() {
                     key={branch.id}
                     branch={branch}
                     report={report}
+                    platforms={platforms.filter(
+                      (platform) => platform.branch_id === branch.id
+                    )}
                   />
                 );
               })}
@@ -218,9 +234,11 @@ function InfoCard({
 function BranchCard({
   branch,
   report,
+  platforms,
 }: {
   branch: any;
   report: any;
+  platforms: any[];
 }) {
   return (
     <div className="rounded-3xl border border-[#BABDE2]/30 bg-[#F8F7F3] p-5">
@@ -235,30 +253,21 @@ function BranchCard({
           </p>
         </div>
 
-        <span className="rounded-full bg-[#BABDE2]/40 px-3 py-1 text-xs font-bold text-[#374375]">
-          مفعّل
+        <span
+          className={`rounded-full px-3 py-1 text-xs font-bold ${
+            branch.status === "active"
+              ? "bg-[#BABDE2]/40 text-[#374375]"
+              : "bg-[#DFAEA1]/30 text-[#895159]"
+          }`}
+        >
+          {branch.status === "active" ? "مفعّل" : "متوقف مؤقتًا"}
         </span>
       </div>
 
       <div className="space-y-3">
-        {branch.google_maps_url && (
-          <a
-            href={branch.google_maps_url}
-            target="_blank"
-            rel="noreferrer"
-            className="flex items-center gap-2 rounded-2xl bg-white px-4 py-3 text-sm font-bold text-[#374375] transition hover:bg-[#BABDE2]/20"
-          >
-            <MapPin size={18} />
-            رابط Google Maps
-          </a>
-        )}
-
-        {branch.x_handle && (
-          <div className="flex items-center gap-2 rounded-2xl bg-white px-4 py-3 text-sm font-bold text-[#374375]">
-            <MessageCircle size={18} />
-            حساب X: {branch.x_handle}
-          </div>
-        )}
+        <p className="rounded-2xl bg-white px-4 py-3 text-sm font-bold text-[#374375]">
+          النشاط: {branch.business_activity || "غير محدد"}
+        </p>
 
         <div className="grid gap-3 md:grid-cols-3">
           <MiniStat label="متوسط التقييم" value={report?.google_rating ?? "—"} />
@@ -275,6 +284,7 @@ function BranchCard({
           <FileText size={18} />
           عرض تقارير الفرع
         </Link>
+        <BranchManager branch={branch} platforms={platforms} />
       </div>
     </div>
   );

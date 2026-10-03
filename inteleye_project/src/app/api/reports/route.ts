@@ -71,7 +71,7 @@ export async function POST(request: Request) {
       .select("id")
       .eq("id", selectedBranchId)
       .eq("client_id", access.client.id)
-      .eq("is_active", true)
+      .eq("status", "active")
       .maybeSingle(),
 
     access.supabase

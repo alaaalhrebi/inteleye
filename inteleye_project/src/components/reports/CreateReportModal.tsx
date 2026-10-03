@@ -47,8 +47,9 @@ export default function CreateReportModal({
   onClose,
   onAccepted,
 }: CreateReportModalProps) {
+  const activeBranches = branches.filter((branch) => branch.status === "active");
   const initialBranchId =
-    branches.length === 1 ? String(branches[0].id) : "";
+    activeBranches.length === 1 ? String(activeBranches[0].id) : "";
 
   const initialPlatforms = platforms.filter(
     (platform) =>
@@ -283,7 +284,7 @@ export default function CreateReportModal({
               >
                 <option value="">اختر الفرع</option>
 
-                {branches.map((branch) => (
+              {activeBranches.map((branch) => (
                   <option
                     key={branch.id}
                     value={branch.id}

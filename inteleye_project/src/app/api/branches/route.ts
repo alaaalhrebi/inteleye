@@ -83,7 +83,7 @@ export async function POST(request: Request) {
         .from("branches")
         .select("id", { count: "exact", head: true })
         .eq("client_id", client.id)
-        .eq("is_active", true),
+        .in("status", ["active", "suspended"]),
       supabase
         .from("client_platforms")
         .select("id, branch_id, platform_name, platform_url")
@@ -173,7 +173,12 @@ export async function POST(request: Request) {
 
   const { data: branch, error: branchError } = await supabase
     .from("branches")
-    .insert({ client_id: client.id, name })
+    .insert({
+      client_id: client.id,
+      name,
+      business_activity: businessActivity,
+      status: "active",
+    })
     .select("id")
     .single();
 

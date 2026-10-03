@@ -76,7 +76,7 @@ export async function loadReportsSnapshot(
         .order("created_at", { ascending: false }),
       supabase
         .from("branches")
-        .select("id, name")
+        .select("id, name, status")
         .eq("client_id", clientId)
         .order("name"),
       supabase
@@ -111,6 +111,10 @@ export async function loadReportsSnapshot(
     (branch: Record<string, unknown>) => ({
       id: Number(branch.id),
       name: stringValue(branch.name) || "فرع بدون اسم",
+      status:
+        branch.status === "suspended" || branch.status === "deleted"
+          ? branch.status
+          : "active",
     })
   );
   const platforms: PlatformOption[] = (platformsResult.data ?? []).map(

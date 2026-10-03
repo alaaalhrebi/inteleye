@@ -130,9 +130,9 @@ export async function POST(request: Request) {
       .eq("is_active", true),
     supabase
       .from("branches")
-      .select("id")
+      .select("id, status")
       .eq("client_id", client.id)
-      .eq("is_active", true)
+      .in("status", ["active", "suspended"])
       .order("created_at", { ascending: true }),
   ]);
 
@@ -199,7 +199,19 @@ export async function POST(request: Request) {
   let effectiveRequestedBranchId = requestedBranchId;
 
   if (!permissions.canChoosePlatformScope) {
-    let primaryBranchId = Number(branchRows[0]?.id);
+    let primaryBranchId = Number(
+      branchRows.find((branch) => branch.status === "active")?.id
+    );
+
+    if (
+      (!Number.isSafeInteger(primaryBranchId) || primaryBranchId <= 0) &&
+      branchRows.some((branch) => branch.status === "suspended")
+    ) {
+      return NextResponse.json(
+        { message: "أعد تفعيل الفرع قبل ربط منصة جديدة" },
+        { status: 409 }
+      );
+    }
 
     if (!Number.isSafeInteger(primaryBranchId) || primaryBranchId <= 0) {
       const { data: ensuredBranchId, error: branchError } = await supabase.rpc(
@@ -236,7 +248,7 @@ export async function POST(request: Request) {
       .select("id")
       .eq("id", effectiveRequestedBranchId)
       .eq("client_id", client.id)
-      .eq("is_active", true)
+      .eq("status", "active")
       .maybeSingle();
 
     if (!branch) {
@@ -260,7 +272,12 @@ export async function POST(request: Request) {
 
     const { data: branch, error: branchError } = await supabase
       .from("branches")
-      .insert({ client_id: client.id, name: branchName })
+      .insert({
+        client_id: client.id,
+        name: branchName,
+        business_activity: businessActivity,
+        status: "active",
+      })
       .select("id")
       .single();
 

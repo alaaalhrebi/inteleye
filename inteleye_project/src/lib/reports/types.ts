@@ -3,6 +3,7 @@ export type JsonRecord = Record<string, unknown>;
 export type BranchOption = {
   id: number;
   name: string;
+  status: "active" | "suspended" | "deleted";
 };
 
 export type PlatformOption = {

@@ -48,7 +48,7 @@ export default async function SettingsPage() {
       .from("branches")
       .select("id", { count: "exact" })
       .eq("client_id", client.id)
-      .eq("is_active", true),
+      .in("status", ["active", "suspended"]),
     supabase
       .from("client_platforms")
       .select("platform_name")

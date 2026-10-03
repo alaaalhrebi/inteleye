@@ -90,7 +90,8 @@ export default async function DashboardPage({
   let branchesQuery = supabase
     .from("branches")
     .select("id, name")
-    .eq("client_id", client.id);
+    .eq("client_id", client.id)
+    .eq("status", "active");
 
   if (basePermissions.isTrialActive) {
     branchesQuery = branchesQuery.limit(1);

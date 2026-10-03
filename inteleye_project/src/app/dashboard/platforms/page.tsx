@@ -82,9 +82,9 @@ export default async function PlatformsPage() {
     platformsQuery,
     supabase
       .from("branches")
-      .select("id, name")
+      .select("id, name, status")
       .eq("client_id", client.id)
-      .eq("is_active", true),
+      .in("status", ["active", "suspended"]),
     supabase
       .from("unified_feedback")
       .select("platform_name, published_at")
