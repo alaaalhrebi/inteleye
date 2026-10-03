@@ -5,6 +5,7 @@ import {
   queuePlatformSync,
   type SyncPlatformName,
 } from "@/lib/platforms/n8n";
+import { normalizePlatformValue } from "@/lib/platforms/normalize";
 import { getSubscriptionPermissions } from "@/lib/subscription-permissions";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 
@@ -22,34 +23,6 @@ type BranchActionRequest = {
 
 function textValue(value: unknown) {
   return typeof value === "string" ? value.trim() : "";
-}
-
-function normalizePlatformValue(platformName: string, rawValue: string) {
-  if (platformName === "x") {
-    let username = rawValue.trim();
-    try {
-      const parsed = new URL(username);
-      username = parsed.pathname.split("/").filter(Boolean)[0] || "";
-    } catch {
-      // X also accepts a username without a URL.
-    }
-
-    username = username.replace(/^@/, "").trim();
-    if (!username) return null;
-    return { platformUrl: `https://x.com/${username}`, username };
-  }
-
-  try {
-    const parsed = new URL(rawValue);
-    if (!['http:', 'https:'].includes(parsed.protocol)) return null;
-    parsed.hash = "";
-    return {
-      platformUrl: parsed.toString().replace(/\/+$/, ""),
-      username: null,
-    };
-  } catch {
-    return null;
-  }
 }
 
 function rpcErrorResponse(message: string) {
@@ -239,9 +212,17 @@ export async function PATCH(
       return NextResponse.json({ message: "المنصة غير موجودة" }, { status: 404 });
     }
 
-    const normalized = normalizePlatformValue(platform.platform_name, platformValue);
+    const normalized = await normalizePlatformValue(platform.platform_name, platformValue);
     if (!normalized) {
-      return NextResponse.json({ message: "رابط المنصة غير صالح" }, { status: 400 });
+      return NextResponse.json(
+        {
+          message:
+            platform.platform_name === "google_maps"
+              ? "رابط Google Maps غير صالح. انسخ رابط المشاركة من تطبيق خرائط Google"
+              : "رابط المنصة غير صالح",
+        },
+        { status: 400 }
+      );
     }
 
     const { data, error } = await supabase.rpc("rotate_branch_platform_link", {

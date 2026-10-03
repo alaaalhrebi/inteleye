@@ -5,6 +5,7 @@ import {
   queuePlatformSync,
   type SyncPlatformName,
 } from "@/lib/platforms/n8n";
+import { normalizePlatformValue } from "@/lib/platforms/normalize";
 import { getSubscriptionPermissions } from "@/lib/subscription-permissions";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 
@@ -32,42 +33,6 @@ function textValue(value: unknown) {
 
 function normalizeComparableUrl(value: string) {
   return value.trim().replace(/\/+$/, "").toLowerCase();
-}
-
-function normalizePlatformValue(platformName: string, rawValue: string) {
-  if (platformName === "x") {
-    let username = rawValue.trim();
-
-    try {
-      const parsed = new URL(username);
-      username = parsed.pathname.split("/").filter(Boolean)[0] || "";
-    } catch {
-      // يقبل اسم المستخدم مباشرة بالإضافة إلى الرابط.
-    }
-
-    username = username.replace(/^@/, "").trim();
-    if (!username) return null;
-
-    return {
-      platformUrl: `https://x.com/${username}`,
-      username,
-    };
-  }
-
-  try {
-    const parsed = new URL(rawValue);
-    if (!['http:', 'https:'].includes(parsed.protocol)) return null;
-
-    parsed.hash = "";
-    const normalizedUrl = parsed.toString().replace(/\/+$/, "");
-
-    return {
-      platformUrl: normalizedUrl,
-      username: null,
-    };
-  } catch {
-    return null;
-  }
 }
 
 export async function POST(request: Request) {
@@ -105,9 +70,17 @@ export async function POST(request: Request) {
     );
   }
 
-  const normalizedPlatform = normalizePlatformValue(platformName, platformValue);
+  const normalizedPlatform = await normalizePlatformValue(platformName, platformValue);
   if (!normalizedPlatform) {
-    return NextResponse.json({ message: "رابط المنصة غير صالح" }, { status: 400 });
+    return NextResponse.json(
+      {
+        message:
+          platformName === "google_maps"
+            ? "رابط Google Maps غير صالح. انسخ رابط المشاركة من تطبيق خرائط Google"
+            : "رابط المنصة غير صالح",
+      },
+      { status: 400 }
+    );
   }
 
   const { data: client } = await supabase

@@ -5,6 +5,7 @@ import {
   queuePlatformSync,
   type SyncPlatformName,
 } from "@/lib/platforms/n8n";
+import { normalizePlatformValue } from "@/lib/platforms/normalize";
 import { getSubscriptionPermissions } from "@/lib/subscription-permissions";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 
@@ -132,18 +133,24 @@ export async function POST(request: Request) {
 
   const effectiveScope = supportsGlobalScope ? requestedScope : "new_branch";
 
-  const cleanUsername =
-    platformName === "x" ? platformValue.replace(/^@/, "") : null;
-  const finalPlatformUrl =
-    platformName === "x"
-      ? `https://x.com/${cleanUsername}`
-      : platformValue.replace(/\/+$/, "");
+  const normalizedPlatform = await normalizePlatformValue(platformName, platformValue);
+  if (!normalizedPlatform) {
+    return NextResponse.json(
+      {
+        message:
+          platformName === "google_maps"
+            ? "رابط Google Maps غير صالح. انسخ رابط المشاركة من تطبيق خرائط Google"
+            : "رابط المنصة غير صالح",
+      },
+      { status: 400 }
+    );
+  }
 
   const duplicateLink = (activePlatforms ?? []).find(
     (platform) =>
       platform.platform_name === platformName &&
       normalizeComparableUrl(platform.platform_url) ===
-        normalizeComparableUrl(finalPlatformUrl)
+        normalizeComparableUrl(normalizedPlatform.platformUrl)
   );
 
   if (duplicateLink) {
@@ -196,8 +203,8 @@ export async function POST(request: Request) {
       client_id: client.id,
       branch_id: effectiveScope === "global" ? null : branch.id,
       platform_name: platformName,
-      platform_url: finalPlatformUrl,
-      username: cleanUsername,
+      platform_url: normalizedPlatform.platformUrl,
+      username: normalizedPlatform.username,
       business_activity: businessActivity,
       is_active: true,
       connection_status: "pending",
