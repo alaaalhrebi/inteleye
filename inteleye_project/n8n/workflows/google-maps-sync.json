@@ -62,6 +62,53 @@
     },
     {
       "parameters": {
+        "jsCode": "const platform = $json;\nconst rawUrl = String(platform.platform_url || '').trim();\nconst match = rawUrl.match(/^https?:\\/\\/([^\\/?#]+)(\\/[^?#]*)?(?:[?#].*)?$/i);\n\nif (!match) {\n  return [{ json: { ...platform, google_url_ready: false, sync_error: 'رابط Google Maps المخزن غير صالح' } }];\n}\n\nconst host = match[1].toLowerCase();\nconst path = match[2] || '/';\nconst isGoogleHost = host === 'google.com' || host.endsWith('.google.com');\nconst isMapsPath = host === 'maps.google.com' || path === '/maps' || path.startsWith('/maps/');\n\nif (!isGoogleHost || !isMapsPath) {\n  return [{ json: { ...platform, google_url_ready: false, sync_error: 'رابط Google Maps لم يُوسّع إلى رابط خرائط كامل قبل المزامنة' } }];\n}\n\nreturn [{\n  json: {\n    ...platform,\n    platform_url: rawUrl.replace(/#.*$/, '').replace(/\\/+$/, ''),\n    google_url_ready: true\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        624,
+        0
+      ],
+      "id": "caf49262-4cf5-4563-b33c-24be2a2457e5",
+      "name": "Validate Google Maps URL"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "470f335a-acde-4ebc-80fe-028e26af4e0d",
+              "leftValue": "={{ $json.google_url_ready === true }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        784,
+        0
+      ],
+      "id": "90852d9c-62ef-47ef-b97a-a2d877d41e8e",
+      "name": "Google URL Ready?"
+    },
+    {
+      "parameters": {
         "method": "POST",
         "url": "https://api.apify.com/v2/acts/nwua9Gu5YrADL7ZDj/run-sync-get-dataset-items",
         "authentication": "genericCredentialType",
@@ -92,7 +139,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// السجل الحالي القادم من جدول client_platforms\nconst platform = $('Loop Over Items').item.json;\n\nif (!platform.id) {\n  throw new Error('platform_id غير موجود');\n}\n\nconst output = [];\n\nfor (const item of items) {\n  const place = item.json;\n\n  // بعض Actors تضع التقييمات داخل مصفوفة،\n  // وبعضها يعيد كل تقييم كسجل مستقل\n  let reviews =\n    place.reviews ||\n    place.reviewsData ||\n    place.reviewData ||\n    place.reviewsPersonalData ||\n    [];\n\n  if (!Array.isArray(reviews)) {\n    reviews = [];\n  }\n\n  // إذا كان العنصر نفسه يمثل تقييمًا\n  if (\n    reviews.length === 0 &&\n    (\n      place.reviewId ||\n      place.reviewText ||\n      place.text ||\n      place.rating ||\n      place.stars\n    )\n  ) {\n    reviews = [place];\n  }\n\n  for (let i = 0; i < reviews.length; i++) {\n    const review = reviews[i];\n\n    const reviewText =\n      review.text ||\n      review.reviewText ||\n      review.textTranslated ||\n      review.comment ||\n      '';\n\n    // تجاهل التقييمات التي لا تحتوي على نص\n    if (!reviewText.trim()) {\n      continue;\n    }\n\n    const reviewDate =\n      review.publishedAtDate ||\n      review.date ||\n      review.publishedAt ||\n      null;\n\n    const reviewId =\n      review.reviewId ||\n      review.id ||\n      review.reviewUrl ||\n      `${platform.id}_${reviewDate || 'no-date'}_${i}_${reviewText.slice(0, 40)}`;\n\n    const starsValue =\n      review.stars ??\n      review.rating ??\n      review.reviewRating ??\n      null;\n\n    output.push({\n      json: {\n        // بيانات الربط\n        branch_id: platform.branch_id,\n        platform_id: platform.id,\n\n        // بيانات تقييم Google\n        review_id: String(reviewId),\n        reviewer_name:\n          review.name ||\n          review.reviewerName ||\n          review.userName ||\n          null,\n\n        stars:\n          starsValue !== null && starsValue !== ''\n            ? Number(starsValue)\n            : null,\n\n        review_text: reviewText.trim(),\n        review_date: reviewDate,\n\n        review_url:\n          review.reviewUrl ||\n          review.url ||\n          platform.platform_url ||\n          null,\n\n        owner_reply:\n          review.responseFromOwnerText ||\n          review.ownerReply ||\n          review.ownerResponse ||\n          null,\n\n        // حالة التحليل\n        analysis_status: 'pending',\n\n        // البيانات الأصلية القادمة من Apify\n        raw_data: review\n      }\n    });\n  }\n}\n\nconst fetchFailed = items.some(({ json }) =>\n  Boolean(json?.error || json?.errorDescription || json?.requestErrorMessages)\n);\n\nif (output.length === 0) {\n  return [{ json: {\n    fetch_succeeded: !fetchFailed,\n    has_scraped_reviews: false,\n    client_id: platform.client_id,\n    branch_id: platform.branch_id ?? null,\n    platform_id: platform.id\n  } }];\n}\n\nreturn output.map(({ json }) => ({\n  json: {\n    ...json,\n    fetch_succeeded: true,\n    has_scraped_reviews: true\n  }\n}));"
+        "jsCode": "// السجل الحالي القادم من جدول client_platforms\nconst platform = $('Loop Over Items').item.json;\n\nif (!platform.id) {\n  throw new Error('platform_id غير موجود');\n}\n\nconst output = [];\n\nfor (const item of items) {\n  const place = item.json;\n\n  // بعض Actors تضع التقييمات داخل مصفوفة،\n  // وبعضها يعيد كل تقييم كسجل مستقل\n  let reviews =\n    place.reviews ||\n    place.reviewsData ||\n    place.reviewData ||\n    place.reviewsPersonalData ||\n    [];\n\n  if (!Array.isArray(reviews)) {\n    reviews = [];\n  }\n\n  // إذا كان العنصر نفسه يمثل تقييمًا\n  if (\n    reviews.length === 0 &&\n    (\n      place.reviewId ||\n      place.reviewText ||\n      place.text ||\n      place.rating ||\n      place.stars\n    )\n  ) {\n    reviews = [place];\n  }\n\n  for (let i = 0; i < reviews.length; i++) {\n    const review = reviews[i];\n\n    const reviewText =\n      review.text ||\n      review.reviewText ||\n      review.textTranslated ||\n      review.comment ||\n      '';\n\n    // تجاهل التقييمات التي لا تحتوي على نص\n    if (!reviewText.trim()) {\n      continue;\n    }\n\n    const reviewDate =\n      review.publishedAtDate ||\n      review.date ||\n      review.publishedAt ||\n      null;\n\n    const reviewId =\n      review.reviewId ||\n      review.id ||\n      review.reviewUrl ||\n      `${platform.id}_${reviewDate || 'no-date'}_${i}_${reviewText.slice(0, 40)}`;\n\n    const starsValue =\n      review.stars ??\n      review.rating ??\n      review.reviewRating ??\n      null;\n\n    output.push({\n      json: {\n        // بيانات الربط\n        branch_id: platform.branch_id,\n        platform_id: platform.id,\n\n        // بيانات تقييم Google\n        review_id: String(reviewId),\n        reviewer_name:\n          review.name ||\n          review.reviewerName ||\n          review.userName ||\n          null,\n\n        stars:\n          starsValue !== null && starsValue !== ''\n            ? Number(starsValue)\n            : null,\n\n        review_text: reviewText.trim(),\n        review_date: reviewDate,\n\n        review_url:\n          review.reviewUrl ||\n          review.url ||\n          platform.platform_url ||\n          null,\n\n        owner_reply:\n          review.responseFromOwnerText ||\n          review.ownerReply ||\n          review.ownerResponse ||\n          null,\n\n        // حالة التحليل\n        analysis_status: 'pending',\n\n        // البيانات الأصلية القادمة من Apify\n        raw_data: review\n      }\n    });\n  }\n}\n\nconst failedItem = items.find(({ json }) =>\n  Boolean(json?.error || json?.errorDescription || json?.requestErrorMessages)\n);\nconst fetchFailed = Boolean(failedItem);\nconst rawError = JSON.stringify(\n  failedItem?.json?.errorDescription ||\n  failedItem?.json?.requestErrorMessages ||\n  failedItem?.json?.error ||\n  ''\n).toLowerCase();\nconst syncError = rawError.includes('invalid input') || rawError.includes('valid urls')\n  ? 'رفض Apify رابط Google Maps لأنه غير صالح أو غير مكتمل'\n  : 'فشل تشغيل جامع تقييمات Google Maps في Apify';\n\nif (output.length === 0) {\n  return [{ json: {\n    fetch_succeeded: !fetchFailed,\n    has_scraped_reviews: false,\n    sync_error: fetchFailed ? syncError : null,\n    client_id: platform.client_id,\n    branch_id: platform.branch_id ?? null,\n    platform_id: platform.id\n  } }];\n}\n\nreturn output.map(({ json }) => ({\n  json: {\n    ...json,\n    fetch_succeeded: true,\n    has_scraped_reviews: true\n  }\n}));"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -518,7 +565,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ { p_platform_id: Number($('Loop Over Items').item.json.id), p_error: 'تعذر سحب تقييمات Google Maps' } }}",
+        "jsonBody": "={{ { p_platform_id: Number($('Loop Over Items').item.json.id), p_error: String($json.sync_error || 'تعذر سحب تقييمات Google Maps').slice(0, 500) } }}",
         "options": {}
       },
       "id": "f4e12ec7-182d-4752-abb8-9a1323841956",
@@ -535,6 +582,19 @@
           "name": "Supabase Backend"
         }
       }
+    },
+    {
+      "parameters": {
+        "jsCode": "let failures = [];\ntry {\n  failures = $('Fail Google Sync').all();\n} catch {\n  failures = [];\n}\n\nif (failures.length > 0) {\n  throw new Error(`فشلت مزامنة Google Maps لعدد ${failures.length} منصة. تم حفظ حالة الخطأ لكل منصة.`);\n}\n\nreturn items;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        640,
+        -144
+      ],
+      "id": "aee0f835-9aa0-4354-bc9d-0a560c792d92",
+      "name": "Assert Google Sync Batch"
     },
     {
       "parameters": {
@@ -575,10 +635,45 @@
     },
     "Loop Over Items": {
       "main": [
-        [],
+        [
+          {
+            "node": "Assert Google Sync Batch",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Validate Google Maps URL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Google Maps URL": {
+      "main": [
+        [
+          {
+            "node": "Google URL Ready?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google URL Ready?": {
+      "main": [
         [
           {
             "node": "Fetch Google Reviews from Apify",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Fail Google Sync",
             "type": "main",
             "index": 0
           }

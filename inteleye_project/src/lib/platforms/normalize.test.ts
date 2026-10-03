@@ -64,3 +64,25 @@ test("يرفض روابط Google Maps المختصرة التي لا تنتهي 
     null
   );
 });
+
+test("يستخرج رابط Google Maps الكامل من صفحة التحويل", async () => {
+  const fetchImpl = (async () =>
+    ({
+      url: "https://share.google/example",
+      text: async () =>
+        '<meta property="og:url" content="https://www.google.com/maps/place/IntelEye/?entry=ttu">',
+    }) as Response) as typeof fetch;
+
+  assert.deepEqual(
+    await normalizePlatformValue(
+      "google_maps",
+      "https://share.google/example",
+      fetchImpl
+    ),
+    {
+      platformUrl:
+        "https://www.google.com/maps/place/IntelEye/?entry=ttu",
+      username: null,
+    }
+  );
+});

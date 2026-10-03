@@ -24,6 +24,25 @@ function isDirectGoogleMapsUrl(url: URL) {
   );
 }
 
+function findGoogleMapsUrlInHtml(html: string, baseUrl: URL) {
+  const candidates = [
+    ...html.matchAll(
+      /<(?:link|meta)[^>]+(?:href|content)=["']([^"']+)["'][^>]*>/gi
+    ),
+  ];
+
+  for (const match of candidates) {
+    try {
+      const candidate = new URL(match[1].replace(/&amp;/g, "&"), baseUrl);
+      if (isDirectGoogleMapsUrl(candidate)) return candidate;
+    } catch {
+      // Ignore malformed metadata and continue looking for a canonical Maps URL.
+    }
+  }
+
+  return null;
+}
+
 async function expandGoogleMapsUrl(rawUrl: URL, fetchImpl: FetchLike) {
   const host = rawUrl.hostname.toLowerCase();
 
@@ -40,9 +59,16 @@ async function expandGoogleMapsUrl(rawUrl: URL, fetchImpl: FetchLike) {
       },
     });
 
-    await response.body?.cancel();
     const expanded = new URL(response.url);
-    return isDirectGoogleMapsUrl(expanded) ? expanded : null;
+    if (isDirectGoogleMapsUrl(expanded)) {
+      await response.body?.cancel();
+      return expanded;
+    }
+
+    // Some Google share links return an HTML hand-off page instead of a final
+    // HTTP redirect. Accept only a canonical Google Maps URL from its metadata.
+    const html = await response.text();
+    return findGoogleMapsUrlInHtml(html, expanded);
   } catch {
     return null;
   }

@@ -62,4 +62,38 @@ for (const config of workflows) {
   );
 }
 
+const googleWorkflow = JSON.parse(
+  await readFile("n8n/workflows/google-maps-sync.json", "utf8")
+);
+const googleUrlValidator = googleWorkflow.nodes.find(
+  (node) => node.name === "Validate Google Maps URL"
+);
+const googleFailureNode = googleWorkflow.nodes.find(
+  (node) => node.name === "Fail Google Sync"
+);
+const googleBatchAssertion = googleWorkflow.nodes.find(
+  (node) => node.name === "Assert Google Sync Batch"
+);
+
+assert.ok(googleUrlValidator, "Google workflow must validate canonical Maps URLs");
+assert.match(googleUrlValidator.parameters.jsCode, /google_url_ready/);
+assert.equal(
+  googleWorkflow.connections["Loop Over Items"].main[1][0].node,
+  "Validate Google Maps URL",
+  "Google URLs must be validated before Apify"
+);
+assert.match(
+  googleFailureNode.parameters.jsonBody,
+  /sync_error/,
+  "Google failures must persist a precise safe error"
+);
+assert.ok(
+  googleBatchAssertion,
+  "Google workflow must fail the execution after recording platform failures"
+);
+assert.equal(
+  googleWorkflow.connections["Loop Over Items"].main[0][0].node,
+  "Assert Google Sync Batch"
+);
+
 console.log(`Verified ${workflows.length} platform sync workflows.`);
