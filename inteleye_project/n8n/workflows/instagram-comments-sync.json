@@ -379,7 +379,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const platform = $('Normalize Instagram Account').item.json;\nreturn [{ json: {\n  client_id: platform.client_id,\n  branch_id: platform.branch_id ?? null,\n  platform_id: platform.id,\n} }];"
+        "jsCode": "const platform = $('Normalize Instagram Account').last().json;\n\nif (!platform?.id || !platform?.client_id) {\n  throw new Error('تعذر استعادة سياق حساب Instagram قبل التحليل');\n}\n\nreturn [{ json: {\n  client_id: platform.client_id,\n  branch_id: platform.branch_id ?? null,\n  platform_id: platform.id,\n} }];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -772,7 +772,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ { p_platform_id: Number($('Loop Instagram Accounts').item.json.id) } }}",
+        "jsonBody": "={{ { p_platform_id: Number($('Prepare Instagram Pending Analysis').last().json.platform_id) } }}",
         "options": {}
       },
       "id": "e94437e1-f367-4483-b6eb-39b282a6f84f",
@@ -807,7 +807,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ { p_platform_id: Number($('Loop Instagram Accounts').item.json.id), p_error: 'تعذر سحب منشورات Instagram' } }}",
+        "jsonBody": "={{ { p_platform_id: Number($('Normalize Instagram Account').last().json.id), p_error: 'تعذر سحب منشورات Instagram' } }}",
         "options": {}
       },
       "id": "f8a68324-908d-471a-ab86-c2d206a57210",
