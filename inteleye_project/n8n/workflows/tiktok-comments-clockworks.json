@@ -133,7 +133,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const platform = $('Determine TikTok Sync Period').first().json;\nconst periodStart = new Date(platform.metrics_period_start).getTime();\nconst periodEnd = new Date(platform.period_end).getTime();\nconst numberOrZero = value => {\n  const parsed = Number(value);\n  return Number.isFinite(parsed) && parsed > 0 ? Math.trunc(parsed) : 0;\n};\nconst toIsoDate = video => {\n  const raw = video.createTimeISO ?? video.createTime;\n  if (typeof raw === 'number') return new Date(raw * 1000).toISOString();\n  const parsed = new Date(raw);\n  return Number.isNaN(parsed.getTime()) ? null : parsed.toISOString();\n};\nconst rawItems = items.map(item => item.json);\nconst failures = rawItems.filter(item => item?.error || item?.errorCode || item?.errorDescription || item?.requestErrorMessages);\nconst videos = [];\nfor (const video of rawItems) {\n  const videoId = video.id ?? video.videoId;\n  const videoUrl = video.webVideoUrl ?? video.videoUrl;\n  const publishedAt = toIsoDate(video);\n  if (!videoId || !videoUrl || !publishedAt) continue;\n  const publishedTime = new Date(publishedAt).getTime();\n  if (publishedTime < periodStart || publishedTime >= periodEnd) continue;\n  videos.push({\n    video_id: String(videoId),\n    video_url: String(videoUrl),\n    description: String(video.text ?? video.description ?? '').trim() || null,\n    published_at: publishedAt,\n    play_count: numberOrZero(video.playCount),\n    digg_count: numberOrZero(video.diggCount),\n    comment_count: numberOrZero(video.commentCount),\n    share_count: numberOrZero(video.shareCount),\n    raw_data: {\n      author: video.authorMeta?.name ?? null,\n      hashtags: Array.isArray(video.hashtags) ? video.hashtags : [],\n      collect_count: numberOrZero(video.collectCount),\n      is_pinned: Boolean(video.isPinned)\n    }\n  });\n}\nreturn [{ json: {\n  ...platform,\n  fetch_succeeded: videos.length > 0 || failures.length === 0,\n  has_videos: videos.length > 0,\n  videos\n} }];"
+        "jsCode": "const platform = $('Determine TikTok Sync Period').last().json;\nconst periodStart = new Date(platform.metrics_period_start).getTime();\nconst periodEnd = new Date(platform.period_end).getTime();\nconst numberOrZero = value => {\n  const parsed = Number(value);\n  return Number.isFinite(parsed) && parsed > 0 ? Math.trunc(parsed) : 0;\n};\nconst toIsoDate = video => {\n  const raw = video.createTimeISO ?? video.createTime;\n  if (typeof raw === 'number') return new Date(raw * 1000).toISOString();\n  const parsed = new Date(raw);\n  return Number.isNaN(parsed.getTime()) ? null : parsed.toISOString();\n};\nconst rawItems = items.map(item => item.json);\nconst failures = rawItems.filter(item => item?.error || item?.errorCode || item?.errorDescription || item?.requestErrorMessages);\nconst videos = [];\nfor (const video of rawItems) {\n  const videoId = video.id ?? video.videoId;\n  const videoUrl = video.webVideoUrl ?? video.videoUrl;\n  const publishedAt = toIsoDate(video);\n  if (!videoId || !videoUrl || !publishedAt) continue;\n  const publishedTime = new Date(publishedAt).getTime();\n  if (publishedTime < periodStart || publishedTime >= periodEnd) continue;\n  videos.push({\n    video_id: String(videoId),\n    video_url: String(videoUrl),\n    description: String(video.text ?? video.description ?? '').trim() || null,\n    published_at: publishedAt,\n    play_count: numberOrZero(video.playCount),\n    digg_count: numberOrZero(video.diggCount),\n    comment_count: numberOrZero(video.commentCount),\n    share_count: numberOrZero(video.shareCount),\n    raw_data: {\n      author: video.authorMeta?.name ?? null,\n      hashtags: Array.isArray(video.hashtags) ? video.hashtags : [],\n      collect_count: numberOrZero(video.collectCount),\n      is_pinned: Boolean(video.isPinned)\n    }\n  });\n}\nreturn [{ json: {\n  ...platform,\n  fetch_succeeded: videos.length > 0 || failures.length === 0,\n  has_videos: videos.length > 0,\n  videos\n} }];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -331,7 +331,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const platform =\n  $('Continue TikTok Platform').first().json;\n\nconst comments = items\n  .filter(item =>\n    item.json.id &&\n    item.json.comment_text\n  )\n  .map(item => ({\n    // رقم السجل داخل جدول tiktok_comments\n    source_record_id: item.json.id,\n\n    // معرف التعليق الأصلي في TikTok\n    tiktok_comment_id:\n      item.json.tiktok_comment_id,\n\n    video_id:\n      item.json.video_id || null,\n\n    // اسم العمود في الجدول commenter_username\n    author_username:\n      item.json.commenter_username || null,\n\n    video_url:\n      item.json.video_url || null,\n\n    comment_text:\n      item.json.comment_text,\n\n    // اسم العمود في الجدول comment_date\n    posted_at:\n      item.json.comment_date || null,\n\n    // الجدول يحتوي like_count كعمود منفصل\n    public_metrics: {\n      like_count: Number(\n        item.json.like_count || 0\n      )\n    }\n  }));\n\nif (!comments.length) {\n  return [];\n}\n\nreturn [\n  {\n    json: {\n      client_id: platform.client_id,\n      branch_id:\n        platform.branch_id ?? null,\n      platform_id:\n        platform.platform_id,\n\n      platform_name: 'tiktok',\n      source_table: 'tiktok_comments',\n\n      comments\n    }\n  }\n];"
+        "jsCode": "const platform =\n  $('Continue TikTok Platform').last().json;\n\nconst comments = items\n  .filter(item =>\n    item.json.id &&\n    item.json.comment_text\n  )\n  .map(item => ({\n    // رقم السجل داخل جدول tiktok_comments\n    source_record_id: item.json.id,\n\n    // معرف التعليق الأصلي في TikTok\n    tiktok_comment_id:\n      item.json.tiktok_comment_id,\n\n    video_id:\n      item.json.video_id || null,\n\n    // اسم العمود في الجدول commenter_username\n    author_username:\n      item.json.commenter_username || null,\n\n    video_url:\n      item.json.video_url || null,\n\n    comment_text:\n      item.json.comment_text,\n\n    // اسم العمود في الجدول comment_date\n    posted_at:\n      item.json.comment_date || null,\n\n    // الجدول يحتوي like_count كعمود منفصل\n    public_metrics: {\n      like_count: Number(\n        item.json.like_count || 0\n      )\n    }\n  }));\n\nif (!comments.length) {\n  return [];\n}\n\nreturn [\n  {\n    json: {\n      client_id: platform.client_id,\n      branch_id:\n        platform.branch_id ?? null,\n      platform_id:\n        platform.platform_id,\n\n      platform_name: 'tiktok',\n      source_table: 'tiktok_comments',\n\n      comments\n    }\n  }\n];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -488,7 +488,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const platform =\n  $('Determine TikTok Sync Period').first().json;\n\nreturn [\n  {\n    json: {\n      client_id: platform.client_id,\n      branch_id: platform.branch_id ?? null,\n      platform_id: platform.id,\n      platform_name: 'tiktok'\n    }\n  }\n];"
+        "jsCode": "const platform =\n  $('Determine TikTok Sync Period').last().json;\n\nreturn [\n  {\n    json: {\n      client_id: platform.client_id,\n      branch_id: platform.branch_id ?? null,\n      platform_id: platform.id,\n      platform_name: 'tiktok'\n    }\n  }\n];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -550,7 +550,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ { p_platform_id: Number($('Loop Over Items').item.json.id) } }}",
+        "jsonBody": "={{ { p_platform_id: Number($('Continue TikTok Platform').last().json.platform_id) } }}",
         "options": {}
       },
       "id": "f2d2709a-c818-4851-a1d8-2ae104944ed7",
@@ -588,7 +588,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ { p_platform_id: Number($('Loop Over Items').item.json.id), p_error: 'تعذر سحب تعليقات TikTok' } }}",
+        "jsonBody": "={{ { p_platform_id: Number($json.platform_id ?? $json.id ?? $('Determine TikTok Sync Period').last().json.id), p_error: String($json.message || $json.errorDescription || $json.error || 'تعذر سحب تعليقات TikTok').slice(0, 500) } }}",
         "options": {}
       },
       "id": "befeb065-68bf-4df7-ab20-d28cd78d839f",
@@ -714,7 +714,7 @@
             },
             {
               "name": "platform_id",
-              "value": "={{ 'eq.' + $('Normalize TikTok Videos').first().json.id }}"
+              "value": "={{ 'eq.' + $('Normalize TikTok Videos').last().json.id }}"
             },
             {
               "name": "limit",
@@ -745,7 +745,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const platform = $('Normalize TikTok Videos').first().json;\nconst rows = items.flatMap(item => Array.isArray(item.json) ? item.json : [item.json]);\nconst existingCounts = new Map(rows.filter(row => row?.video_id).map(row => [String(row.video_id), Number(row.comment_count || 0)]));\nconst now = new Date().toISOString();\nconst videos = platform.videos ?? [];\nconst videoRows = videos.map(video => ({\n  client_id: platform.client_id,\n  branch_id: platform.branch_id ?? null,\n  platform_id: platform.id,\n  video_id: video.video_id,\n  video_url: video.video_url,\n  description: video.description,\n  published_at: video.published_at,\n  play_count: video.play_count,\n  digg_count: video.digg_count,\n  comment_count: video.comment_count,\n  share_count: video.share_count,\n  last_scraped_at: now,\n  raw_data: video.raw_data,\n  updated_at: now\n}));\nconst commentTargets = videos.filter(video => {\n  const oldCount = existingCounts.get(String(video.video_id));\n  return video.comment_count > 0 && (oldCount === undefined || video.comment_count > oldCount);\n});\nreturn [{ json: {\n  ...platform,\n  video_rows: videoRows,\n  comment_target_urls: commentTargets.map(video => video.video_url),\n  comment_target_videos: commentTargets\n} }];"
+        "jsCode": "const platform = $('Normalize TikTok Videos').last().json;\nconst rows = items.flatMap(item => Array.isArray(item.json) ? item.json : [item.json]);\nconst existingCounts = new Map(rows.filter(row => row?.video_id).map(row => [String(row.video_id), Number(row.comment_count || 0)]));\nconst now = new Date().toISOString();\nconst videos = platform.videos ?? [];\nconst videoRows = videos.map(video => ({\n  client_id: platform.client_id,\n  branch_id: platform.branch_id ?? null,\n  platform_id: platform.id,\n  video_id: video.video_id,\n  video_url: video.video_url,\n  description: video.description,\n  published_at: video.published_at,\n  play_count: video.play_count,\n  digg_count: video.digg_count,\n  comment_count: video.comment_count,\n  share_count: video.share_count,\n  last_scraped_at: now,\n  raw_data: video.raw_data,\n  updated_at: now\n}));\nconst commentTargets = videos.filter(video => {\n  const oldCount = existingCounts.get(String(video.video_id));\n  return video.comment_count > 0 && (oldCount === undefined || video.comment_count > oldCount);\n});\nreturn [{ json: {\n  ...platform,\n  video_rows: videoRows,\n  comment_target_urls: commentTargets.map(video => video.video_url),\n  comment_target_videos: commentTargets\n} }];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -806,7 +806,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const prepared = $('Prepare TikTok Video Sync').first().json;\nreturn [{ json: prepared }];"
+        "jsCode": "const prepared = $('Prepare TikTok Video Sync').last().json;\nreturn [{ json: prepared }];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -892,7 +892,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const platform = $('Prepare TikTok Video Sync').first().json;\nconst periodStart = new Date(platform.period_start).getTime();\nconst periodEnd = new Date(platform.period_end).getTime();\nconst monitoredUsername = String(platform.tiktok_username || '').replace(/^@/, '').trim().toLowerCase();\nconst videos = platform.comment_target_videos ?? [];\nconst videoByUrl = new Map(videos.map(video => [String(video.video_url).split('?')[0], video]));\nconst output = [];\nconst rawItems = items.map(item => item.json);\nconst failures = rawItems.filter(item => item?.error || item?.errorCode || item?.errorDescription || item?.requestErrorMessages);\nfor (const comment of rawItems) {\n  const commentId = comment.cid ?? comment.commentId ?? comment.id;\n  const text = String(comment.text ?? '').trim();\n  if (!commentId || !text) continue;\n  const rawDate = comment.createTimeISO ?? comment.createTime;\n  const commentDate = typeof rawDate === 'number' ? new Date(rawDate * 1000) : new Date(rawDate);\n  const commentTime = commentDate.getTime();\n  if (Number.isNaN(commentTime) || commentTime < periodStart || commentTime >= periodEnd) continue;\n  const authorUsername = String(comment.uniqueId ?? comment.username ?? '').replace(/^@/, '').trim();\n  if (monitoredUsername && authorUsername.toLowerCase() === monitoredUsername) continue;\n  const videoUrl = String(comment.videoWebUrl ?? comment.videoUrl ?? '').trim();\n  const video = videoByUrl.get(videoUrl.split('?')[0]);\n  const urlVideoId = videoUrl.split('/video/')[1]?.split('?')[0]?.split('/')[0] ?? null;\n  const replyToId = comment.repliesToId ?? comment.replyToCommentId ?? null;\n  output.push({ json: {\n    fetch_succeeded: true,\n    has_comments: true,\n    client_id: platform.client_id,\n    branch_id: platform.branch_id ?? null,\n    platform_id: platform.id,\n    tiktok_comment_id: String(commentId),\n    video_id: String(comment.aweme_id ?? comment.videoId ?? video?.video_id ?? urlVideoId ?? '') || null,\n    comment_text: text,\n    author_username: authorUsername || null,\n    author_name: comment.nickname ?? null,\n    author_avatar_url: comment.avatarThumbnail ?? null,\n    video_url: videoUrl || video?.video_url || null,\n    video_description: video?.description ?? null,\n    posted_at: commentDate.toISOString(),\n    public_metrics: {\n      like_count: Number(comment.diggCount ?? comment.likes ?? 0) || 0,\n      reply_count: Number(comment.replyCommentTotal ?? comment.replies ?? 0) || 0\n    },\n    is_reply: Boolean(replyToId),\n    reply_to_comment_id: replyToId ? String(replyToId) : null,\n    analysis_status: 'pending',\n    raw_data: { comment, monitored_username: platform.tiktok_username || null, client_platform_id: platform.id }\n  } });\n}\nif (output.length === 0) {\n  return [{ json: {\n    fetch_succeeded: failures.length === 0,\n    has_comments: false,\n    client_id: platform.client_id,\n    branch_id: platform.branch_id ?? null,\n    platform_id: platform.id,\n    message: failures.length ? 'تعذر جلب تعليقات TikTok من Clockworks' : 'لا توجد تعليقات TikTok جديدة داخل الفترة المحددة'\n  } }];\n}\nreturn output;"
+        "jsCode": "const platform = $('Prepare TikTok Video Sync').last().json;\nconst periodStart = new Date(platform.period_start).getTime();\nconst periodEnd = new Date(platform.period_end).getTime();\nconst monitoredUsername = String(platform.tiktok_username || '').replace(/^@/, '').trim().toLowerCase();\nconst videos = platform.comment_target_videos ?? [];\nconst videoByUrl = new Map(videos.map(video => [String(video.video_url).split('?')[0], video]));\nconst output = [];\nconst rawItems = items.map(item => item.json);\nconst failures = rawItems.filter(item => item?.error || item?.errorCode || item?.errorDescription || item?.requestErrorMessages);\nfor (const comment of rawItems) {\n  const commentId = comment.cid ?? comment.commentId ?? comment.id;\n  const text = String(comment.text ?? '').trim();\n  if (!commentId || !text) continue;\n  const rawDate = comment.createTimeISO ?? comment.createTime;\n  const commentDate = typeof rawDate === 'number' ? new Date(rawDate * 1000) : new Date(rawDate);\n  const commentTime = commentDate.getTime();\n  if (Number.isNaN(commentTime) || commentTime < periodStart || commentTime >= periodEnd) continue;\n  const authorUsername = String(comment.uniqueId ?? comment.username ?? '').replace(/^@/, '').trim();\n  if (monitoredUsername && authorUsername.toLowerCase() === monitoredUsername) continue;\n  const videoUrl = String(comment.videoWebUrl ?? comment.videoUrl ?? '').trim();\n  const video = videoByUrl.get(videoUrl.split('?')[0]);\n  const urlVideoId = videoUrl.split('/video/')[1]?.split('?')[0]?.split('/')[0] ?? null;\n  const replyToId = comment.repliesToId ?? comment.replyToCommentId ?? null;\n  output.push({ json: {\n    fetch_succeeded: true,\n    has_comments: true,\n    client_id: platform.client_id,\n    branch_id: platform.branch_id ?? null,\n    platform_id: platform.id,\n    tiktok_comment_id: String(commentId),\n    video_id: String(comment.aweme_id ?? comment.videoId ?? video?.video_id ?? urlVideoId ?? '') || null,\n    comment_text: text,\n    author_username: authorUsername || null,\n    author_name: comment.nickname ?? null,\n    author_avatar_url: comment.avatarThumbnail ?? null,\n    video_url: videoUrl || video?.video_url || null,\n    video_description: video?.description ?? null,\n    posted_at: commentDate.toISOString(),\n    public_metrics: {\n      like_count: Number(comment.diggCount ?? comment.likes ?? 0) || 0,\n      reply_count: Number(comment.replyCommentTotal ?? comment.replies ?? 0) || 0\n    },\n    is_reply: Boolean(replyToId),\n    reply_to_comment_id: replyToId ? String(replyToId) : null,\n    analysis_status: 'pending',\n    raw_data: { comment, monitored_username: platform.tiktok_username || null, client_platform_id: platform.id }\n  } });\n}\nif (output.length === 0) {\n  return [{ json: {\n    fetch_succeeded: failures.length === 0,\n    has_comments: false,\n    client_id: platform.client_id,\n    branch_id: platform.branch_id ?? null,\n    platform_id: platform.id,\n    message: failures.length ? 'تعذر جلب تعليقات TikTok من Clockworks' : 'لا توجد تعليقات TikTok جديدة داخل الفترة المحددة'\n  } }];\n}\nreturn output;"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -902,6 +902,19 @@
       ],
       "id": "9d32f8b4-4027-49aa-92ce-2532d24a11a5",
       "name": "Normalize TikTok Comments"
+    },
+    {
+      "parameters": {
+        "jsCode": "let failures = [];\ntry {\n  failures = $('Fail TikTok Sync').all();\n} catch {\n  failures = [];\n}\n\nif (failures.length > 0) {\n  throw new Error(`فشلت مزامنة TikTok لعدد ${failures.length} منصة. تم حفظ حالة الخطأ لكل منصة.`);\n}\n\nreturn items;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        736,
+        3888
+      ],
+      "id": "1a4fc439-8f35-4a2f-b09b-5f83a989ba87",
+      "name": "Assert TikTok Sync Batch"
     }
   ],
   "pinData": {
@@ -951,7 +964,13 @@
     },
     "Loop Over Items": {
       "main": [
-        [],
+        [
+          {
+            "node": "Assert TikTok Sync Batch",
+            "type": "main",
+            "index": 0
+          }
+        ],
         [
           {
             "node": "Determine TikTok Sync Period",

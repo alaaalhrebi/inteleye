@@ -96,4 +96,46 @@ assert.equal(
   "Assert Google Sync Batch"
 );
 
+const tiktokWorkflow = JSON.parse(
+  await readFile("n8n/workflows/tiktok-comments-clockworks.json", "utf8")
+);
+const tiktokCompletionNode = tiktokWorkflow.nodes.find(
+  (node) => node.name === "Complete TikTok Sync"
+);
+const tiktokFailureNode = tiktokWorkflow.nodes.find(
+  (node) => node.name === "Fail TikTok Sync"
+);
+const tiktokBatchAssertion = tiktokWorkflow.nodes.find(
+  (node) => node.name === "Assert TikTok Sync Batch"
+);
+
+assert.doesNotMatch(
+  tiktokCompletionNode.parameters.jsonBody,
+  /\.item\.json/,
+  "TikTok completion must not depend on paired-item metadata"
+);
+assert.match(
+  tiktokCompletionNode.parameters.jsonBody,
+  /Continue TikTok Platform'\)\.last\(\)\.json\.platform_id/,
+  "TikTok completion must use the current sequential platform context"
+);
+assert.doesNotMatch(
+  tiktokFailureNode.parameters.jsonBody,
+  /\.item\.json/,
+  "TikTok failure handling must not depend on paired-item metadata"
+);
+assert.match(
+  tiktokFailureNode.parameters.jsonBody,
+  /p_error: String/,
+  "TikTok failures must persist a precise safe error"
+);
+assert.ok(
+  tiktokBatchAssertion,
+  "TikTok workflow must fail the execution after recording platform failures"
+);
+assert.equal(
+  tiktokWorkflow.connections["Loop Over Items"].main[0][0].node,
+  "Assert TikTok Sync Batch"
+);
+
 console.log(`Verified ${workflows.length} platform sync workflows.`);
