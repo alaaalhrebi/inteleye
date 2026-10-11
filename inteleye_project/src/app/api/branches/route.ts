@@ -1,3 +1,4 @@
+import { subscriptionWriteError } from "@/lib/subscription-write-errors";
 import { isJsonObject } from "@/lib/json-object";
 import { NextResponse } from "next/server";
 
@@ -81,7 +82,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ message: "تعذر التحقق من الحساب" }, { status: 403 });
   }
 
-  const [{ count: branchesCount }, { data: activePlatforms }] =
+  const [{ count: branchesCount, error: branchesError }, { data: activePlatforms, error: platformsError }] =
     await Promise.all([
       supabase
         .from("branches")
@@ -95,6 +96,10 @@ export async function POST(request: Request) {
         .eq("is_active", true),
     ]);
 
+  if (branchesError || platformsError) {
+    return NextResponse.json({ message: "تعذر التحقق من حدود الباقة، حاول لاحقًا" }, { status: 503 });
+  }
+
   const platformNames = new Set(
     (activePlatforms ?? []).map((platform) => platform.platform_name)
   );
@@ -105,7 +110,11 @@ export async function POST(request: Request) {
 
   if (!permissions.canAddBranch) {
     return NextResponse.json(
-      { message: "إدارة الفروع متاحة ضمن الاشتراكات المدفوعة السارية" },
+      {
+        message: permissions.canManageBranches
+          ? "وصلت إلى حد الفروع في باقتك الحالية"
+          : "إدارة الفروع متاحة ضمن الاشتراكات المدفوعة السارية",
+      },
       { status: 403 }
     );
   }
@@ -193,6 +202,8 @@ export async function POST(request: Request) {
     .single();
 
   if (branchError || !branch) {
+    const failure = subscriptionWriteError(branchError);
+    if (failure) return NextResponse.json({ message: failure.message }, { status: failure.status });
     const status = branchError?.code === "42501" ? 403 : 500;
     return NextResponse.json(
       { message: status === 403 ? "غير مصرح بإضافة فرع" : "تعذر حفظ الفرع" },
@@ -223,10 +234,13 @@ export async function POST(request: Request) {
       .eq("id", branch.id)
       .eq("client_id", client.id);
 
+    const failure = subscriptionWriteError(platformError);
+    if (failure) return NextResponse.json({ message: failure.message }, { status: failure.status });
+
     const status =
-      platformError.code === "23505"
+      platformError?.code === "23505"
         ? 409
-        : platformError.code === "42501"
+        : platformError?.code === "42501"
         ? 403
         : 500;
     return NextResponse.json(

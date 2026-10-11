@@ -1,3 +1,4 @@
+import { subscriptionWriteError } from "@/lib/subscription-write-errors";
 import { isJsonObject } from "@/lib/json-object";
 import { NextResponse } from "next/server";
 
@@ -26,7 +27,9 @@ function textValue(value: unknown) {
   return typeof value === "string" ? value.trim() : "";
 }
 
-function rpcErrorResponse(message: string) {
+function rpcErrorResponse(message: string, code?: string) {
+  const failure = subscriptionWriteError({ message, code });
+  if (failure) return NextResponse.json({ message: failure.message }, { status: failure.status });
   if (message.includes("platform_link_change_cooldown")) {
     return NextResponse.json(
       { message: "لا يمكن تغيير رابط هذه المنصة قبل انتهاء مهلة الشهر" },
@@ -130,7 +133,7 @@ export async function PATCH(
       p_business_activity: businessActivity,
     });
 
-    if (error) return rpcErrorResponse(error.message);
+    if (error) return rpcErrorResponse(error.message, error.code);
     return NextResponse.json({ message: "تم تحديث بيانات الفرع" });
   }
 
@@ -144,7 +147,7 @@ export async function PATCH(
       p_branch_id: branchId,
       p_status: status,
     });
-    if (error) return rpcErrorResponse(error.message);
+    if (error) return rpcErrorResponse(error.message, error.code);
 
     let syncQueued = 0;
     if (status === "active") {
@@ -235,7 +238,7 @@ export async function PATCH(
       p_username: normalized.username,
     });
 
-    if (error) return rpcErrorResponse(error.message);
+    if (error) return rpcErrorResponse(error.message, error.code);
 
     const result = Array.isArray(data) ? data[0] : data;
     let syncQueued = false;

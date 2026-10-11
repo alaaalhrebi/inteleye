@@ -1,3 +1,4 @@
+import { subscriptionWriteError } from "@/lib/subscription-write-errors";
 import { isJsonObject } from "@/lib/json-object";
 import { NextResponse } from "next/server";
 
@@ -98,7 +99,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ message: "تعذر التحقق من الحساب" }, { status: 403 });
   }
 
-  const [{ data: activePlatforms }, { data: activeBranches }] = await Promise.all([
+  const [{ data: activePlatforms, error: platformsError }, { data: activeBranches, error: branchesError }] = await Promise.all([
     supabase
       .from("client_platforms")
       .select("id, branch_id, platform_name, platform_url")
@@ -111,6 +112,10 @@ export async function POST(request: Request) {
       .in("status", ["active", "suspended"])
       .order("created_at", { ascending: true }),
   ]);
+
+  if (branchesError || platformsError) {
+    return NextResponse.json({ message: "تعذر التحقق من حدود الباقة، حاول لاحقًا" }, { status: 503 });
+  }
 
   const platformRows = activePlatforms ?? [];
   const branchRows = activeBranches ?? [];
@@ -258,6 +263,10 @@ export async function POST(request: Request) {
       .single();
 
     if (branchError || !branch) {
+      const failure = subscriptionWriteError(branchError);
+      if (failure) {
+        return NextResponse.json({ message: failure.message }, { status: failure.status });
+      }
       const status = branchError?.code === "42501" ? 403 : 500;
       return NextResponse.json(
         {
@@ -319,6 +328,9 @@ export async function POST(request: Request) {
         .eq("id", createdBranchId)
         .eq("client_id", client.id);
     }
+
+    const failure = subscriptionWriteError(platformError);
+    if (failure) return NextResponse.json({ message: failure.message }, { status: failure.status });
 
     const isDuplicate = platformError?.code === "23505";
     const isForbidden = platformError?.code === "42501";

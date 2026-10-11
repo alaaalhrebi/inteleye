@@ -15,6 +15,7 @@ function load(relative, mocks = {}) {
   }).outputText;
   vm.runInNewContext(code, {
     module, exports: module.exports, console, Request, Response, AbortController,
+    fetch: () => assert.fail('unexpected external network request'),
     setTimeout, clearTimeout, process,
     require(name) {
       if (Object.hasOwn(mocks, name)) return mocks[name];
@@ -156,6 +157,44 @@ Module._resolveFilename = function(name, ...args) {
 require.extensions['.ts'] = (module, filename) => module._compile(ts.transpileModule(fs.readFileSync(filename, 'utf8'), {
   compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020, esModuleInterop: true },
 }).outputText, filename);
-for (const file of ['plans.test.ts', 'platforms/normalize.test.ts', 'platforms/n8n.test.ts', 'reports/reports.test.ts']) {
+for (const file of ['plans.test.ts', 'platforms/normalize.test.ts', 'platforms/n8n.test.ts', 'reports/reports.test.ts', 'subscription-write-errors.test.ts']) {
   require(path.join(root, 'src/lib', file));
+}
+
+// Test real route error responses without contacting Supabase or n8n.
+for (const file of ['branches/route.ts', 'platforms/route.ts']) {
+  for (const scenario of ['quota', 'count failure']) {
+    test(`${file} handles ${scenario} without queueing sync`, async () => {
+      const error = { code: '23514', message: 'branch_plan_limit_reached' };
+      const supabase = {
+        auth: { getUser: async () => ({ data: { user: { id: 'test-user' } } }) },
+        from(table) {
+          let insert = false;
+          const query = {
+            select() { return this; }, eq() { return this; }, in() { return this; }, order() { return this; },
+            insert() { insert = true; return this; },
+            maybeSingle: async () => ({ data: { id: 7, plan: 'pro', subscription_status: 'active',
+              current_period_end: '2099-01-01', allowed_platforms_count: 2 } }),
+            single: async () => { assert.ok(insert); return { data: null, error }; },
+            then(resolve) { return Promise.resolve({ data: [], count: 0,
+              error: scenario === 'count failure' ? { code: 'unavailable' } : null }).then(resolve); },
+          };
+          return query;
+        },
+      };
+      const route = load(`src/app/api/${file}`, {
+        '@/lib/supabase-server': { createSupabaseServerClient: () => supabase },
+        '@/lib/platforms/n8n': { queuePlatformSync: () => assert.fail('unexpected sync'), PlatformSyncWebhookError: class extends Error {} },
+      });
+      const response = await route.POST(new Request('https://example.test/api', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: 'Test', branchName: 'Test', platformName: 'x',
+          platformValue: 'public-test', businessActivity: 'test', scope: 'new_branch' }),
+      }));
+      assert.equal(response.status, scenario === 'quota' ? 403 : 503);
+      const data = await response.json();
+      assert.ok(data.message);
+      assert.ok(!data.message.includes(error.message));
+    });
+  }
 }
