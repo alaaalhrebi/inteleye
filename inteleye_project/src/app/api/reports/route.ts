@@ -1,3 +1,4 @@
+import { loadReportsSnapshot } from "@/lib/reports/data";
 import { NextResponse } from "next/server";
 
 import { getReportsAccess } from "@/lib/reports/access";
@@ -32,14 +33,10 @@ export async function POST(request: Request) {
     );
   }
 
-  let body: Record<string, unknown>;
+  let body: unknown;
 
   try {
-    body =
-      (await request.json()) as Record<
-        string,
-        unknown
-      >;
+    body = await request.json();
   } catch {
     return NextResponse.json(
       { message: "بيانات الطلب غير صالحة" },
@@ -193,6 +190,32 @@ export async function POST(request: Request) {
     return NextResponse.json(
       { message: "تعذر إنشاء طلب التقرير" },
       { status: 500 }
+    );
+  }
+}
+
+export async function GET() {
+  const headers = { "Cache-Control": "private, no-store" };
+  try {
+    const access = await getReportsAccess();
+    if (!access.ok) {
+      return NextResponse.json(
+        { message: access.status === 401 ? "يجب تسجيل الدخول أولًا" : "غير مصرح" },
+        { status: access.status, headers }
+      );
+    }
+    if (!access.permissions.canViewReports) {
+      return NextResponse.json(
+        { message: "التقارير متاحة للاشتراكات المدفوعة السارية فقط" },
+        { status: 403, headers }
+      );
+    }
+    const snapshot = await loadReportsSnapshot(access.supabase, access.client.id);
+    return NextResponse.json(snapshot, { headers });
+  } catch {
+    return NextResponse.json(
+      { message: "تعذر تحديث التقارير الآن. يرجى المحاولة لاحقًا." },
+      { status: 503, headers }
     );
   }
 }

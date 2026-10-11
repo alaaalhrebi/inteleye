@@ -1,3 +1,4 @@
+import { isJsonObject } from "@/lib/json-object";
 import { NextResponse } from "next/server";
 
 import {
@@ -47,7 +48,9 @@ export async function POST(request: Request) {
 
   let body: PlatformRequest;
   try {
-    body = (await request.json()) as PlatformRequest;
+    const parsed: unknown = await request.json();
+    if (!isJsonObject(parsed)) throw new Error("INVALID_REQUEST_BODY");
+    body = parsed;
   } catch {
     return NextResponse.json({ message: "بيانات الطلب غير صالحة" }, { status: 400 });
   }

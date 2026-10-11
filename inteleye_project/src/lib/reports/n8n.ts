@@ -1,4 +1,5 @@
 import type { ReportRequestPayload } from "@/lib/reports/types";
+import { isJsonObject } from "@/lib/json-object";
 
 type LegacyWorkflowInput = Omit<
   ReportRequestPayload,
@@ -92,9 +93,9 @@ export async function requestReportFromWorkflow(
       signal: controller.signal,
     });
 
-    let data: Record<string, unknown> = {};
+    let data: unknown;
     try {
-      data = (await response.json()) as Record<string, unknown>;
+      data = await response.json();
     } catch {
       // لا نمرر استجابة n8n الخام للمستخدم.
     }
@@ -111,14 +112,16 @@ export async function requestReportFromWorkflow(
             : "WORKFLOW_REJECTED",
         isAuthenticationFailure || isInactiveWorkflow || response.status >= 500
           ? 503
-          : response.status,
+          : response.status >= 400
+            ? response.status
+            : 502,
         isInactiveWorkflow
           ? "خدمة إنشاء التقارير غير مفعلة حالياً."
           : "تعذر إرسال طلب التقرير. يرجى المحاولة لاحقاً."
       );
     }
 
-    const requestId = data.request_id;
+    const requestId = isJsonObject(data) ? data.request_id : undefined;
     if (
       (typeof requestId !== "string" && typeof requestId !== "number") ||
       String(requestId).trim() === ""

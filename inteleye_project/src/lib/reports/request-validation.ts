@@ -1,4 +1,5 @@
 import type { ReportRequestPayload } from "@/lib/reports/types";
+import { isJsonObject } from "@/lib/json-object";
 
 export type RequestValidationResult =
   | { ok: true; value: ReportRequestPayload }
@@ -21,14 +22,18 @@ function dateOnly(value: unknown) {
 }
 
 function positiveInteger(value: unknown) {
+  if (typeof value !== "number" && typeof value !== "string") return null;
   const number = typeof value === "number" ? value : Number(value);
   return Number.isSafeInteger(number) && number > 0 ? number : null;
 }
 
 export function validateReportRequest(
-  body: Record<string, unknown>,
+  body: unknown,
   now = new Date()
 ): RequestValidationResult {
+  if (!isJsonObject(body)) {
+    return { ok: false, status: 400, message: "بيانات الطلب غير صالحة" };
+  }
   const branchId = positiveInteger(body.branchId);
   const platformIds = Array.isArray(body.platformIds)
     ? body.platformIds.map(positiveInteger)
