@@ -1,5 +1,7 @@
 "use client";
 
+import "./moyasar.css";
+
 import Link from "next/link";
 import Script from "next/script";
 import { useSearchParams } from "next/navigation";
@@ -31,7 +33,12 @@ type MoyasarOptions = {
   publishable_api_key: string;
   callback_url: string;
   methods: string[];
+  supported_networks: string[];
+  fixed_width: boolean;
+  use_payment_intent: boolean;
+  on_initiating: () => Promise<false | { payment_intent: { id: string; client_secret: string }; metadata: Record<string, string> }>;
   metadata: Record<string, string>;
+  on_completed: (payment: { id: string }) => Promise<void>;
 };
 
 declare global {
@@ -136,47 +143,86 @@ function CheckoutForm() {
       return;
     }
 
-    if (!publishableKey) {
+    if (!publishableKey?.startsWith("pk_live_")) {
       setMoyasarError("تعذر تجهيز بوابة الدفع حاليًا. تواصل مع الدعم.");
       return;
     }
 
-    if (!window.Moyasar) {
-      setMoyasarError("تعذر تحميل بوابة الدفع. أعد تحميل الصفحة وحاول مجددًا.");
-      return;
+    let cancelled = false;
+    async function prepareForm() {
+      try {
+        const response = await fetch("/api/payments/orders", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ plan: targetPlan }),
+        });
+        const order = await response.json();
+        if (cancelled) return;
+        if (!response.ok) throw new Error(order.message || "تعذر تجهيز طلب الدفع");
+        sessionStorage.setItem("inteleye_payment_order", order.order_id);
+        const callbackParams = new URLSearchParams({
+          order_id: order.order_id, plan: order.plan, mode: order.mode,
+        });
+        const callback = `${window.location.origin}/checkout/success?${callbackParams}`;
+        if (order.status !== "pending") { window.location.assign(callback); return; }
+        const intentEndpoint = `/api/payments/orders/${encodeURIComponent(order.order_id)}/intent`;
+        async function resolve(mode: "inspect" | "prepare") {
+          const response = await fetch(intentEndpoint, { method: "POST",
+            headers: { "Content-Type": "application/json" }, body: JSON.stringify({ mode }) });
+          const decision = await response.json();
+          if (!response.ok) throw new Error(decision.message || "تعذر التحقق من الدفع. لا تدفع مرة أخرى");
+          return decision;
+        }
+        const previous = await resolve("inspect");
+        if (cancelled) return;
+        if (previous.status === "fulfilled" || previous.status === "review") { window.location.assign(callback); return; }
+        if (previous.status !== "ready") throw new Error(`${previous.message || "المحاولة السابقة قيد التحقق. لا تدفع مرة أخرى"} أعد تحميل الصفحة للتحقق.`);
+        if (!window.Moyasar) throw new Error("تعذر تحميل بوابة الدفع");
+        window.Moyasar.init({
+          element: ".mysr-form", amount: order.amount, currency: order.currency,
+          description: `IntelEye — باقة ${targetDetails.name}`,
+          publishable_api_key: publishableKey!, callback_url: callback,
+          use_payment_intent: true,
+          on_initiating: async () => {
+            try {
+              setMoyasarError(null);
+              const decision = await resolve("prepare");
+              if (decision.status === "fulfilled" || decision.status === "review") {
+                window.location.assign(callback); return false;
+              }
+              if (decision.status !== "ready" || !decision.payment_intent || !decision.attempt_id) {
+                setMoyasarError(decision.message || "المحاولة السابقة قيد التحقق. أعد التحقق دون دفع جديد"); return false;
+              }
+              return { payment_intent: decision.payment_intent,
+                metadata: { order_id: order.order_id, attempt_id: decision.attempt_id } };
+            } catch (error) {
+              setMoyasarError(error instanceof Error ? error.message : "تعذر تجهيز الدفع. أعد التحقق دون دفع جديد");
+              return false;
+            }
+          },
+          fixed_width: false, methods: ["creditcard"],
+          supported_networks: ["visa", "mastercard", "mada", "amex"], metadata: { order_id: order.order_id },
+          // Official form hook runs before 3DS. Save an independently verified
+          // initiated payment too, so a lost browser callback can be recovered.
+          on_completed: async payment => {
+            const result = await fetch("/api/payments/verify", {
+              method: "POST", headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ order_id: order.order_id, payment_id: payment.id }),
+            });
+            if (!result.ok) {
+              const body = await result.json();
+              throw new Error(body.message || "تعذر حفظ عملية الدفع. لا تدفع مرة أخرى");
+            }
+          },
+        });
+        moyasarInitialized.current = true;
+        setFormReady(true);
+      } catch (error) {
+        if (!cancelled) setMoyasarError(error instanceof Error ? error.message : "تعذر تجهيز نموذج الدفع");
+      }
     }
+    prepareForm();
+    return () => { cancelled = true; };
 
-    try {
-      const callbackParams = new URLSearchParams({
-        plan: targetPlan,
-        mode: quote.mode,
-      });
-
-      window.Moyasar.init({
-        element: ".mysr-form",
-        amount: quote.amountHalalas,
-        currency: "SAR",
-        description:
-          quote.mode === "upgrade"
-            ? `ترقية IntelEye إلى باقة ${targetDetails.name}`
-            : `اشتراك IntelEye — باقة ${targetDetails.name}`,
-        publishable_api_key: publishableKey,
-        callback_url: `${window.location.origin}/checkout/success?${callbackParams.toString()}`,
-        methods: ["creditcard"],
-        metadata: {
-          client_user_id: userId,
-          plan: targetPlan,
-          target_plan: targetPlan,
-          current_plan: currentPlan,
-          payment_type: quote.mode,
-        },
-      });
-
-      moyasarInitialized.current = true;
-      setFormReady(true);
-    } catch {
-      setMoyasarError("حدث خطأ أثناء تجهيز نموذج الدفع. حاول مرة أخرى.");
-    }
   }, [
     accountError,
     checkingAccount,
@@ -200,11 +246,15 @@ function CheckoutForm() {
     >
       <link
         rel="stylesheet"
-        href="https://cdn.moyasar.com/mpf/1.16.0/moyasar.css"
+        href="https://cdn.jsdelivr.net/npm/moyasar-payment-form@2.3.0/dist/moyasar.css"
+        integrity="sha384-kXA6TcBKVzqpjpsbaJciletoxOQ3kNhUKCCMPpZaXA2MOhJMTaqVspZdFxXo5iTA"
+        crossOrigin="anonymous"
       />
       <Script
-        src="https://cdn.moyasar.com/mpf/1.16.0/moyasar.js"
-        onLoad={() => setScriptLoaded(true)}
+        src="https://cdn.jsdelivr.net/npm/moyasar-payment-form@2.3.0/dist/moyasar.umd.js"
+        integrity="sha384-zaoyfKoayFfcaZQLYxWEYqjG/of8gAw5lYVmKz68FG4j8tm27LqmqNFuIPlNtdLd"
+        crossOrigin="anonymous"
+        onReady={() => setScriptLoaded(true)}
         onError={() =>
           setMoyasarError("تعذر تحميل بوابة الدفع. حاول مرة أخرى لاحقًا.")
         }
@@ -347,7 +397,7 @@ function CheckoutForm() {
                 {scriptLoaded && !formReady && !moyasarError && (
                   <StatusMessage text="جاري تجهيز نموذج الدفع..." />
                 )}
-                <div className="mysr-form" />
+                <div className="mysr-form inteleye-payment-form" />
               </>
             )}
           </section>

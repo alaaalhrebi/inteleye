@@ -6,7 +6,7 @@ import { CheckCircle2, Clock3, Sparkles, TriangleAlert } from "lucide-react";
 import { Suspense, useEffect, useState } from "react";
 
 import { normalizePlan, PLAN_DETAILS } from "@/lib/plans";
-import { createSupabaseBrowserClient } from "@/lib/supabase-browser";
+
 
 type ConfirmationStatus = "waiting" | "active" | "timeout";
 
@@ -25,9 +25,13 @@ export default function CheckoutSuccessPage() {
 function CheckoutSuccessContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const [supabase] = useState(() => createSupabaseBrowserClient());
+
   const [status, setStatus] = useState<ConfirmationStatus>("waiting");
-  const targetPlan = normalizePlan(searchParams.get("plan"));
+  const [targetPlan, setTargetPlan] = useState(normalizePlan(searchParams.get("plan")));
+  const [message, setMessage] = useState<string>();
+  const [attempt, setAttempt] = useState(0);
+  const orderId = searchParams.get("order_id");
+  const paymentId = searchParams.get("id");
   const isUpgrade = searchParams.get("mode") === "upgrade";
 
   useEffect(() => {
@@ -35,27 +39,56 @@ function CheckoutSuccessContent() {
     let isConfirmed = false;
     let redirectTimer: ReturnType<typeof setTimeout> | undefined;
 
+    let inFlight = false;
     async function confirmSubscription() {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user || !isMounted || isConfirmed) return;
-
-      const { data: client } = await supabase
-        .from("clients")
-        .select("subscription_status, plan")
-        .eq("user_id", user.id)
-        .maybeSingle();
-
-      const activatedTargetPlan =
-        client?.subscription_status?.toLowerCase() === "active" &&
-        client?.plan?.trim().toLowerCase() === targetPlan;
-
-      if (activatedTargetPlan && isMounted) {
-        isConfirmed = true;
-        setStatus("active");
-        redirectTimer = setTimeout(() => router.replace("/dashboard"), 1800);
-      }
+      if (!isMounted || isConfirmed || inFlight) return;
+      inFlight = true;
+      try {
+        const id = orderId || sessionStorage.getItem("inteleye_payment_order");
+        if (!id) { setMessage("لم نجد طلب الدفع. تواصل مع الدعم قبل إعادة الدفع."); setStatus("timeout"); return; }
+        const response = await fetch(`/api/payments/orders/${encodeURIComponent(id)}`, { cache: "no-store" });
+        const order = await response.json();
+        if (!response.ok) throw new Error(order.message || "تعذر قراءة حالة الطلب");
+        if (!isMounted) return;
+        setTargetPlan(normalizePlan(order.plan));
+        let confirmed = order.status === "fulfilled";
+        const providerId = paymentId || order.payment_id;
+        if (!confirmed && !providerId) {
+          const recovery = await fetch(`/api/payments/orders/${encodeURIComponent(id)}/intent`, {
+            method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ mode: "inspect" }),
+          });
+          const decision = await recovery.json();
+          if (!isMounted) return;
+          if (!recovery.ok) throw new Error(decision.message || "تعذر استعادة عملية الدفع");
+          confirmed = decision.status === "fulfilled";
+          if (decision.status === "review") {
+            setMessage(decision.message); setStatus("timeout"); isConfirmed = true; return;
+          }
+          if (decision.message) setMessage(decision.message);
+        }
+        if (!confirmed && providerId) {
+          const verification = await fetch("/api/payments/verify", {
+            method: "POST", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ order_id: id, payment_id: providerId }),
+          });
+          const result = await verification.json();
+          if (!isMounted) return;
+          if (!verification.ok) throw new Error(result.message || "تعذر تأكيد الدفع الآن");
+          confirmed = result.status === "fulfilled";
+          if (result.status === "review") {
+            setMessage(result.message); setStatus("timeout"); isConfirmed = true; return;
+          }
+          if (order.payment_status === "failed") {
+            setMessage("لم تنجح عملية الدفع. لم يتم تفعيل الاشتراك."); setStatus("timeout");
+          }
+        }
+        if (confirmed && isMounted) {
+          isConfirmed = true; setStatus("active");
+          redirectTimer = setTimeout(() => router.replace("/dashboard"), 1800);
+        }
+      } catch (error) {
+        if (isMounted) setMessage(error instanceof Error ? error.message : "تعذر تأكيد الدفع. لا تدفع مرة أخرى.");
+      } finally { inFlight = false; }
     }
 
     confirmSubscription();
@@ -71,13 +104,15 @@ function CheckoutSuccessContent() {
       clearTimeout(timeout);
       if (redirectTimer) clearTimeout(redirectTimer);
     };
-  }, [router, supabase, targetPlan]);
+  }, [router, orderId, paymentId, attempt]);
 
   return (
     <SuccessCard
       status={status}
       isUpgrade={isUpgrade}
       planName={PLAN_DETAILS[targetPlan].name}
+      message={message}
+      retry={() => { setStatus("waiting"); setAttempt(value => value + 1); }}
     />
   );
 }
@@ -86,10 +121,14 @@ function SuccessCard({
   status,
   isUpgrade,
   planName,
+  message,
+  retry,
 }: {
   status: ConfirmationStatus;
   isUpgrade: boolean;
   planName: string;
+  message?: string;
+  retry?: () => void;
 }) {
   return (
     <main
@@ -139,9 +178,9 @@ function SuccessCard({
           <>
             <h1 className="mt-6 text-2xl font-extrabold">الدفع قيد التحقق</h1>
             <p className="mt-3 leading-7 text-gray-500">
-              لم يصلنا تأكيد تفعيل باقة {planName} بعد. لا تُعد عملية الدفع
-              فاشلة بالضرورة؛ تحقق من حسابك بعد قليل أو تواصل مع الدعم.
+              {message || `لم يصل تأكيد تفعيل باقة ${planName} بعد. لا تدفع مرة أخرى؛ أعد محاولة التحقق أو تواصل مع الدعم.`}
             </p>
+            {retry && <button onClick={retry} className="mt-6 rounded-full bg-[#374375] px-5 py-3 text-sm font-extrabold text-white">إعادة التحقق دون دفع جديد</button>}
             <div className="mt-6 grid gap-3 sm:grid-cols-2">
               <Link
                 href="/dashboard"

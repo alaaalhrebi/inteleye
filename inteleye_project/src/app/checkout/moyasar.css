@@ -1,0 +1,24 @@
+/* Overrides are confined to Moyasar's container; IntelEye's page styles stay intact. */
+.inteleye-payment-form {
+  width: 340px;
+  max-width: 100%;
+  margin-inline: auto;
+  margin-top: 16px;
+  margin-bottom: 16px;
+  min-height: 324.6px;
+}
+.inteleye-payment-form #mysr {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Ubuntu, sans-serif;
+  color: rgba(26, 26, 26, 0.9);
+}
+.inteleye-payment-form #mysr button[type="submit"] {
+  background-color: #183f9c !important;
+  border-radius: 8px !important;
+  font-weight: 400 !important;
+}
+.inteleye-payment-form #mysr button[type="submit"]:hover {
+  background-color: #13347e !important;
+}
+@media (max-width: 639px) {
+  .inteleye-payment-form { width: 100%; min-height: 345px; }
+}
