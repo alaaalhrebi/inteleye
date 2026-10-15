@@ -6,17 +6,18 @@ const path = require('node:path');
 const vm = require('node:vm');
 const ts = require('typescript');
 const root = path.resolve(__dirname, '..');
-function load(file) {
+function load(file, globals = {}) {
   const module = { exports: {} };
   const code = ts.transpileModule(fs.readFileSync(path.join(root, file), 'utf8'), {
     compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020 },
   }).outputText;
   vm.runInNewContext(code, { module, exports: module.exports, process, Buffer, Request, Response, URL, URLSearchParams, AbortSignal,
+    performance, console: { error() {} },
     fetch: () => assert.fail('unexpected external provider request'), require(name) {
-      if (name.startsWith('@/')) return load('src/' + name.slice(2) + '.ts');
-      if (name.startsWith('./')) return load(path.join(path.dirname(file), name + '.ts'));
+      if (name.startsWith('@/')) return load('src/' + name.slice(2) + '.ts', globals);
+      if (name.startsWith('./')) return load(path.join(path.dirname(file), name + '.ts'), globals);
       return require(name);
-    } });
+    }, ...globals });
   return module.exports;
 }
 const { resolveIntent } = load('src/lib/payments/intents.ts');
@@ -232,4 +233,96 @@ test('returning to a cached paid order rechecks provider status before first act
   });
   assert.equal(fetched, 1); assert.equal(order.status, 'pending'); assert.equal(db.applied, 0);
   assert.equal(db.payments[0].provider_status, 'voided'); assert.equal(db.inserted, undefined);
+});
+
+function diagnosticApi() {
+  const logs = []; let tick = 100;
+  const provider = load('src/lib/payments/intents-provider.ts', {
+    performance: { now: () => { const value = tick; tick += 25; return value; } },
+    console: { error: (event, fields) => logs.push({ event, ...JSON.parse(JSON.stringify(fields)) }) },
+  });
+  return { provider, logs };
+}
+const createInput = { amount: 19900, currency: 'SAR', description: 'private-order-description', callback_url: intent.callback_url };
+const sensitive = [env.MOYASAR_SECRET_KEY, env.NEXT_PUBLIC_MOYASAR_PUBLISHABLE_KEY,
+  intent.client_secret, createInput.description, createInput.callback_url, '4111111111111111', 'private-cookie'];
+function safeLogs(logs) {
+  const output = JSON.stringify(logs);
+  for (const value of sensitive) assert.ok(!output.includes(value), `diagnostic leaked ${value}`);
+  for (const row of logs) {
+    assert.equal(row.event, 'payment_intent_provider_failure');
+    assert.equal(row.duration_ms, 25);
+    assert.deepEqual(Object.keys(row).sort(), ['duration_ms', 'error_code', 'event', 'http_status', 'operation',
+      ...(row.provider_error_code ? ['provider_error_code'] : []), 'stage'].sort());
+  }
+}
+for (const status of [401, 403, 422, 429, 500]) {
+  test(`diagnostics retain provider HTTP ${status} without exposing rejection contents or retrying`, async () => {
+    const { provider, logs } = diagnosticApi(); let calls = 0;
+    await assert.rejects(provider.createLiveIntent(createInput, { environment: env, fetchImpl: async () => {
+      calls++; return Response.json({ type: 'invalid_request_error', message: sensitive.join(' '),
+        client_secret: intent.client_secret, headers: { Authorization: env.MOYASAR_SECRET_KEY }, source: { number: '4111111111111111' } }, { status });
+    } }), e => e.code === 'PROVIDER_REJECTED' && e.status === 503);
+    assert.equal(calls, 1); assert.equal(logs.length, 1);
+    assert.equal(logs[0].http_status, status); assert.equal(logs[0].stage, 'http');
+    assert.equal(logs[0].operation, 'create'); assert.equal(logs[0].provider_error_code, 'invalid_request_error'); safeLogs(logs);
+  });
+}
+test('unrecognized provider codes and non-JSON HTTP errors never reach logs', async () => {
+  for (const response of [Response.json({ code: sensitive.join(' '), message: sensitive.join(' ') }, { status: 403 }),
+    new Response(sensitive.join(' '), { status: 502 })]) {
+    const { provider, logs } = diagnosticApi();
+    await assert.rejects(provider.fetchLiveIntent(intent.id, { environment: env, fetchImpl: async () => response }), e => e.code === 'PROVIDER_REJECTED');
+    assert.equal(logs.length, 1); assert.equal(logs[0].operation, 'fetch');
+    assert.equal(logs[0].provider_error_code, 'UNKNOWN_PROVIDER_ERROR'); safeLogs(logs);
+  }
+});
+for (const name of ['TimeoutError', 'AbortError', 'TypeError']) {
+  test(`network diagnostic ${name} excludes exception message and preserves error behavior`, async () => {
+    const { provider, logs } = diagnosticApi();
+    await assert.rejects(provider.createLiveIntent(createInput, { environment: env, fetchImpl: async () => {
+      const error = new Error(sensitive.join(' ')); error.name = name; throw error;
+    } }), e => e.code === 'PROVIDER_UNAVAILABLE' && e.status === 503);
+    assert.equal(logs[0].http_status, null); assert.equal(logs[0].stage, 'network');
+    assert.equal(logs[0].error_code, name === 'TimeoutError' ? 'TIMEOUT' : name === 'AbortError' ? 'ABORTED' : 'NETWORK_ERROR'); safeLogs(logs);
+  });
+}
+test('successful HTTP with invalid JSON logs parse failure once', async () => {
+  const { provider, logs } = diagnosticApi();
+  await assert.rejects(provider.createLiveIntent(createInput, { environment: env,
+    fetchImpl: async () => new Response(sensitive.join(' '), { status: 200 }) }), e => e.code === 'INVALID_INTENT_RESPONSE' && e.status === 502);
+  assert.equal(logs.length, 1); assert.equal(logs[0].stage, 'parse'); assert.equal(logs[0].http_status, 200); safeLogs(logs);
+});
+test('schema and order mismatches log safe validation failures; success stays silent', async () => {
+  for (const patch of [{ client_secret: 'wrong' }, { amount: 1 }]) {
+    const { provider, logs } = diagnosticApi();
+    await assert.rejects(provider.createLiveIntent(createInput, { environment: env,
+      fetchImpl: async () => Response.json({ ...intent, ...patch }) }), e => e.status === 502);
+    assert.equal(logs.length, 1); assert.equal(logs[0].stage, 'validation'); assert.equal(logs[0].http_status, 200); safeLogs(logs);
+  }
+  const { provider, logs } = diagnosticApi();
+  assert.equal((await provider.createLiveIntent(createInput, { environment: env,
+    fetchImpl: async () => Response.json(intent) })).id, intent.id);
+  assert.equal(logs.length, 0);
+});
+test('list operation logs validation failure without query metadata or response contents', async () => {
+  const { provider, logs } = diagnosticApi();
+  await assert.rejects(provider.findAttemptPayment(uid(1), uid(2), { environment: env,
+    fetchImpl: async () => Response.json({ payments: sensitive }) }), e => e.code === 'INVALID_PROVIDER_RESPONSE');
+  assert.equal(logs[0].operation, 'list'); assert.equal(logs[0].stage, 'validation'); safeLogs(logs);
+  assert.ok(!JSON.stringify(logs).includes(uid(1))); assert.ok(!JSON.stringify(logs).includes(uid(2)));
+});
+test('diagnosed creation rejection keeps the reservation and never retries automatically', async () => {
+  const db = database(), { provider, logs } = diagnosticApi(); let calls = 0;
+  const p = fakeProvider(db);
+  p.create = input => provider.createLiveIntent(input, { environment: env, fetchImpl: async () => {
+    calls++; return Response.json({ type: 'authentication_error' }, { status: 401 });
+  } });
+  await assert.rejects(run(db, p), e => e.code === 'PROVIDER_REJECTED');
+  const generation = db.order.intent_generation;
+  assert.ok(generation); assert.ok(db.order.intent_reserved_at); assert.equal(db.order.intent_id, null);
+  assert.equal(db.order.status, 'pending'); assert.equal(db.payments.length, 0);
+  assert.equal((await run(db, p, false)).status, 'waiting');
+  assert.equal((await run(db, p)).status, 'waiting');
+  assert.equal(calls, 1); assert.equal(db.order.intent_generation, generation); safeLogs(logs);
 });
