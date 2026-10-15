@@ -1,0 +1,610 @@
+{
+  "name": "Weekly Report Email",
+  "nodes": [
+    {
+      "id": "b6dcd791-db9e-4aeb-8e4c-53558c49e124",
+      "name": "Report Completed Input",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "inputSource": "passthrough"
+      }
+    },
+    {
+      "id": "d13d685b-51b1-4d36-aef2-3fc5d0a9da72",
+      "name": "Validate Report ID",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        280,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const id = Number($json.id);\nif (!Number.isSafeInteger(id) || id <= 0) throw new Error('INVALID_REPORT_ID');\nreturn { json: { report_id: id } };"
+      }
+    },
+    {
+      "id": "bf166eda-0066-4600-9a05-222cd311ea4a",
+      "name": "Read Saved Report",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        560,
+        0
+      ],
+      "parameters": {
+        "url": "https://dhryldlprpdmsixhlaqe.supabase.co/rest/v1/reports",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpCustomAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "select",
+              "value": "id,client_id,branch_id,platform_id,report_type,status,period_start,period_end,stats"
+            },
+            {
+              "name": "id",
+              "value": "={{ 'eq.' + $json.report_id }}"
+            },
+            {
+              "name": "limit",
+              "value": "1"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "credentials": {
+        "httpCustomAuth": {
+          "id": "zG0oLxK9PlldN0gl",
+          "name": "Supabase Backend"
+        }
+      }
+    },
+    {
+      "id": "98075f8a-5264-4b93-b6cf-f06daccf6678",
+      "name": "Saved Report Is Ready?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        840,
+        0
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "9d7e264e-e7fc-43d1-91cf-51dacae0673d",
+              "leftValue": "={{ $json.report_type === 'weekly' && $json.status === 'completed' }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "afdb3754-cd3f-4de2-b48f-487939af0887",
+      "name": "Read Notification",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1120,
+        0
+      ],
+      "parameters": {
+        "url": "https://dhryldlprpdmsixhlaqe.supabase.co/rest/v1/report_email_notifications",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpCustomAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "select",
+              "value": "id,report_id,client_id,status"
+            },
+            {
+              "name": "report_id",
+              "value": "={{ 'eq.' + $json.id }}"
+            },
+            {
+              "name": "client_id",
+              "value": "={{ 'eq.' + $json.client_id }}"
+            },
+            {
+              "name": "status",
+              "value": "eq.pending"
+            },
+            {
+              "name": "limit",
+              "value": "1"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "credentials": {
+        "httpCustomAuth": {
+          "id": "zG0oLxK9PlldN0gl",
+          "name": "Supabase Backend"
+        }
+      }
+    },
+    {
+      "id": "2f69ee66-69f0-477b-810d-b62d79be14d1",
+      "name": "Claim Notification",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1400,
+        0
+      ],
+      "parameters": {
+        "url": "https://dhryldlprpdmsixhlaqe.supabase.co/rest/v1/report_email_notifications",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpCustomAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "id",
+              "value": "={{ 'eq.' + $json.id }}"
+            },
+            {
+              "name": "client_id",
+              "value": "={{ 'eq.' + $('Read Saved Report').item.json.client_id }}"
+            },
+            {
+              "name": "report_id",
+              "value": "={{ 'eq.' + $('Read Saved Report').item.json.id }}"
+            },
+            {
+              "name": "status",
+              "value": "eq.pending"
+            }
+          ]
+        },
+        "options": {},
+        "method": "PATCH",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Prefer",
+              "value": "return=representation"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { status: 'sending', updated_at: $now.toUTC().toISO() } }}"
+      },
+      "credentials": {
+        "httpCustomAuth": {
+          "id": "zG0oLxK9PlldN0gl",
+          "name": "Supabase Backend"
+        }
+      }
+    },
+    {
+      "id": "96119ab7-eb9f-42e9-b55b-fe602ac4c5fd",
+      "name": "Read Current Client",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        0,
+        260
+      ],
+      "parameters": {
+        "url": "https://dhryldlprpdmsixhlaqe.supabase.co/rest/v1/clients",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpCustomAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "select",
+              "value": "id,name,email,plan,subscription_status,trial_ends_at,current_period_end"
+            },
+            {
+              "name": "id",
+              "value": "={{ 'eq.' + $('Claim Notification').item.json.client_id }}"
+            },
+            {
+              "name": "limit",
+              "value": "1"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "credentials": {
+        "httpCustomAuth": {
+          "id": "zG0oLxK9PlldN0gl",
+          "name": "Supabase Backend"
+        }
+      }
+    },
+    {
+      "id": "fc251376-0848-4217-9b6f-ddd92cd3fd94",
+      "name": "Prepare Weekly Email",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        280,
+        260
+      ],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const client = $json;\nconst report = $('Read Saved Report').item.json;\nconst job = $('Claim Notification').item.json;\nif (Number(client.id) !== Number(report.client_id) || Number(job.client_id) !== Number(client.id) || Number(job.report_id) !== Number(report.id)) throw new Error('NOTIFICATION_SCOPE_MISMATCH');\nconst now = Date.now();\nconst trial = client.subscription_status === 'trial' && Date.parse(client.trial_ends_at || '') > now;\nconst paid = client.subscription_status === 'active' && (!client.current_period_end || Date.parse(client.current_period_end) > now);\nconst email = typeof client.email === 'string' ? client.email.trim() : '';\nif ((!trial && !paid) || !/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)) return { json: { skip: true, error_code: !trial && !paid ? 'SUBSCRIPTION_INACTIVE' : 'CLIENT_EMAIL_MISSING' } };\nconst includeUrgent = paid && ['pro', 'enterprise'].includes(client.plan);\nconst savedCases = Array.isArray(report.stats?.reputation_urgent_cases) ? report.stats.reputation_urgent_cases : [];\nconst cases = includeUrgent ? savedCases.filter(row => Number(row.client_id) === Number(client.id) && Number(row.platform_id) === Number(report.platform_id) && (row.branch_id ?? null) === (report.branch_id ?? null) && ['high', 'critical'].includes(row.severity) && (row.sentiment === 'negative' || row.is_complaint === true)) : [];\nconst clean = value => String(value || '').replace(/[\\u0000-\\u0008\\u000b\\u000c\\u000e-\\u001f]/g, '').slice(0, 2000);\nconst details = cases.length ? '\\n\\nتعليقات مصنفة عالية الخطورة وتحتاج مراجعتك:\\n' + cases.map((row, index) => `${index + 1}. ${clean(row.feedback_text)}\\nالسبب: ${clean(row.reason)}\\nالتاريخ: ${clean(row.published_at)}\\nالرد المقترح: ${clean(row.suggested_reply)}`).join('\\n\\n') : '';\nreturn { json: { skip: false, recipient_email: email, subject: `IntelEye — تقرير الأسبوع جاهز #${report.id}`, message: `مرحبًا ${clean(client.name)}،\\n\\nتقريرك الأسبوعي للفترة ${clean(report.period_start)} إلى ${clean(report.period_end)} جاهز.${details}\\n\\nادخل الموقع لمشاهدة التقرير:\\nhttps://www.inteleye-sa.com/dashboard/reports\\n\\nهذا تحليل مساعد، ويرجى مراجعة الحالات قبل اتخاذ إجراء.`, urgent_count: cases.length } };"
+      }
+    },
+    {
+      "id": "6fe6f256-dadc-429c-840f-336851631b7c",
+      "name": "Client Can Receive?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        560,
+        260
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "0aef6c6e-e44d-4aba-8cf0-c5242a976238",
+              "leftValue": "={{ $json.skip === false }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.recipient_email }}",
+        "subject": "={{ $json.subject }}",
+        "emailType": "text",
+        "message": "={{ $json.message }}",
+        "options": {
+          "appendAttribution": false,
+          "senderName": "IntelEye"
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        840,
+        260
+      ],
+      "id": "e1217a4a-880b-4db4-bf76-25d3f73a5276",
+      "name": "Send Weekly Email",
+      "webhookId": "acf4db39-88dc-41e8-a639-03f9378d0e87",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "uTXfDSckKXGK4sAq",
+          "name": "Gmail account"
+        }
+      },
+      "onError": "continueErrorOutput",
+      "retryOnFail": false
+    },
+    {
+      "id": "4c5dfbd3-954a-4028-970d-5e5fc3c5c228",
+      "name": "Confirm Gmail Receipt",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1120,
+        260
+      ],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "if (typeof $json.id !== 'string' || !$json.id) return { json: { status: 'unknown', error_code: 'GMAIL_RESULT_UNKNOWN' } };\nreturn { json: { status: 'sent', gmail_message_id: $json.id, sent_at: new Date().toISOString(), error_code: null } };"
+      }
+    },
+    {
+      "id": "286b9cd4-8148-4ef7-bb30-463f4ab7981a",
+      "name": "Classify Gmail Failure",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1400,
+        260
+      ],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const status = Number($json.error?.httpCode ?? $json.error?.statusCode ?? $json.httpCode ?? $json.statusCode);\nconst definite = [400, 401, 403, 404, 429].includes(status);\nreturn { json: { status: definite ? 'failed' : 'unknown', error_code: definite ? `GMAIL_REJECTED_${status}` : 'GMAIL_RESULT_UNKNOWN' } };"
+      }
+    },
+    {
+      "id": "e1853c89-18ad-4162-8eeb-e92f6a407998",
+      "name": "Record Delivery Result",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        0,
+        520
+      ],
+      "parameters": {
+        "url": "https://dhryldlprpdmsixhlaqe.supabase.co/rest/v1/report_email_notifications",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpCustomAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "id",
+              "value": "={{ 'eq.' + $('Claim Notification').item.json.id }}"
+            },
+            {
+              "name": "status",
+              "value": "eq.sending"
+            }
+          ]
+        },
+        "options": {},
+        "method": "PATCH",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Prefer",
+              "value": "return=representation"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { status: $json.status, gmail_message_id: $json.gmail_message_id ?? null, sent_at: $json.sent_at ?? null, error_code: $json.error_code, updated_at: $now.toUTC().toISO() } }}"
+      },
+      "credentials": {
+        "httpCustomAuth": {
+          "id": "zG0oLxK9PlldN0gl",
+          "name": "Supabase Backend"
+        }
+      }
+    },
+    {
+      "id": "e5b68d10-6074-4878-8117-8c05ea89c29d",
+      "name": "Record Skipped Notification",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        280,
+        520
+      ],
+      "parameters": {
+        "url": "https://dhryldlprpdmsixhlaqe.supabase.co/rest/v1/report_email_notifications",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpCustomAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "id",
+              "value": "={{ 'eq.' + $('Claim Notification').item.json.id }}"
+            },
+            {
+              "name": "status",
+              "value": "eq.sending"
+            }
+          ]
+        },
+        "options": {},
+        "method": "PATCH",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Prefer",
+              "value": "return=representation"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { status: 'skipped', error_code: $json.error_code, updated_at: $now.toUTC().toISO() } }}"
+      },
+      "credentials": {
+        "httpCustomAuth": {
+          "id": "zG0oLxK9PlldN0gl",
+          "name": "Supabase Backend"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Report Completed Input": {
+      "main": [
+        [
+          {
+            "node": "Validate Report ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Report ID": {
+      "main": [
+        [
+          {
+            "node": "Read Saved Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Saved Report": {
+      "main": [
+        [
+          {
+            "node": "Saved Report Is Ready?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Saved Report Is Ready?": {
+      "main": [
+        [
+          {
+            "node": "Read Notification",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Notification": {
+      "main": [
+        [
+          {
+            "node": "Claim Notification",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Claim Notification": {
+      "main": [
+        [
+          {
+            "node": "Read Current Client",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Current Client": {
+      "main": [
+        [
+          {
+            "node": "Prepare Weekly Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Weekly Email": {
+      "main": [
+        [
+          {
+            "node": "Client Can Receive?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Client Can Receive?": {
+      "main": [
+        [
+          {
+            "node": "Send Weekly Email",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Record Skipped Notification",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Weekly Email": {
+      "main": [
+        [
+          {
+            "node": "Confirm Gmail Receipt",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Classify Gmail Failure",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Confirm Gmail Receipt": {
+      "main": [
+        [
+          {
+            "node": "Record Delivery Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Classify Gmail Failure": {
+      "main": [
+        [
+          {
+            "node": "Record Delivery Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataSuccessExecution": "none",
+    "saveDataErrorExecution": "none"
+  }
+}

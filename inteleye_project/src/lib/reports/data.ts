@@ -52,8 +52,13 @@ function titleForReport(report: Record<string, unknown>) {
 
 export async function loadReportsSnapshot(
   supabase: SupabaseClientLike,
-  clientId: number
+  clientId: number,
+  options: { weeklyOnly?: boolean } = {}
 ): Promise<ReportsSnapshot> {
+  let reportsQuery = supabase.from("reports").select("*").eq("client_id", clientId);
+  if (options.weeklyOnly) {
+    reportsQuery = reportsQuery.eq("report_type", "weekly").eq("status", "completed");
+  }
   const [
     reportsResult,
     requestsResult,
@@ -62,12 +67,8 @@ export async function loadReportsSnapshot(
     urgentFeedbackResult,
   ] =
     await Promise.all([
-      supabase
-        .from("reports")
-        .select("*")
-        .eq("client_id", clientId)
-        .order("created_at", { ascending: false }),
-      supabase
+      reportsQuery.order("created_at", { ascending: false }),
+      options.weeklyOnly ? Promise.resolve({ data: [], error: null }) : supabase
         .from("report_requests")
         .select(
           "id, branch_id, platform_id, period_start, period_end, status, created_at, updated_at"

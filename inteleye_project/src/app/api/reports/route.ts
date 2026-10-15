@@ -206,11 +206,13 @@ export async function GET() {
     }
     if (!access.permissions.canViewReports) {
       return NextResponse.json(
-        { message: "التقارير متاحة للاشتراكات المدفوعة السارية فقط" },
+        { message: "التقارير متاحة أثناء صلاحية التجربة أو الاشتراك" },
         { status: 403, headers }
       );
     }
-    const snapshot = await loadReportsSnapshot(access.supabase, access.client.id);
+    const snapshot = await loadReportsSnapshot(access.supabase, access.client.id, {
+      weeklyOnly: access.permissions.isTrialActive,
+    });
     return NextResponse.json(snapshot, { headers });
   } catch {
     return NextResponse.json(

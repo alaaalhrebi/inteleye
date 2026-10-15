@@ -18,13 +18,13 @@ const validBody = {
   periodEnd: "2026-07-31",
 };
 
-test("trial السارية تصل إلى لوحة التحكم ولا تصل إلى التقارير", () => {
+test("trial السارية تشاهد التقارير الأسبوعية دون إنشاء تقرير مخصص", () => {
   const value = getSubscriptionPermissions(
     { subscription_status: "trial", trial_ends_at: "2026-08-03T00:00:00Z" },
     { now }
   );
   assert.equal(value.canAccessDashboard, true);
-  assert.equal(value.canViewReports, false);
+  assert.equal(value.canViewReports, true);
   assert.equal(value.canCreateCustomReport, false);
   assert.equal(value.canChoosePlatformScope, false);
 });

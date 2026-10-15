@@ -1,0 +1,755 @@
+{
+  "name": "Platform Reports - Webhook & Weekly",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "83a03a23-9c6f-46a4-ba7a-d7a1f15c6d76",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const context =\n  $('Build Platform Report Stats').item.json;\n\nlet text =\n  $json.text ||\n  $json.message?.content ||\n  $json.output?.[0]?.content?.[0]?.text ||\n  $json.content?.find(\n    item => item.type === 'output_text'\n  )?.text ||\n  '';\n\nif (typeof text !== 'string') {\n  text = JSON.stringify(text);\n}\n\ntext = text\n  .replace(/```json/gi, '')\n  .replace(/```/g, '')\n  .trim();\n\nif (!text) {\n  throw new Error(\n    'لم يتم العثور على محتوى التقرير'\n  );\n}\n\nlet report;\n\ntry {\n  report = JSON.parse(text);\n} catch (error) {\n  throw new Error(\n    'تقرير المنصة ليس JSON صالحًا'\n  );\n}\n\nif (\n  !report ||\n  typeof report !== 'object' ||\n  Array.isArray(report)\n) {\n  throw new Error(\n    'نتيجة التقرير يجب أن تكون JSON Object'\n  );\n}\n\nreturn {\n  json: {\n    client_id: context.client_id,\n    client_name: context.client_name || null,\n\n    branch_id: context.branch_id ?? null,\n    branch_name: context.branch_name || null,\n\n    platform_id: context.platform_id,\n    platform_name: context.platform_name,\n\n    report_scope: context.report_scope,\n    report_type: context.report_type,\n\n    period_start: context.period_start,\n    period_end: context.period_end,\n\n    total_feedback:\n      context.stats?.total_feedback || 0,\n\n    stats: context.stats || {},\n\n    report_title:\n      report.report_title || null,\n\n    executive_summary:\n      report.executive_summary || null,\n\n    sentiment_summary:\n      report.sentiment_summary || {},\n\n    top_strengths: Array.isArray(\n      report.top_strengths\n    )\n      ? report.top_strengths\n      : [],\n\n    top_issues: Array.isArray(\n      report.top_issues\n    )\n      ? report.top_issues\n      : [],\n\n    urgent_cases_summary:\n      report.urgent_cases_summary || {\n        count: 0,\n        summary: ''\n      },\n\n    customer_needs: Array.isArray(\n      report.customer_needs\n    )\n      ? report.customer_needs\n      : [],\n\n    sales_opportunities: Array.isArray(\n      report.sales_opportunities\n    )\n      ? report.sales_opportunities\n      : [],\n\n    recommendations: Array.isArray(\n      report.recommendations\n    )\n      ? report.recommendations\n      : [],\n\n    action_plan: Array.isArray(\n      report.action_plan\n    )\n      ? report.action_plan\n      : [],\n\n    conclusion:\n      report.conclusion || null,\n\n    report_data: report,\n\n    generated_at:\n      new Date().toISOString()\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        280,
+        0
+      ],
+      "id": "a5f23dc3-c242-4660-afa0-f1bd73d231c7",
+      "name": "Parse Report Result"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://dhryldlprpdmsixhlaqe.supabase.co/rest/v1/reports",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpCustomAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "on_conflict",
+              "value": "client_id,report_type,period_start,period_end,report_scope"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Prefer",
+              "value": "resolution=merge-duplicates,return=representation"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ {\n  client_id: $json.client_id,\n  branch_id: $json.branch_id ?? null,\n  platform_id: $json.platform_id,\n\n  report_type: $json.report_type,\n  report_scope: $json.report_scope,\n\n  period_start:\n    String($json.period_start).slice(0, 10),\n\n  period_end:\n    String($json.period_end).slice(0, 10),\n\n  total_feedback:\n    Number($json.total_feedback || 0),\n\n  total_sales_opportunities:\n    Number(\n      $json.stats?.sales_opportunities_count || 0\n    ),\n\n  total_complaints:\n    Number(\n      $json.stats?.complaints_count || 0\n    ),\n\n  total_needs_reply:\n    Number(\n      $json.stats?.needs_reply_count || 0\n    ),\n\n  positive_pct:\n    Number(\n      $json.stats?.sentiment?.positive_percentage || 0\n    ),\n\n  negative_pct:\n    Number(\n      $json.stats?.sentiment?.negative_percentage || 0\n    ),\n\n  neutral_pct:\n    Number(\n      $json.stats?.sentiment?.neutral_percentage || 0\n    ),\n\n  platforms: [\n    $json.platform_name\n  ],\n\n  stats:\n    $json.stats || {},\n\n  ai_summary: {\n    report_title:\n      $json.report_title || null,\n\n    executive_summary:\n      $json.executive_summary || null,\n\n    sentiment_summary:\n      $json.sentiment_summary || {},\n\n    top_strengths:\n      $json.top_strengths || [],\n\n    top_issues:\n      $json.top_issues || [],\n\n    urgent_cases_summary:\n      $json.urgent_cases_summary || {\n        count: 0,\n        summary: ''\n      },\n\n    customer_needs:\n      $json.customer_needs || [],\n\n    sales_opportunities:\n      $json.sales_opportunities || [],\n\n    recommendations:\n      $json.recommendations || [],\n\n    action_plan:\n      $json.action_plan || [],\n\n    conclusion:\n      $json.conclusion || null\n  },\n\n  status: 'completed',\n\n  updated_at:\n    $now.toUTC().toISO()\n} }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        560,
+        0
+      ],
+      "id": "4fbc9ddd-0eb7-4337-a8d9-fca080fc8db0",
+      "name": "Upsert Report",
+      "credentials": {
+        "httpCustomAuth": {
+          "id": "zG0oLxK9PlldN0gl",
+          "name": "Supabase Backend"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 5
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        840,
+        0
+      ],
+      "id": "4291f346-56f7-4f23-ad6c-2c50cb2a16d0",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "https://dhryldlprpdmsixhlaqe.supabase.co/rest/v1/clients",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpCustomAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "id",
+              "value": "={{ 'eq.' + $('Determine Report Period').last().json.id }}"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Prefer",
+              "value": "return=representation"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ (() => {\n  const report = $('Determine Report Period').last().json;\n\n  const periodEnd = new Date(report.period_end);\n\n  const nextReportAt = new Date(\n    periodEnd.getTime() + (7 * 24 * 60 * 60 * 1000)\n  ).toISOString();\n\n  const body = {\n    last_report_at: periodEnd.toISOString(),\n    next_report_at: nextReportAt\n  };\n\n  if (report.report_type === 'initial_historical') {\n    body.initial_report_generated_at =\n      $now.toUTC().toISO();\n  }\n\n  return body;\n})() }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1120,
+        0
+      ],
+      "id": "52cba8f2-796d-4300-8d8f-205301063b51",
+      "name": "Update Client Report Schedule",
+      "credentials": {
+        "httpCustomAuth": {
+          "id": "zG0oLxK9PlldN0gl",
+          "name": "Supabase Backend"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const client = $json;\n\nif (!client.id) {\n  throw new Error('معرف العميل غير موجود');\n}\n\nconst dayMs = 24 * 60 * 60 * 1000;\n\nlet reportType;\nlet periodStart;\nlet periodEnd;\n\nif (!client.initial_report_generated_at) {\n  reportType = 'initial_historical';\n\n  periodEnd = new Date();\n\n  periodStart = new Date(\n    periodEnd.getTime() - 30 * dayMs\n  );\n} else {\n  reportType = 'weekly';\n\n  periodStart = new Date(\n    client.last_report_at ||\n    client.activated_at || client.created_at || new Date(Date.now() - 7 * dayMs)\n  );\n\n  periodEnd = new Date(\n    client.next_report_at ||\n    new Date()\n  );\n}\n\nreturn {\n  json: {\n    ...client,\n\n    report_type: reportType,\n\n    period_start:\n      periodStart.toISOString(),\n\n    period_end:\n      periodEnd.toISOString()\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1400,
+        0
+      ],
+      "id": "7ca58e72-245a-4d83-8b90-4fea8ad67a32",
+      "name": "Determine Report Period"
+    },
+    {
+      "parameters": {
+        "url": "https://dhryldlprpdmsixhlaqe.supabase.co/rest/v1/clients",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpCustomAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "select",
+              "value": "id,name,created_at,subscription_status,activated_at,initial_report_generated_at,last_report_at,next_report_at,client_platforms(id,is_active,last_success_at),plan,trial_ends_at,current_period_end"
+            },
+            {
+              "name": "subscription_status",
+              "value": "in.(trial,active)"
+            },
+            {
+              "name": "next_report_at",
+              "value": "={{ 'lte.' + $now.toUTC().toISO() }}"
+            },
+            {
+              "name": "order",
+              "value": "next_report_at.asc"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        0,
+        260
+      ],
+      "id": "1e34fbc0-5f09-4be1-9b34-533972f827f2",
+      "name": "Get Due Clients",
+      "credentials": {
+        "httpCustomAuth": {
+          "id": "zG0oLxK9PlldN0gl",
+          "name": "Supabase Backend"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        280,
+        260
+      ],
+      "id": "9695ec8a-1aa5-46a2-bba9-9ce16e5ac19f",
+      "name": "Loop Clients"
+    },
+    {
+      "parameters": {
+        "url": "https://dhryldlprpdmsixhlaqe.supabase.co/rest/v1/client_platforms",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpCustomAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "select",
+              "value": "id,client_id,branch_id,platform_name,platform_url,username,settings,is_active,branches(id,name)"
+            },
+            {
+              "name": "client_id",
+              "value": "={{ 'eq.' + $json.id }}"
+            },
+            {
+              "name": "is_active",
+              "value": "eq.true"
+            },
+            {
+              "name": "platform_name",
+              "value": "in.(google_maps,x,tiktok,instagram)"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        560,
+        260
+      ],
+      "id": "daefea7e-bc95-4685-a748-daf94121b4b1",
+      "name": "Get Active Client Platforms",
+      "credentials": {
+        "httpCustomAuth": {
+          "id": "zG0oLxK9PlldN0gl",
+          "name": "Supabase Backend"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "https://dhryldlprpdmsixhlaqe.supabase.co/rest/v1/unified_feedback",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpCustomAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "select",
+              "value": "source_record_id,client_id,branch_id,platform_id,platform_name,source_table,external_id,feedback_text,rating,published_at,sentiment,category,severity,needs_reply,is_sales_opportunity,is_complaint,suggested_reply,reason,analysis_status"
+            },
+            {
+              "name": "branch_id",
+              "value": "={{ $json.branch_id == null\n  ? 'is.null'\n  : 'eq.' + $json.branch_id\n}}"
+            },
+            {
+              "name": "order",
+              "value": "published_at.asc"
+            },
+            {
+              "name": "client_id",
+              "value": "={{ 'eq.' + $json.client_id }}"
+            },
+            {
+              "name": "platform_name",
+              "value": "={{ 'eq.' + $json.platform_name }}"
+            },
+            {
+              "name": "and",
+              "value": "={{ \n  '(published_at.gte.' +\n  $json.period_start +\n  ',published_at.lt.' +\n  $json.period_end +\n  ')'\n}}"
+            },
+            {
+              "name": "platform_id",
+              "value": "={{ 'eq.' + $json.id }}"
+            },
+            {
+              "name": "analysis_status",
+              "value": "eq.completed"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        840,
+        260
+      ],
+      "id": "1340886c-d722-4613-9638-b8acb707c948",
+      "name": "Get Platform Feedback",
+      "alwaysOutputData": true,
+      "credentials": {
+        "httpCustomAuth": {
+          "id": "zG0oLxK9PlldN0gl",
+          "name": "Supabase Backend"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "11b52d07-442b-4234-8bb7-c53d982f58ff",
+              "leftValue": "={{ !!$json.source_record_id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1120,
+        260
+      ],
+      "id": "d18a0aef-236c-404f-ad33-2a73f144691d",
+      "name": "Has Platform Feedback?"
+    },
+    {
+      "parameters": {
+        "jsCode": "const context =\n  $('Loop Platform Reports').last().json;\n\n// إزالة العنصر الفارغ إن وجد\nconst feedback = $input.all()\n  .map(item => item.json)\n  .filter(item => item.source_record_id);\n\nif (!feedback.length) {\n  return [];\n}\n\nif (feedback.some(row => Number(row.client_id) !== Number(context.client_id) || Number(row.platform_id) !== Number(context.id) || (row.branch_id ?? null) !== (context.branch_id ?? null))) throw new Error('REPORT_FEEDBACK_SCOPE_MISMATCH');\n\nconst total = feedback.length;\n\nconst percent = value =>\n  total > 0\n    ? Number(((value / total) * 100).toFixed(2))\n    : 0;\n\nconst sentimentCounts = {\n  positive: 0,\n  negative: 0,\n  neutral: 0\n};\n\nconst severityCounts = {\n  low: 0,\n  medium: 0,\n  high: 0\n};\n\nconst categoryCounts = {};\nconst negativeCategoryCounts = {};\nconst positiveCategoryCounts = {};\n\nlet needsReplyCount = 0;\nlet complaintsCount = 0;\nlet salesOpportunitiesCount = 0;\n\nconst ratings = [];\n\nconst normalizeCategories = value => {\n  if (Array.isArray(value)) {\n    return value;\n  }\n\n  if (!value) {\n    return ['أخرى'];\n  }\n\n  return [String(value)];\n};\n\nfor (const row of feedback) {\n  const sentiment = [\n    'positive',\n    'negative',\n    'neutral'\n  ].includes(row.sentiment)\n    ? row.sentiment\n    : 'neutral';\n\n  sentimentCounts[sentiment]++;\n\n  const severity = [\n    'low',\n    'medium',\n    'high'\n  ].includes(row.severity)\n    ? row.severity\n    : 'low';\n\n  severityCounts[severity]++;\n\n  if (row.needs_reply === true) {\n    needsReplyCount++;\n  }\n\n  if (row.is_complaint === true) {\n    complaintsCount++;\n  }\n\n  if (row.is_sales_opportunity === true) {\n    salesOpportunitiesCount++;\n  }\n\n  const rating = Number(row.rating);\n\n  if (\n    row.rating !== null &&\n    row.rating !== undefined &&\n    !Number.isNaN(rating)\n  ) {\n    ratings.push(rating);\n  }\n\n  const categories = normalizeCategories(\n    row.category\n  );\n\n  for (const category of categories) {\n    const name = String(category || 'أخرى');\n\n    categoryCounts[name] =\n      (categoryCounts[name] || 0) + 1;\n\n    if (sentiment === 'negative') {\n      negativeCategoryCounts[name] =\n        (negativeCategoryCounts[name] || 0) + 1;\n    }\n\n    if (sentiment === 'positive') {\n      positiveCategoryCounts[name] =\n        (positiveCategoryCounts[name] || 0) + 1;\n    }\n  }\n}\n\nconst sortCounts = counts =>\n  Object.entries(counts)\n    .sort((a, b) => b[1] - a[1])\n    .map(([name, count]) => ({\n      name,\n      count\n    }));\n\nconst averageRating = ratings.length\n  ? Number(\n      (\n        ratings.reduce(\n          (sum, value) => sum + value,\n          0\n        ) / ratings.length\n      ).toFixed(2)\n    )\n  : null;\n\nconst urgentCases = feedback\n  .filter(row =>\n    ['high', 'critical'].includes(row.severity) && (row.sentiment === 'negative' || row.is_complaint === true)\n  )\n  .map(row => ({\n    source_record_id: row.source_record_id,\n    source_table: row.source_table,\n    client_id: row.client_id,\n    platform_id: row.platform_id,\n    branch_id: row.branch_id ?? null,\n    severity: row.severity,\n    sentiment: row.sentiment,\n    is_complaint: row.is_complaint === true,\n    external_id: row.external_id || null,\n    feedback_text: row.feedback_text || '',\n    category: normalizeCategories(row.category),\n    reason: row.reason || null,\n    suggested_reply:\n      row.suggested_reply || null,\n    published_at: row.published_at || null\n  }));\n\nconst feedbackForAi = feedback.map(row => ({\n  source_record_id: row.source_record_id,\n  feedback_text: row.feedback_text || '',\n  rating: row.rating ?? null,\n  sentiment: row.sentiment || 'neutral',\n  category: normalizeCategories(row.category),\n  severity: row.severity || 'low',\n  needs_reply: row.needs_reply === true,\n  is_complaint: row.is_complaint === true,\n  is_sales_opportunity:\n    row.is_sales_opportunity === true,\n  reason: row.reason || null,\n  published_at: row.published_at || null\n}));\n\nreturn [\n  {\n    json: {\n      client_id: context.client_id,\n      client_name: context.client_name || null,\n\n      branch_id: context.branch_id ?? null,\n      branch_name: context.branch_name || null,\n\n      platform_id: context.id,\n      platform_name: context.platform_name,\n\n      report_scope: context.report_scope,\n      report_type: context.report_type,\n\n      period_start: context.period_start,\n      period_end: context.period_end,\n\n      stats: {\n        total_feedback: total,\n\n        sentiment: {\n          positive: sentimentCounts.positive,\n          negative: sentimentCounts.negative,\n          neutral: sentimentCounts.neutral,\n\n          positive_percentage:\n            percent(sentimentCounts.positive),\n\n          negative_percentage:\n            percent(sentimentCounts.negative),\n\n          neutral_percentage:\n            percent(sentimentCounts.neutral)\n        },\n\n        severity: severityCounts,\n\n        average_rating: averageRating,\n\n        needs_reply_count:\n          needsReplyCount,\n\n        complaints_count:\n          complaintsCount,\n\n        sales_opportunities_count:\n          salesOpportunitiesCount,\n\n        categories:\n          sortCounts(categoryCounts),\n\n        top_issues:\n          sortCounts(\n            negativeCategoryCounts\n          ).slice(0, 5),\n\n        top_strengths:\n          sortCounts(\n            positiveCategoryCounts\n          ).slice(0, 5),\n\n        reputation_urgent_cases: urgentCases,\n\n        urgent_cases_count:\n          urgentCases.length\n      },\n\n      urgent_cases: urgentCases,\n      feedback_for_ai: feedbackForAi\n    }\n  }\n];",
+        "mode": "runOnceForAllItems"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1400,
+        260
+      ],
+      "id": "bc1cc396-b24c-4ab7-b227-b8ba8f729fce",
+      "name": "Build Platform Report Stats"
+    },
+    {
+      "parameters": {
+        "jsCode": "const client =\n  $('Determine Report Period').last().json;\n\nreturn $input.all().map(item => {\n  const platform = item.json;\n\n  const branch = Array.isArray(platform.branches)\n    ? platform.branches[0]\n    : platform.branches;\n\n  return {\n    json: {\n      ...platform,\n\n      client_name:\n        client.name || null,\n\n      report_type:\n        client.report_type,\n\n      period_start:\n        client.period_start,\n\n      period_end:\n        client.period_end,\n\n      branch_name:\n        branch?.name || null,\n\n      report_scope:\n        platform.branch_id\n          ? `${platform.platform_name}:branch:${platform.branch_id}`\n          : `${platform.platform_name}:client`\n    }\n  };\n});",
+        "mode": "runOnceForAllItems"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        0,
+        520
+      ],
+      "id": "b96d035d-7aa7-4602-8226-d44434eb80b0",
+      "name": "Attach Report Context"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        280,
+        520
+      ],
+      "id": "9450f67f-d35d-4141-ac64-7b1b4c1b774c",
+      "name": "Loop Platform Reports"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-4O-MINI"
+        },
+        "responses": {
+          "values": [
+            {
+              "content": "=أنت محلل متخصص في تجربة العملاء، تحليل صوت العميل، وسمعة المنشآت.\n\nمهمتك إعداد تقرير تحليلي احترافي باللغة العربية يساعد الإدارة على فهم:\n- ماذا يقول العملاء؟\n- لماذا يشعرون بهذه الطريقة؟\n- ما الاتجاهات والأنماط المتكررة؟\n- ما المشكلات التي تحتاج تدخلًا؟\n- ما الفرص التي يمكن الاستفادة منها؟\n- وما الذي قد يحدث مستقبلاً إذا استمرت الاتجاهات الحالية؟\n\nلا تكتفِ بتلخيص التعليقات، بل استخرج منها رؤى عملية قابلة للاستخدام في اتخاذ القرار.\n\nمعلومات التقرير:\n- اسم العميل: {{ $json.client_name || 'غير محدد' }}\n- المنصة: {{ $json.platform_name }}\n- اسم الفرع: {{ $json.branch_name || 'على مستوى المنشأة' }}\n- نوع التقرير: {{ $json.report_type }}\n- بداية الفترة: {{ $json.period_start }}\n- نهاية الفترة: {{ $json.period_end }}\n\nالإحصاءات المحسوبة من النظام:\n{{ JSON.stringify($json.stats) }}\n\nالحالات العاجلة:\n{{ JSON.stringify($json.urgent_cases) }}\n\nعينة من التعليقات المحللة:\n{{ JSON.stringify($json.feedback_for_ai.slice(0, 150)) }}\n\nاعتمد على الإحصاءات كما هي تمامًا.\nلا تغير الأرقام أو النسب.\nلا تخترع بيانات أو أرقامًا أو أحداثًا غير موجودة.\n\nحلل التعليقات لاستخراج:\n- اتجاه مشاعر العملاء.\n- أهم أسباب الرضا وعدم الرضا.\n- المواضيع والأنماط المتكررة.\n- نقاط القوة الأكثر وضوحًا.\n- المشكلات الأكثر تأثيرًا.\n- الاحتياجات غير الملباة.\n- فرص تحسين تجربة العميل.\n- فرص المبيعات أو النمو إن وجدت.\n- مؤشرات الولاء أو احتمالية فقدان العملاء.\n- المخاطر المحتملة على السمعة.\n- الإشارات الجديدة أو الموضوعات التي بدأت في الظهور.\n- رؤية مستقبلية مبنية فقط على الأنماط الموجودة في البيانات.\n- توصيات عملية قابلة للتنفيذ.\n\nالرؤية المستقبلية ليست توقعًا مؤكدًا.\nيجب صياغتها كاستنتاج تحليلي مثل:\n\"إذا استمر هذا الاتجاه...\"\nأو\n\"تشير التعليقات الحالية إلى احتمال...\"\n\nأرجع JSON صالحًا فقط دون Markdown أو أي نص خارج JSON بالشكل التالي:\n\n{\n  \"report_title\": \"\",\n  \"executive_summary\": \"\",\n\n  \"sentiment_analysis\": {\n    \"overall_direction\": \"\",\n    \"positive_drivers\": [],\n    \"negative_drivers\": [],\n    \"neutral_observations\": []\n  },\n\n  \"trend_analysis\": {\n    \"direction\": \"stable\",\n    \"summary\": \"\",\n    \"rising_topics\": [],\n    \"declining_topics\": []\n  },\n\n  \"top_strengths\": [\n    {\n      \"title\": \"\",\n      \"description\": \"\",\n      \"count\": 0,\n      \"business_impact\": \"\"\n    }\n  ],\n\n  \"top_issues\": [\n    {\n      \"title\": \"\",\n      \"description\": \"\",\n      \"count\": 0,\n      \"priority\": \"low\",\n      \"business_impact\": \"\"\n    }\n  ],\n\n  \"recurring_themes\": [\n    {\n      \"theme\": \"\",\n      \"summary\": \"\",\n      \"sentiment\": \"neutral\",\n      \"count\": 0\n    }\n  ],\n\n  \"emerging_signals\": [\n    {\n      \"signal\": \"\",\n      \"description\": \"\",\n      \"importance\": \"low\"\n    }\n  ],\n\n  \"urgent_cases_summary\": {\n    \"count\": 0,\n    \"summary\": \"\"\n  },\n\n  \"customer_needs\": [\n    {\n      \"need\": \"\",\n      \"evidence\": \"\",\n      \"importance\": \"low\"\n    }\n  ],\n\n  \"customer_loyalty_signals\": {\n    \"positive_signals\": [],\n    \"risk_signals\": [],\n    \"summary\": \"\"\n  },\n\n  \"reputation_risks\": [\n    {\n      \"risk\": \"\",\n      \"description\": \"\",\n      \"priority\": \"low\"\n    }\n  ],\n\n  \"sales_opportunities\": [\n    {\n      \"opportunity\": \"\",\n      \"reason\": \"\",\n      \"suggested_action\": \"\"\n    }\n  ],\n\n  \"future_outlook\": {\n    \"summary\": \"\",\n    \"likely_positive_direction\": [],\n    \"potential_risks\": [],\n    \"watch_next_period\": []\n  },\n\n  \"recommendations\": [\n    {\n      \"title\": \"\",\n      \"description\": \"\",\n      \"priority\": \"low\",\n      \"suggested_action\": \"\",\n      \"expected_impact\": \"\"\n    }\n  ],\n\n  \"action_plan\": [\n    {\n      \"action\": \"\",\n      \"priority\": \"low\",\n      \"responsible_team\": \"\",\n      \"timeframe\": \"\",\n      \"success_indicator\": \"\"\n    }\n  ],\n\n  \"management_priorities\": {\n    \"immediate\": [],\n    \"short_term\": [],\n    \"monitor\": []\n  },\n\n  \"next_report_watchlist\": [],\n\n  \"conclusion\": \"\"\n}\n\nالقواعد:\n\n- التقرير باللغة العربية.\n- اجعل التحليل خاصًا بالمنصة والفرع والفترة الحالية فقط.\n- لا تذكر أي منصة أخرى.\n- لا تخترع أرقامًا أو نسبًا أو معلومات غير موجودة.\n- استخدم الأرقام الواردة في stats كما هي دون إعادة حسابها إذا لم يكن ذلك مطلوبًا.\n- count يجب أن يكون رقمًا صحيحًا مبنيًا على البيانات المتاحة، وإذا تعذر تحديده بدقة استخدم 0 ولا تخترع قيمة.\n- priority وimportance يجب أن تكون فقط:\n  low\n  medium\n  high\n- sentiment يجب أن تكون فقط:\n  positive\n  neutral\n  negative\n- trend_analysis.direction يجب أن تكون فقط:\n  improving\n  declining\n  stable\n  mixed\n  insufficient_data\n- إذا لم تتوفر بيانات كافية للحكم على اتجاه زمني، استخدم insufficient_data ولا تخترع اتجاهًا.\n- لا تعتبر تكرار التعليقات القليلة اتجاهًا عامًا دون أدلة كافية.\n- فرّق بين المشكلة الفردية والنمط المتكرر.\n- استنتج الأسباب من محتوى التعليقات فقط.\n- اجمع التعليقات المتشابهة دلاليًا تحت موضوع واحد حتى لو اختلفت الكلمات المستخدمة.\n- لا تبالغ في الاستنتاجات.\n- الرؤية المستقبلية يجب أن تكون مبنية على الاتجاهات والأنماط الموجودة فقط، وليست توقعات مؤكدة.\n- إذا لم توجد حالات عاجلة، اجعل urgent_cases_summary.count = 0 ووضح أنه لا توجد حالات عاجلة.\n- إذا لم توجد فرص مبيعات حقيقية، أرجع sales_opportunities كمصفوفة فارغة.\n- إذا لم توجد مخاطر سمعة واضحة، أرجع reputation_risks كمصفوفة فارغة.\n- إذا لم توجد إشارات ناشئة، أرجع emerging_signals كمصفوفة فارغة.\n- لا تكرر نفس الفكرة في عدة أقسام إلا إذا كان السياق مختلفًا.\n- ركز على الرؤى التي تساعد الإدارة على اتخاذ قرار.\n- اجعل التوصيات محددة وعملية وقابلة للتنفيذ.\n- اربط كل توصية قدر الإمكان بمشكلة أو فرصة ظهرت في البيانات.\n- لا تستخدم عبارات عامة مثل \"تحسين الخدمة\" دون توضيح ما الذي يجب تحسينه.\n- أرجع JSON صالحًا فقط دون Markdown أو أي نص خارجي."
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {
+          "maxTokens": 3000,
+          "temperature": 0.2
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2.3,
+      "position": [
+        560,
+        520
+      ],
+      "id": "d0f565f4-40f4-48e8-9eb8-7b21b4070e47",
+      "name": "Generate Platform Report",
+      "retryOnFail": true,
+      "waitBetweenTries": 5000,
+      "credentials": {
+        "openAiApi": {
+          "id": "YL3zdWbXhbX2hL1V",
+          "name": "OpenAI key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "return $input.all().filter(({ json: client }) => {\n  const now = Date.now();\n  const eligible = client.subscription_status === 'trial'\n    ? Boolean(client.trial_ends_at) && Date.parse(client.trial_ends_at) > now\n    : client.subscription_status === 'active' && (!client.current_period_end || Date.parse(client.current_period_end) > now);\n  if (!eligible) return false;\n  const dueAt = new Date(client.next_report_at || 0).getTime();\n  const platforms = Array.isArray(client.client_platforms)\n    ? client.client_platforms.filter(platform => platform.is_active === true)\n    : [];\n\n  return platforms.length > 0 && platforms.every(platform => {\n    const completedAt = new Date(platform.last_success_at || 0).getTime();\n    return Number.isFinite(completedAt) && completedAt >= dueAt;\n  });\n});",
+        "mode": "runOnceForAllItems"
+      },
+      "id": "421f3e99-a430-4448-9efc-809888b576fa",
+      "typeVersion": 2,
+      "name": "Keep Clients Ready For Reports",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        840,
+        520
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "refresh-platform-reports",
+        "authentication": "headerAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        1120,
+        520
+      ],
+      "id": "e8be99a2-485d-43c1-84f1-25ac291ce935",
+      "name": "Platform Sync Completed Webhook",
+      "webhookId": "693d97a8-49bd-4593-bc27-0f872488c0ee",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "21Us8qDaS5zhvSdM",
+          "name": "Header Auth account"
+        }
+      }
+    },
+    {
+      "id": "634c7f1f-5965-46cc-85c3-ebeed37bea9e",
+      "name": "Is Completed Weekly Report?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1400,
+        520
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "83aeb8c8-17c2-49fe-9757-53b01cfe82e0",
+              "leftValue": "={{ $json.report_type === 'weekly' && $json.status === 'completed' }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "7d6558b7-583b-42a2-af59-4da309d68bfe",
+      "name": "Send Weekly Report Notification",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        780
+      ],
+      "parameters": {
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "value": "SELECT_WEEKLY_REPORT_EMAIL_WORKFLOW_ID",
+          "mode": "id"
+        },
+        "mode": "each",
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "onError": "continueRegularOutput",
+      "alwaysOutputData": true
+    }
+  ],
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Get Due Clients",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Report Result": {
+      "main": [
+        [
+          {
+            "node": "Upsert Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get Due Clients",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upsert Report": {
+      "main": [
+        [
+          {
+            "node": "Is Completed Weekly Report?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Client Report Schedule": {
+      "main": [
+        [
+          {
+            "node": "Loop Clients",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Determine Report Period": {
+      "main": [
+        [
+          {
+            "node": "Get Active Client Platforms",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Due Clients": {
+      "main": [
+        [
+          {
+            "node": "Keep Clients Ready For Reports",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Clients": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Determine Report Period",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Active Client Platforms": {
+      "main": [
+        [
+          {
+            "node": "Attach Report Context",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Platform Feedback": {
+      "main": [
+        [
+          {
+            "node": "Has Platform Feedback?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has Platform Feedback?": {
+      "main": [
+        [
+          {
+            "node": "Build Platform Report Stats",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Loop Platform Reports",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Platform Report Stats": {
+      "main": [
+        [
+          {
+            "node": "Generate Platform Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Attach Report Context": {
+      "main": [
+        [
+          {
+            "node": "Loop Platform Reports",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Platform Reports": {
+      "main": [
+        [
+          {
+            "node": "Update Client Report Schedule",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Get Platform Feedback",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Platform Report": {
+      "main": [
+        [
+          {
+            "node": "Parse Report Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Keep Clients Ready For Reports": {
+      "main": [
+        [
+          {
+            "node": "Loop Clients",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Platform Sync Completed Webhook": {
+      "main": [
+        [
+          {
+            "node": "Get Due Clients",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Completed Weekly Report?": {
+      "main": [
+        [
+          {
+            "node": "Send Weekly Report Notification",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Loop Platform Reports",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Weekly Report Notification": {
+      "main": [
+        [
+          {
+            "node": "Loop Platform Reports",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "nodeGroups": []
+}

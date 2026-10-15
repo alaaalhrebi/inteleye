@@ -52,7 +52,7 @@ export function getSubscriptionPermissions(
 
   const canAccessDashboard = isTrialActive || hasActiveSubscription;
   const canManageBranches = hasActiveSubscription;
-  const canAccessReports = hasActiveSubscription;
+  const canAccessReports = isTrialActive || hasActiveSubscription;
   const isAdvancedReportsPlan = plan === "pro" || plan === "enterprise";
   const canChoosePlatformScope = hasActiveSubscription && isAdvancedReportsPlan;
   const canCreateCustomReport =

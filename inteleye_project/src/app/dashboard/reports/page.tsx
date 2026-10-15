@@ -36,7 +36,9 @@ export default async function ReportsPage() {
     );
   }
 
-  const snapshot = await loadReportsSnapshot(supabase, client.id);
+  const snapshot = await loadReportsSnapshot(supabase, client.id, {
+    weeklyOnly: permissions.isTrialActive,
+  });
 
   return (
     <ReportsManager
