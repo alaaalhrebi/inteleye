@@ -90,7 +90,10 @@ export async function middleware(request: NextRequest) {
 
   if (
     (path === "/login" || path === "/signup") &&
-    hasAuthenticatedClaims
+    hasAuthenticatedClaims &&
+    // The dashboard may reject a stale session after getClaims succeeds.
+    // Allow its explicit recovery destination instead of bouncing back forever.
+    !(path === "/login" && request.nextUrl.searchParams.get("reason") === "session_required")
   ) {
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }

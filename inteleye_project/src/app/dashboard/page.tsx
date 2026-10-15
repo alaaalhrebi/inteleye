@@ -39,7 +39,7 @@ export default async function DashboardPage({
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user) redirect("/login");
+  if (!user) redirect("/login?reason=session_required");
 
   const { data: client, error: clientError } = await supabase
     .from("clients")
@@ -59,11 +59,11 @@ export default async function DashboardPage({
   
   if (clientError) {
     console.error("Failed to load client:", clientError.message);
-    redirect("/login");
+    return <DashboardAccountUnavailable />;
   }
   
   if (!client) {
-    redirect("/signup");
+    return <DashboardAccountUnavailable />;
   }
   
   const basePermissions = getSubscriptionPermissions(client);
@@ -255,6 +255,25 @@ const selectedBranchName =
         </main>
       </div>
     </div>
+  );
+}
+
+function DashboardAccountUnavailable() {
+  return (
+    <main dir="rtl" className="min-h-screen bg-[#F8F7F3] px-4 py-12 text-[#374375]">
+      <section role="alert" className="mx-auto max-w-xl rounded-3xl border border-[#BABDE2]/40 bg-white p-6 text-center shadow-sm sm:p-8">
+        <h1 className="text-2xl font-extrabold">تعذر تحميل بيانات حسابك الآن</h1>
+        <p className="mt-4 leading-7 text-gray-500">
+          أعد المحاولة بعد قليل. إذا استمرت المشكلة، تواصل مع الدعم. لم تتغير بيانات حسابك.
+        </p>
+        <div className="mt-6 flex flex-wrap justify-center gap-3">
+          <a href="/dashboard" className="inline-flex items-center justify-center rounded-full bg-[#374375] px-5 py-3 text-sm font-bold text-white">
+            إعادة المحاولة
+          </a>
+          <LogoutButton />
+        </div>
+      </section>
+    </main>
   );
 }
 
