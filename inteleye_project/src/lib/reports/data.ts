@@ -53,11 +53,13 @@ function titleForReport(report: Record<string, unknown>) {
 export async function loadReportsSnapshot(
   supabase: SupabaseClientLike,
   clientId: number,
-  options: { weeklyOnly?: boolean } = {}
+  options: { trialReportsOnly?: boolean } = {}
 ): Promise<ReportsSnapshot> {
   let reportsQuery = supabase.from("reports").select("*").eq("client_id", clientId);
-  if (options.weeklyOnly) {
-    reportsQuery = reportsQuery.eq("report_type", "weekly").eq("status", "completed");
+  if (options.trialReportsOnly) {
+    reportsQuery = reportsQuery
+      .in("report_type", ["initial", "initial_historical", "weekly"])
+      .eq("status", "completed");
   }
   const [
     reportsResult,
@@ -68,7 +70,7 @@ export async function loadReportsSnapshot(
   ] =
     await Promise.all([
       reportsQuery.order("created_at", { ascending: false }),
-      options.weeklyOnly ? Promise.resolve({ data: [], error: null }) : supabase
+      options.trialReportsOnly ? Promise.resolve({ data: [], error: null }) : supabase
         .from("report_requests")
         .select(
           "id, branch_id, platform_id, period_start, period_end, status, created_at, updated_at"

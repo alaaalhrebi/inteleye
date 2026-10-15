@@ -97,4 +97,47 @@ test('weekly notifications and trial RLS on isolated PostgreSQL', { timeout: 600
       assert.equal(sql("set role service_role; update report_email_notifications set status='sending' where report_id=1 and status='pending' returning 'CLAIMED';"), '');
     }
   });
+  // Phase 1 of the initial-report experience extends the already installed policies.
+  sql(`insert into reports values
+    (10,1,'initial','completed'),(11,1,'monthly','completed'),(12,1,'initial_historical','processing'),
+    (13,2,'initial_historical','completed'),(14,3,'initial_historical','completed'),(15,1,'initial','failed');`);
+  const migration = fs.readFileSync(path.join(root, 'migrations/20261016090000_allow_trial_initial_reports.sql'), 'utf8');
+  const readTrial = "set request.jwt.claim.sub='00000000-0000-0000-0000-000000000001'; set role authenticated; select string_agg(id::text,',' order by id) from reports;";
+  const beforeExtension = sql(`select json_build_object(
+    'clients',(select json_agg(c order by id) from clients c),
+    'reports',(select json_agg(r order by id) from reports r),
+    'notifications',(select json_agg(n order by id) from report_email_notifications n))::text;`);
+  sql('begin; ' + migration + ' commit;');
+  await t.test('initial report migration preserves every client, report and delivery state', () => {
+    assert.equal(sql(`select json_build_object(
+      'clients',(select json_agg(c order by id) from clients c),
+      'reports',(select json_agg(r order by id) from reports r),
+      'notifications',(select json_agg(n order by id) from report_email_notifications n))::text;`), beforeExtension);
+    assert.equal(sql("select polpermissive from pg_policy where polrelid='reports'::regclass and polname='reports_subscription_scope_guard';"), 'f');
+  });
+  await t.test('trial reads own completed initial and weekly reports despite a broad existing policy', () => {
+    assert.equal(sql(readTrial), '1,3,4,10,100');
+  });
+  await t.test('paid history and expired-trial isolation survive the extension', () => {
+    assert.equal(sql("set request.jwt.claim.sub='00000000-0000-0000-0000-000000000002'; set role authenticated; select string_agg(id::text,',' order by id) from reports;"), '5,6,13');
+    assert.equal(sql("set request.jwt.claim.sub='00000000-0000-0000-0000-000000000003'; set role authenticated; select count(*) from reports;"), '0');
+    assert.equal(sql("set request.jwt.claim.sub='00000000-0000-0000-0000-000000000099'; set role authenticated; select count(*) from reports;"), '0');
+    denied('set role anon; select * from reports;');
+  });
+  await t.test('extension does not enable custom creation for trial or Basic or change Pro access', () => {
+    for (const id of [1, 4]) {
+      const uid = `00000000-0000-0000-0000-${String(id).padStart(12, '0')}`;
+      denied(`set request.jwt.claim.sub='${uid}'; set role authenticated; insert into report_requests values('extension-${id}',${id},'${uid}');`);
+    }
+    const uid = '00000000-0000-0000-0000-000000000002';
+    sql(`set request.jwt.claim.sub='${uid}'; set role authenticated; insert into report_requests values('extension-pro',2,'${uid}');`);
+  });
+  await t.test('rollback restores weekly-only trial access and keeps existing data', () => {
+    sql(fs.readFileSync(path.join(root, 'rollback/20261016090000_allow_trial_initial_reports.sql'), 'utf8'));
+    assert.equal(sql(readTrial), '1,4,100');
+    assert.equal(sql("select count(*) from reports where report_type in ('initial','initial_historical');"), '6');
+    assert.equal(sql('select status from report_email_notifications where report_id=1;'), 'sent');
+    sql('begin; ' + migration + ' commit;');
+    assert.equal(sql(readTrial), '1,3,4,10,100');
+  });
 });

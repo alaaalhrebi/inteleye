@@ -47,35 +47,49 @@ test('expired trial and paid subscriptions cannot view reports', () => {
     assert.equal(p.canViewReports, false); assert.equal(p.canCreateCustomReport, false);
   }
 });
-function db() {
+function db(rows = {}) {
   const calls = [];
   return { calls, from(table) {
     const filters = []; calls.push({ table, filters });
     const q = { select() { return this; }, eq(...v) { filters.push(v); return this; }, order() { return this; },
-      in() { return this; }, limit() { return this; }, then(resolve) { return Promise.resolve({ data: [], error: null }).then(resolve); } };
+      in(key, values) { filters.push([key, values]); return this; }, limit() { return this; }, then(resolve) {
+        const data = (rows[table] || []).filter(row => filters.every(([key, value]) =>
+          Array.isArray(value) ? value.includes(row[key]) : row[key] === value));
+        return Promise.resolve({ data, error: null }).then(resolve);
+      } };
     return q;
   } };
 }
-test('trial snapshot queries completed weekly reports only and skips custom requests', async () => {
+test('trial snapshot queries completed initial and weekly reports and skips custom requests', async () => {
   const data = load('src/lib/reports/data.ts'), database = db();
-  await data.loadReportsSnapshot(database, 7, { weeklyOnly: true });
+  await data.loadReportsSnapshot(database, 7, { trialReportsOnly: true });
   assert.equal(database.calls.some(c => c.table === 'report_requests'), false);
   const filters = database.calls.find(c => c.table === 'reports').filters;
-  assert.ok(filters.some(([k, v]) => k === 'report_type' && v === 'weekly'));
+  assert.deepEqual(Array.from(filters.find(([k]) => k === 'report_type')[1]), ['initial', 'initial_historical', 'weekly']);
   assert.ok(filters.some(([k, v]) => k === 'status' && v === 'completed'));
   for (const c of database.calls) assert.ok(c.filters.some(([k, v]) => k === 'client_id' && v === 7));
+});
+test('trial snapshot returns its completed initial and weekly rows, excluding other types, states and clients', async () => {
+  const rows = [
+    [1, 7, 'initial_historical', 'completed'], [2, 7, 'initial', 'completed'], [3, 7, 'weekly', 'completed'],
+    [4, 7, 'custom', 'completed'], [5, 7, 'monthly', 'completed'], [6, 7, 'initial_historical', 'processing'],
+    [7, 7, 'weekly', 'failed'], [8, 8, 'initial_historical', 'completed'], [9, 7, 'unknown', 'completed'],
+  ].map(([id, client_id, report_type, status]) => ({ id, client_id, report_type, status }));
+  const snapshot = await load('src/lib/reports/data.ts').loadReportsSnapshot(db({ reports: rows }), 7,
+    { trialReportsOnly: true });
+  assert.deepEqual(Array.from(snapshot.reports, report => report.reportId), [1, 2, 3]);
 });
 test('paid snapshot keeps the existing report history and requests', async () => {
   const database = db(); await load('src/lib/reports/data.ts').loadReportsSnapshot(database, 7);
   assert.ok(database.calls.some(c => c.table === 'report_requests'));
   assert.equal(database.calls.find(c => c.table === 'reports').filters.length, 1);
 });
-test('GET API derives weekly scope from server entitlement, not request parameters', async () => {
+test('GET API derives trial report scope from server entitlement, not request parameters', async () => {
   const route = load('src/app/api/reports/route.ts', {
     '@/lib/reports/access': { getReportsAccess: async () => ({ ok: true, supabase: {}, client: { id: 7 },
       permissions: { canViewReports: true, isTrialActive: true } }) },
     '@/lib/reports/data': { loadReportsSnapshot: async (_, id, options) => {
-      assert.equal(id, 7); assert.equal(options.weeklyOnly, true); return { reports: [], branches: [], platforms: [] };
+      assert.equal(id, 7); assert.equal(options.trialReportsOnly, true); return { reports: [], branches: [], platforms: [] };
     } },
   });
   assert.equal((await route.GET()).status, 200);

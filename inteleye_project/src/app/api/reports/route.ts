@@ -211,7 +211,7 @@ export async function GET() {
       );
     }
     const snapshot = await loadReportsSnapshot(access.supabase, access.client.id, {
-      weeklyOnly: access.permissions.isTrialActive,
+      trialReportsOnly: access.permissions.isTrialActive,
     });
     return NextResponse.json(snapshot, { headers });
   } catch {

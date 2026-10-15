@@ -18,7 +18,7 @@ const validBody = {
   periodEnd: "2026-07-31",
 };
 
-test("trial السارية تشاهد التقارير الأسبوعية دون إنشاء تقرير مخصص", () => {
+test("trial السارية تشاهد التقارير الأولية والأسبوعية دون إنشاء تقرير مخصص", () => {
   const value = getSubscriptionPermissions(
     { subscription_status: "trial", trial_ends_at: "2026-08-03T00:00:00Z" },
     { now }
