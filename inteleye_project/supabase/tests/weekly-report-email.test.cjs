@@ -140,4 +140,57 @@ test('weekly notifications and trial RLS on isolated PostgreSQL', { timeout: 600
     sql('begin; ' + migration + ' commit;');
     assert.equal(sql(readTrial), '1,3,4,10,100');
   });
+  const initialEmailMigration = fs.readFileSync(path.join(root, 'migrations/20261016210000_notify_initial_report_completion.sql'), 'utf8');
+  const snapshot = () => sql(`select json_build_object(
+    'clients',(select json_agg(c order by id) from clients c),
+    'reports',(select json_agg(r order by id) from reports r),
+    'notifications',(select json_agg(n order by id) from report_email_notifications n))::text;`);
+  await t.test('initial-email installation preserves all rows and does not enqueue historical reports', () => {
+    const before = snapshot();
+    sql('begin; ' + initialEmailMigration + ' commit;');
+    assert.equal(snapshot(), before);
+    sql("update reports set status='completed' where id in (3,10,13);");
+    assert.equal(sql('select count(*) from report_email_notifications where report_id in (3,10,13);'), '0');
+  });
+  await t.test('first initial completion enqueues once, failure and incomplete states do not', () => {
+    sql("insert into reports values (20,1,'initial_historical','pending'),(21,2,'initial_historical','processing');");
+    sql("update reports set status='failed' where id=20; update reports set status='processing' where id=20;");
+    assert.equal(sql('select count(*) from report_email_notifications where report_id in (20,21);'), '0');
+    sql("update reports set status='completed' where id=20; update reports set status='completed' where id=20;");
+    assert.equal(sql('select count(*) from report_email_notifications where report_id=20 and client_id=1;'), '1');
+    sql("insert into reports values (22,2,'initial_historical','completed'),(23,2,'initial','completed'),(24,2,'monthly','completed'),(25,2,'custom','completed');");
+    assert.equal(sql('select count(*) from report_email_notifications where report_id in (22,23);'), '2');
+    assert.equal(sql('select count(*) from report_email_notifications where report_id in (24,25);'), '0');
+  });
+  await t.test('concurrent initial-email senders claim one job and never reset uncertain or sent delivery', async () => {
+    const statement = "update report_email_notifications set status='sending' where report_id=20 and status='pending' returning 'CLAIMED';";
+    const first = session(`begin; set role service_role; ${statement} select 'LOCK_HELD'; select pg_sleep(0.3); commit;`);
+    await first.ready;
+    const second = session(`set role service_role; ${statement}`);
+    const [a, b] = await Promise.all([first.done, second.done]);
+    assert.equal(a.code, 0, a.errors); assert.equal(b.code, 0, b.errors);
+    assert.ok(a.output.includes('CLAIMED')); assert.ok(!b.output.includes('CLAIMED'));
+    for (const status of ['sending', 'unknown', 'sent']) {
+      sql(`update report_email_notifications set status='${status}' where report_id=20; update reports set status='completed' where id=20;`);
+      assert.equal(sql('select status from report_email_notifications where report_id=20;'), status);
+      assert.equal(sql('select count(*) from report_email_notifications where report_id=20;'), '1');
+    }
+  });
+  await t.test('trigger remains private and tenant read policies are unchanged by notification extension', () => {
+    for (const role of ['authenticated', 'anon', 'service_role']) denied(`set role ${role}; select private.enqueue_weekly_report_email();`);
+    assert.equal(sql("set request.jwt.claim.sub='00000000-0000-0000-0000-000000000001'; set role authenticated; select count(*) from reports where client_id=2;"), '0');
+    assert.equal(sql("select count(*) from pg_trigger where tgrelid='reports'::regclass and tgname='enqueue_weekly_report_email' and not tgisinternal;"), '1');
+  });
+  await t.test('notification rollback keeps history, restores weekly-only, and reapplication does not backfill', () => {
+    const before = snapshot();
+    sql(fs.readFileSync(path.join(root, 'rollback/20261016210000_notify_initial_report_completion.sql'), 'utf8'));
+    assert.equal(snapshot(), before);
+    sql("insert into reports values (26,1,'initial_historical','completed'),(27,1,'weekly','completed');");
+    assert.equal(sql('select count(*) from report_email_notifications where report_id=26;'), '0');
+    assert.equal(sql('select count(*) from report_email_notifications where report_id=27;'), '1');
+    sql('begin; ' + initialEmailMigration + ' commit;');
+    sql("update reports set status='completed' where id=26;");
+    assert.equal(sql('select count(*) from report_email_notifications where report_id=26;'), '0');
+    assert.equal(sql('select status from report_email_notifications where report_id=20;'), 'sent');
+  });
 });

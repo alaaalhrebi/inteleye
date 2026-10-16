@@ -115,6 +115,36 @@ test('active trial never receives severe details even with saved Pro plan', () =
   const email = run(sender, 'Prepare Weekly Email', { ...client, plan: 'pro', subscription_status: 'trial', trial_ends_at: '2026-10-20' }, context).json;
   assert.equal(email.skip, false); assert.equal(email.urgent_count, 0); assert.ok(!email.message.includes(severe.feedback_text));
 });
+for (const type of ['initial_historical', 'initial']) {
+  for (const [status, plan] of [['trial', 'basic'], ['trial', 'pro'], ['active', 'basic'], ['active', 'pro'], ['active', 'enterprise']]) {
+    test(`${type} readiness email uses initial wording and preserves ${status}/${plan} detail limits`, () => {
+      const email = run(sender, 'Prepare Weekly Email', { ...client, plan, subscription_status: status,
+        trial_ends_at: '2026-10-20' }, { ...context, 'Read Saved Report': { ...report, report_type: type } }).json;
+      assert.match(email.subject, /تقريرك الأولي جاهز/);
+      assert.match(email.message, /تقريرك الأولي جاهز/);
+      assert.doesNotMatch(email.message, /تقريرك الأسبوعي جاهز/);
+      const allowed = status === 'active' && ['pro', 'enterprise'].includes(plan);
+      assert.equal(email.urgent_count, allowed ? 1 : 0);
+      assert.equal(email.message.includes(severe.feedback_text), allowed);
+      assert.match(email.message, /فرع تجريبي/);
+      assert.match(email.message, /خرائط Google/);
+    });
+  }
+}
+test('sender only accepts completed initial/weekly reports, even if called directly', () => {
+  for (const patch of [{ report_type: 'custom' }, { report_type: 'monthly' }, { report_type: 'unknown' },
+    { status: 'failed' }, { report_type: 'initial_historical', status: 'processing' }]) {
+    assert.throws(() => run(sender, 'Prepare Weekly Email', client, { ...context,
+      'Read Saved Report': { ...report, ...patch } }), /REPORT_NOT_NOTIFIABLE/);
+  }
+  const expression = node(sender, 'Saved Report Is Ready?').parameters.conditions.conditions[0].leftValue;
+  const evaluate = json => vm.runInNewContext(expression.slice(3, -2), { $json: json });
+  for (const type of ['initial_historical', 'initial', 'weekly']) {
+    assert.equal(evaluate({ report_type: type, status: 'completed' }), true);
+    assert.equal(evaluate({ report_type: type, status: 'processing' }), false);
+  }
+  assert.equal(evaluate({ report_type: 'custom', status: 'completed' }), false);
+});
 test('expired subscriptions and invalid email skip sending', () => {
   for (const patch of [{ current_period_end: '2026-10-01' }, { subscription_status: 'trial', trial_ends_at: '2026-10-01' }, { email: '' }, { email: 'a b@example.test' }]) {
     assert.equal(run(sender, 'Prepare Weekly Email', { ...client, ...patch }, context).json.skip, true);

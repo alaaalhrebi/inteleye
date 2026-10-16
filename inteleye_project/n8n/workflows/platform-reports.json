@@ -499,7 +499,7 @@
           "conditions": [
             {
               "id": "83aeb8c8-17c2-49fe-9757-53b01cfe82e0",
-              "leftValue": "={{ $json.report_type === 'weekly' && $json.status === 'completed' }}",
+              "leftValue": "={{ ['weekly', 'initial_historical', 'initial'].includes($json.report_type) && $json.status === 'completed' }}",
               "rightValue": true,
               "operator": {
                 "type": "boolean",

@@ -12,7 +12,7 @@ export async function getReportsAccess() {
   const { data: client } = await supabase
     .from("clients")
     .select(
-      "id, plan, subscription_status, trial_ends_at, current_period_end, allowed_platforms_count"
+      "id, plan, subscription_status, trial_ends_at, current_period_end, allowed_platforms_count, next_report_at"
     )
     .eq("user_id", user.id)
     .maybeSingle();

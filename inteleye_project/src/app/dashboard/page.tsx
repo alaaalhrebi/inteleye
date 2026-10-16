@@ -11,6 +11,8 @@ import LogoutButton from "@/components/dashboard/LogoutButton";
 import DashboardSidebar from "@/components/dashboard/DashboardSidebar";
 import PrintDashboardButton from "@/components/dashboard/PrintDashboardButton";
 import InteractiveDashboard from "@/components/dashboard/InteractiveDashboard";
+import ReportProcessingStatus from "@/components/dashboard/ReportProcessingStatus";
+import { loadReportProgress } from "@/lib/reports/progress";
 import { getSubscriptionPermissions } from "@/lib/subscription-permissions";
 import {
   getDashboardPeriodRange,
@@ -52,7 +54,8 @@ export default async function DashboardPage({
       trial_started_at,
       trial_ends_at,
       current_period_end,
-      allowed_platforms_count
+      allowed_platforms_count,
+      next_report_at
     `)
     .eq("user_id", user.id)
     .maybeSingle();
@@ -74,9 +77,10 @@ export default async function DashboardPage({
 
   let platformsQuery = supabase
     .from("client_platforms")
-    .select("id, branch_id, platform_name, platform_url, username, business_activity, is_active, connection_status, last_error")
+    .select("id, branch_id, platform_name, platform_url, username, business_activity, is_active, connection_status, last_error, last_success_at")
     .eq("client_id", client.id)
-    .eq("is_active", true);
+    .eq("is_active", true)
+    .order("id");
 
   if (basePermissions.isTrialActive) {
     platformsQuery = platformsQuery.limit(1);
@@ -129,6 +133,7 @@ export default async function DashboardPage({
     reportsResult,
     alertsResult,
     tiktokMetricsResult,
+    reportProgress,
   ] = await Promise.all([
     loadDashboardFeedback(supabase, {
       ...dataScope,
@@ -149,6 +154,11 @@ export default async function DashboardPage({
           end: periodRange.end,
         })
       : Promise.resolve({ data: null, error: null }),
+    loadReportProgress(supabase, {
+      ...dataScope,
+      platforms,
+      nextReportAt: client.next_report_at,
+    }),
   ]);
 
   const dashboardErrors = [
@@ -221,6 +231,8 @@ const selectedBranchName =
             platformName={selectedPlatformName}
             period={selectedPeriod}
           />
+
+          <ReportProcessingStatus progress={reportProgress} branchId={selectedBranch} platformId={selectedPlatform} />
 
           <InteractiveDashboard
             clientName={client.name}

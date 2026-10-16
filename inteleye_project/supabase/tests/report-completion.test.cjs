@@ -145,6 +145,7 @@ test('report reservation, retry and Gmail claims on isolated PostgreSQL', { time
     create trigger reports_set_updated_at before update on reports for each row execute function public.set_updated_at();`);
   sql(fs.readFileSync(path.join(root,'supabase/migrations/20261015120000_weekly_report_notifications.sql'),'utf8'));
   sql(fs.readFileSync(path.join(root,'supabase/migrations/20261016090000_allow_trial_initial_reports.sql'),'utf8'));
+  sql(fs.readFileSync(path.join(root,'supabase/migrations/20261016210000_notify_initial_report_completion.sql'),'utf8'));
   let initialId;
   await t.test('simultaneous inserts acquire one row with the existing scope-period index',async()=>{
     await race(planSQL(plan({},'owner-a')),planSQL(plan({},'owner-b')));
@@ -182,7 +183,9 @@ test('report reservation, retry and Gmail claims on isolated PostgreSQL', { time
     assert.equal(sql('set role service_role; '+saveSQL(retryRow,context,'retry-a')),String(initialId));
     assert.equal(read(initialId).status,'completed');
     assert.equal(plan(read(initialId),'later').action,'completed');
-    assert.equal(sql('select count(*) from report_email_notifications;'),'0');
+    assert.equal(sql(`select count(*) from report_email_notifications where report_id=${initialId};`),'1');
+    sql(`update reports set status='completed' where id=${initialId};`);
+    assert.equal(sql(`select count(*) from report_email_notifications where report_id=${initialId};`),'1');
   });
   await t.test('27 repeated completion events do not insert or replace the completed initial report',()=>{
     for(let i=0;i<27;i++)assert.equal(sql('set role service_role; '+planSQL(plan({},'repeat-'+i))),'');
@@ -264,7 +267,8 @@ test('report reservation, retry and Gmail claims on isolated PostgreSQL', { time
     slot11=window(a,anchor);const recovered=window(b,anchor);
     assert.equal(slot11.period_end,hour(11));assert.equal(recovered.period_end,hour(11));
     assert.equal(slot11.report_scope,recovered.report_scope);
-    assert.equal(sql(`select count(*) from report_email_notifications where report_id=${id};`),'0');
+    // The initial completion queued one email; reserving the next window must not add another.
+    assert.equal(sql(`select count(*) from report_email_notifications where report_id=${id};`),'1');
   });
   await t.test('same frozen hourly window still permits just one concurrent report insert',async()=>{
     await race(planSQL(plan({},'hour-one-a',slot11)),planSQL(plan({},'hour-one-b',slot11)));

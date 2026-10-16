@@ -208,10 +208,13 @@ test('failed report never advances the schedule or reaches Gmail; completed scop
   assert.equal(ready.all_reports_ready, true); assert.equal(ready.report_period_end, context.period_end);
   assert.throws(() => run(reports, 'Assert Report Batch', items({ report_generation_failed: true })), /RETRY_AVAILABLE/);
 });
-test('weekly notification contract and pending job claim remain unchanged', () => {
+test('completed initial and weekly reports notify, while pending job claim stays unchanged', () => {
   const condition = node(reports, 'Is Completed Weekly Report?').parameters.conditions.conditions[0].leftValue;
-  for (const status of ['failed', 'processing', 'pending']) assert.equal(expression(condition, items({ report_type: 'weekly', status })), false);
-  assert.equal(expression(condition, items({ report_type: 'initial_historical', status: 'completed' })), false);
+  for (const type of ['weekly', 'initial_historical', 'initial']) {
+    for (const status of ['failed', 'processing', 'pending']) assert.equal(expression(condition, items({ report_type: type, status })), false);
+    assert.equal(expression(condition, items({ report_type: type, status: 'completed' })), true);
+  }
+  for (const type of ['custom', 'monthly', 'unknown']) assert.equal(expression(condition, items({ report_type: type, status: 'completed' })), false);
   assert.equal(expression(condition, items({ report_type: 'weekly', status: 'completed' })), true);
   assert.equal(reports.connections['Upsert Report'].main[0][0].node, 'Read Final Report');
   const sender = load('weekly-report-email.json');
