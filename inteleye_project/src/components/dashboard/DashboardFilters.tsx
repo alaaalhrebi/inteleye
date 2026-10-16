@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useEffect, useMemo, useState, useTransition } from "react";
+import { createPortal } from "react-dom";
 import {
   useRouter,
   useSearchParams,
@@ -222,7 +223,7 @@ export default function DashboardFilters({
         </FilterSelect>
       </div>
 
-      {showLoading ? <DashboardRefreshOverlay /> : null}
+      {showLoading ? createPortal(<DashboardRefreshOverlay />, document.body) : null}
     </>
   );
 }
