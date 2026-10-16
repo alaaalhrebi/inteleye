@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
-import Marquee from "react-fast-marquee";
 import { ArrowRight, Sparkles, Globe, Instagram, Twitter, Smartphone, Star, MessageSquare } from "lucide-react";
 import DashboardPreview from "./DashboardPreview";
 export default function HeroSection() {
@@ -137,43 +136,35 @@ export default function HeroSection() {
 
         </motion.div>
 
-{/* Platforms Marquee */}
-<div className="mt-16 sm:mt-20 lg:mt-24 w-full">
+{/* Supported Platforms */}
+<section aria-labelledby="supported-platforms-heading" className="mt-16 sm:mt-20 lg:mt-24 w-full">
 
   <div className="mb-6 flex items-center justify-center gap-2 text-[#374375]/60">
     <span className="h-px w-8 bg-current"></span>
-    <span className="text-xs font-bold uppercase tracking-widest">
+    <h2 id="supported-platforms-heading" className="text-base font-bold sm:text-lg">
       المنصات المدعومة
-    </span>
+    </h2>
     <span className="h-px w-8 bg-current"></span>
   </div>
 
-<Marquee
-  autoFill
-  speed={22}
-  direction="right"
-  pauseOnHover
-  gradient
-  gradientColor="#ffffff"
-  gradientWidth={80}
->
-    {platforms.map((platform, index) => (
-      <div
-        key={index}
-        className="mx-14 flex items-center gap-4 select-none"
+  <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 xl:grid-cols-6">
+    {platforms.map((platform) => (
+      <li
+        key={platform.name}
+        className="flex min-w-0 flex-col items-center justify-center gap-3 rounded-2xl border border-[#BABDE2]/35 bg-[#F8F7F3] px-3 py-5 text-center sm:px-4 sm:py-6"
       >
-        <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-[#E5E7EB] bg-white shadow-sm text-[#374375]">
-          <platform.icon size={24} />
+        <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-[#BABDE2]/35 bg-white text-[#374375] shadow-sm sm:h-16 sm:w-16">
+          <platform.icon aria-hidden="true" className="h-7 w-7 sm:h-8 sm:w-8" />
         </div>
 
-        <span className="whitespace-nowrap font-bold text-[#374375]">
+        <span lang="en" className="text-sm font-bold leading-6 text-[#374375] sm:text-base">
           {platform.name}
         </span>
-      </div>
+      </li>
     ))}
-  </Marquee>
+  </ul>
 
-</div>
+</section>
              
 
       </div>
