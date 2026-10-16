@@ -87,7 +87,7 @@ export default function Footer() {
         </div>
 
         <div className="mt-12 flex justify-center border-t border-white/10 pt-8">
-          <div className="w-full max-w-xs rounded-xl bg-white px-4 py-3">
+          <div className="w-full max-w-[260px] rounded-xl bg-white px-3 py-2">
             <Image
               src="/saudi-business-center.png"
               alt="المركز السعودي للأعمال — Saudi Business Center"
