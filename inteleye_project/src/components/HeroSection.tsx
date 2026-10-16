@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { ArrowRight, Sparkles, Globe, Instagram, Twitter, Smartphone, Star, MessageSquare } from "lucide-react";
+import { ArrowRight, Sparkles, Globe, Instagram, Twitter, Smartphone } from "lucide-react";
 import DashboardPreview from "./DashboardPreview";
 export default function HeroSection() {
 
@@ -11,8 +11,6 @@ export default function HeroSection() {
     { icon: Instagram, name: "Instagram" },
     { icon: Twitter, name: "X (Twitter)" },
     { icon: Smartphone, name: "TikTok" },
-    { icon: Star, name: "Delivery Apps" },
-    { icon: MessageSquare, name: "Specialized Sites" },
   ];
 
   return (
@@ -147,17 +145,17 @@ export default function HeroSection() {
     <span className="h-px w-8 bg-current"></span>
   </div>
 
-  <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 xl:grid-cols-6">
+  <ul className="flex flex-wrap items-center justify-center gap-x-8 gap-y-6 lg:gap-x-12">
     {platforms.map((platform) => (
       <li
         key={platform.name}
-        className="flex min-w-0 flex-col items-center justify-center gap-3 rounded-2xl border border-[#BABDE2]/35 bg-[#F8F7F3] px-3 py-5 text-center sm:px-4 sm:py-6"
+        className="flex items-center gap-4 select-none"
       >
-        <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-[#BABDE2]/35 bg-white text-[#374375] shadow-sm sm:h-16 sm:w-16">
+        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-[#E5E7EB] bg-white text-[#374375] shadow-sm sm:h-16 sm:w-16">
           <platform.icon aria-hidden="true" className="h-7 w-7 sm:h-8 sm:w-8" />
         </div>
 
-        <span lang="en" className="text-sm font-bold leading-6 text-[#374375] sm:text-base">
+        <span lang="en" className="whitespace-nowrap text-base font-bold text-[#374375] sm:text-lg">
           {platform.name}
         </span>
       </li>
