@@ -99,7 +99,9 @@ const client = { id: 7, name: 'Synthetic Customer', email: 'demo@example.test', 
 const severe = { client_id: 7, platform_id: 4, branch_id: 2, severity: 'high', sentiment: 'negative', is_complaint: true,
   feedback_text: 'Synthetic severe complaint', reason: 'Synthetic reason', published_at: '2026-10-10', suggested_reply: 'Synthetic reply' };
 const report = { id: 9, client_id: 7, branch_id: 2, platform_id: 4, report_type: 'weekly', status: 'completed',
-  period_start: '2026-10-08', period_end: '2026-10-15', stats: { reputation_urgent_cases: [severe] } };
+  period_start: '2026-10-08', period_end: '2026-10-15', stats: { reputation_urgent_cases: [severe] },
+  branch: { id: 2, client_id: 7, name: 'فرع تجريبي' },
+  platform: { id: 4, client_id: 7, platform_name: 'google_maps' } };
 const context = { 'Read Saved Report': report, 'Claim Notification': { id: 'job-1', client_id: 7, report_id: 9 } };
 for (const plan of ['basic', 'pro', 'enterprise']) {
   test(`weekly email content is gated by current plan ${plan}`, () => {
@@ -129,11 +131,104 @@ test('job/report ownership mismatch fails before building a recipient', () => {
   assert.throws(() => run(sender, 'Prepare Weekly Email', client, { ...context,
     'Claim Notification': { id: 'wrong', client_id: 8, report_id: 9 } }), /NOTIFICATION_SCOPE_MISMATCH/);
 });
-test('email is plain text; success requires a Gmail receipt', () => {
-  assert.equal(node(sender, 'Send Weekly Email').parameters.emailType, 'text');
+test('email is HTML; success still requires a Gmail receipt with no automatic resend', () => {
+  assert.equal(node(sender, 'Send Weekly Email').parameters.emailType, 'html');
   assert.equal(node(sender, 'Send Weekly Email').retryOnFail, false);
   assert.equal(run(sender, 'Confirm Gmail Receipt', {}).json.status, 'unknown');
   assert.equal(run(sender, 'Confirm Gmail Receipt', { id: 'synthetic-gmail-id' }).json.status, 'sent');
+});
+test('HTML email includes the existing logo, report branch/platform, readable dates and fixed report link', () => {
+  const email = run(sender, 'Prepare Weekly Email', { ...client, plan: 'pro' }, context).json;
+  assert.match(email.message, /<html lang="ar" dir="rtl">/);
+  assert.match(email.message, /src="https:\/\/www\.inteleye-sa\.com\/logo\.png"/);
+  assert.match(email.message, /alt="شعار IntelEye"/);
+  assert.match(email.message, /<strong>الفرع:<\/strong> <span dir="auto">فرع تجريبي<\/span>/);
+  assert.match(email.message, /<strong>المنصة:<\/strong> <span dir="auto">خرائط Google<\/span>/);
+  assert.match(email.subject, /فرع تجريبي \| خرائط Google/);
+  assert.match(email.message, /أكتوبر/);
+  assert.ok(!email.message.includes('2026-10-08'));
+  assert.match(email.message, /رد مقترح — للمراجعة قبل النشر/);
+  assert.match(email.message, /لا تثبت صحة الادعاءات أو أسبابها/);
+  assert.match(email.message, /لا تُنشر الردود تلقائيًا/);
+  assert.match(email.message, /<p dir="auto"/);
+});
+for (const [key, title] of [['google_maps', 'خرائط Google'], ['x', 'X'], ['tiktok', 'TikTok'], ['instagram', 'Instagram']]) {
+  test(`email names the actual ${key} platform and report branch`, () => {
+    const email = run(sender, 'Prepare Weekly Email', client, { ...context,
+      'Read Saved Report': { ...report, platform: { ...report.platform, platform_name: key } } }).json;
+    assert.ok(email.subject.endsWith(' | ' + title));
+    assert.ok(email.message.includes('>' + title + '</span>'));
+    assert.ok(!email.message.includes(severe.feedback_text));
+  });
+}
+test('missing relations use explicit unknown labels rather than guessing from AI text', () => {
+  const email = run(sender, 'Prepare Weekly Email', client, { ...context,
+    'Read Saved Report': { ...report, branch_id: null, platform_id: null, branch: null, platform: null,
+      stats: { branch_name: 'INVENTED BRANCH', platform_name: 'INVENTED PLATFORM' } } }).json;
+  assert.match(email.message, /الفرع غير محدد/);
+  assert.match(email.message, /المنصة غير محددة/);
+  assert.ok(!email.message.includes('INVENTED'));
+});
+test('embedded relation labels from another tenant or another record stop delivery', () => {
+  for (const patch of [
+    { branch: { ...report.branch, client_id: 8 } }, { branch: { ...report.branch, id: 88 } },
+    { platform: { ...report.platform, client_id: 8 } }, { platform: { ...report.platform, id: 88 } },
+  ]) {
+    assert.throws(() => run(sender, 'Prepare Weekly Email', client, { ...context,
+      'Read Saved Report': { ...report, ...patch } }), /NOTIFICATION_LABEL_SCOPE_MISMATCH/);
+  }
+});
+test('HTML escapes all untrusted names, feedback, reasons and suggested replies', () => {
+  const attack = '<img src=x onerror="alert(1)"> & <script>bad()</script>';
+  const email = run(sender, 'Prepare Weekly Email', { ...client, name: attack, plan: 'pro' }, { ...context,
+    'Read Saved Report': { ...report, branch: { ...report.branch, name: attack }, stats: {
+      reputation_urgent_cases: [{ ...severe, feedback_text: attack, reason: attack, suggested_reply: attack }],
+    } } }).json;
+  assert.ok(!email.message.includes(attack));
+  assert.ok(!email.message.includes('<script>'));
+  assert.ok(!email.message.includes('<img src=x'));
+  assert.match(email.message, /&lt;img src=x onerror=&quot;alert\(1\)&quot;&gt; &amp;/);
+});
+test('subject strips line breaks and bidi control characters without changing recipient', () => {
+  const email = run(sender, 'Prepare Weekly Email', { ...client, name: 'Demo\r\nBcc: other@example.test\u202e' }, context).json;
+  assert.equal(email.recipient_email, client.email);
+  assert.doesNotMatch(email.subject, /[\r\n\u202e]/);
+});
+test('long emails preview at most five cases, retain total count, and stay below Gmail clipping size', () => {
+  const email = run(sender, 'Prepare Weekly Email', { ...client, plan: 'enterprise' }, { ...context,
+    'Read Saved Report': { ...report, stats: { reputation_urgent_cases: Array.from({ length: 30 }, () => ({
+      ...severe, feedback_text: '"<&خطير'.repeat(1000), reason: '"<&سبب'.repeat(1000), suggested_reply: '"<&رد'.repeat(1000),
+    })) } } }).json;
+  assert.equal(email.urgent_count, 30);
+  assert.equal(email.displayed_urgent_count, 5);
+  assert.match(email.message, /نعرض هنا 5 حالات من أصل 30/);
+  assert.equal((email.message.match(/رد مقترح — للمراجعة قبل النشر/g) || []).length, 5);
+  assert.ok(Buffer.byteLength(email.message, 'utf8') < 90000);
+});
+test('missing or invalid dates and empty replies render clear fallbacks without malformed timestamps', () => {
+  const email = run(sender, 'Prepare Weekly Email', { ...client, plan: 'pro' }, { ...context,
+    'Read Saved Report': { ...report, period_start: '2026-02-30', stats: { reputation_urgent_cases: [{
+      ...severe, published_at: 'not a date', reason: null, suggested_reply: null,
+    }] } } }).json;
+  assert.match(email.message, /غير متاح/);
+  assert.match(email.message, /لا يوجد رد مقترح محفوظ/);
+  assert.doesNotMatch(email.message, /Invalid Date|undefined|2026-02-30|not a date/);
+});
+test('Pro report without severe cases sends a simple readiness email without alarming section', () => {
+  const email = run(sender, 'Prepare Weekly Email', { ...client, plan: 'pro' }, { ...context,
+    'Read Saved Report': { ...report, stats: {} } }).json;
+  assert.equal(email.urgent_count, 0);
+  assert.doesNotMatch(email.message, /حالات عالية الخطورة تستحق مراجعتكم/);
+  assert.match(email.message, /عرض التقرير الكامل/);
+});
+test('saved report embeds existing branch and platform FKs without adding network nodes or inner filtering', () => {
+  const select = node(sender, 'Read Saved Report').parameters.queryParameters.parameters.find(p => p.name === 'select').value;
+  assert.match(select, /branch:branches\(id,client_id,name\)/);
+  assert.match(select, /platform:client_platforms\(id,client_id,platform_name\)/);
+  assert.doesNotMatch(select, /!inner/);
+  const names = sender.nodes.filter(n => n.type.endsWith('.httpRequest')).map(n => n.name);
+  assert.deepEqual(names, ['Read Saved Report', 'Read Notification', 'Claim Notification', 'Read Current Client',
+    'Record Delivery Result', 'Record Skipped Notification']);
 });
 test('uncertain Gmail failures are not retried or marked sent', () => {
   for (const code of [undefined, 500, 503]) {
