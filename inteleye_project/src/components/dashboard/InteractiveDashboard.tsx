@@ -277,7 +277,7 @@ export default function InteractiveDashboard({
 
       {priorityContent}
 
-      <section className="mt-4 grid gap-4 xl:grid-cols-[minmax(0,1.65fr)_minmax(300px,0.85fr)]">
+      <section className="mt-4 grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1.65fr)_minmax(300px,0.85fr)]">
         <DashboardPanel
           eyebrow="حركة التفاعل"
           title={`${
@@ -313,7 +313,7 @@ export default function InteractiveDashboard({
         </DashboardPanel>
       </section>
 
-      <section className="mt-4 grid gap-4 xl:grid-cols-2">
+      <section className="mt-4 grid grid-cols-1 gap-4 xl:grid-cols-2">
         <PlatformContextPanel
           platformKey={platformKey}
           feedback={feedback}
@@ -769,7 +769,7 @@ function DashboardPanel({
   children: ReactNode;
 }) {
   return (
-    <section className="rounded-[1.5rem] border border-[#BABDE2]/40 bg-white p-4 shadow-sm sm:p-6">
+    <section className="min-w-0 rounded-[1.5rem] border border-[#BABDE2]/40 bg-white p-4 shadow-sm sm:p-6">
       <div className="mb-6 flex items-center gap-3">
         <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#BABDE2]/30 text-[#374375]">
           {icon}

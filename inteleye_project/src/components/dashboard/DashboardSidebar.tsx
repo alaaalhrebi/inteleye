@@ -13,30 +13,13 @@ import {
   Settings,
 } from "lucide-react";
 
-import DashboardFilters from "@/components/dashboard/DashboardFilters";
-
-type Platform = {
-  id: number;
-  branch_id: number | null;
-  platform_name: string;
-};
-
-type Branch = {
-  id: number;
-  name: string;
-};
-
 export default function DashboardSidebar({
-  platforms,
-  branches,
   canManagePlatformLinks,
   currentPlatformsCount,
   platformLimit,
   canManageBranches,
   canAccessCustomReports,
 }: {
-  platforms: Platform[];
-  branches: Branch[];
   canManagePlatformLinks: boolean;
   currentPlatformsCount: number;
   platformLimit: number;
@@ -87,10 +70,6 @@ export default function DashboardSidebar({
       </span>
     </div>
   )}
-</div>
-
-<div className={collapsed ? "lg:hidden" : ""}>
-  <DashboardFilters branches={branches} platforms={platforms} />
 </div>
 
 <nav className={`${collapsed ? "lg:mt-1" : "mt-4"} space-y-2`}>

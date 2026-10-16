@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import LogoutButton from "@/components/dashboard/LogoutButton";
 import DashboardSidebar from "@/components/dashboard/DashboardSidebar";
+import DashboardFilters from "@/components/dashboard/DashboardFilters";
 import PrintDashboardButton from "@/components/dashboard/PrintDashboardButton";
 import InteractiveDashboard from "@/components/dashboard/InteractiveDashboard";
 import ReportProcessingStatus from "@/components/dashboard/ReportProcessingStatus";
@@ -18,7 +19,6 @@ import {
   getDashboardPeriodRange,
   normalizeDashboardPeriod,
   type DashboardFeedbackRow,
-  type DashboardPeriodKey,
   type DashboardTikTokMetrics,
 } from "@/lib/dashboard-analytics";
 
@@ -88,7 +88,7 @@ export default async function DashboardPage({
 
   const { data: platforms, error: platformsError } = await platformsQuery;
 
-  if (platformsError) redirect("/onboarding/platforms");
+  if (platformsError) return <DashboardAccountUnavailable />;
   if (!platforms || platforms.length === 0) redirect("/onboarding/platforms");
 
   let branchesQuery = supabase
@@ -101,7 +101,8 @@ export default async function DashboardPage({
     branchesQuery = branchesQuery.limit(1);
   }
 
-  const { data: branches } = await branchesQuery;
+  const { data: branches, error: branchesError } = await branchesQuery;
+  if (branchesError) return <DashboardAccountUnavailable />;
 
   const branchIds = (branches ?? []).map((b) => b.id);
 
@@ -111,7 +112,8 @@ export default async function DashboardPage({
     : null;
   const requestedPlatformId = Number(selectedPlatformId);
   const selectedPlatform = platforms.some(
-    (platform) => platform.id === requestedPlatformId
+    (platform) => platform.id === requestedPlatformId &&
+      (selectedBranch === null || platform.branch_id === null || platform.branch_id === selectedBranch)
   )
     ? requestedPlatformId
     : null;
@@ -126,6 +128,9 @@ export default async function DashboardPage({
     branchId: selectedBranch,
     platformId: selectedPlatform,
   };
+  const scopedPlatforms = platforms.filter(platform =>
+    (selectedBranch === null || platform.branch_id === null || platform.branch_id === selectedBranch) &&
+    (selectedPlatform === null || platform.id === selectedPlatform));
 
   const [
     currentFeedbackResult,
@@ -145,7 +150,7 @@ export default async function DashboardPage({
       start: periodRange.comparisonStart,
       end: periodRange.comparisonEnd,
     }),
-    loadDashboardReports(supabase, dataScope),
+    loadDashboardReports(supabase, { ...dataScope, start: periodRange.start, end: periodRange.end }),
     loadDashboardAlerts(supabase, dataScope),
     selectedPlatform !== null && selectedPlatformName === "tiktok"
       ? loadTikTokMetrics(supabase, {
@@ -182,7 +187,7 @@ export default async function DashboardPage({
   const alertRows = alertsResult.data;
   const tiktokMetrics = tiktokMetricsResult.data;
   const dashboardSyncState = getDashboardSyncState(
-    platforms,
+    scopedPlatforms,
     selectedPlatform
   );
 
@@ -204,20 +209,15 @@ const branchNames = Object.fromEntries(
 );
 const alerts = buildDashboardAlerts(alertRows, currentFeedback, branchNames);
 const activePlatforms = Array.from(
-  new Set(platforms.map((platform) => platform.platform_name).filter(Boolean))
+  new Set(scopedPlatforms.map((platform) => platform.platform_name).filter(Boolean))
 );
-const selectedBranchName =
-  selectedBranch === null
-    ? null
-    : branchNames[String(selectedBranch)] ?? null;
+const feedbackUnavailable = Boolean(currentFeedbackResult.error || comparisonFeedbackResult.error);
 
   return (
   <div dir="rtl" className="dashboard-print-root min-h-screen bg-[#F8F7F3] text-[#374375]">
     <DashboardHeader clientName={client.name} plan={client.plan} />
     <div className="mx-auto flex max-w-[1500px] flex-col gap-4 px-3 py-3 sm:px-5 sm:py-4 lg:flex-row lg:gap-4">
     <DashboardSidebar
-          platforms={platforms}
-          branches={branches ?? []}
           canManagePlatformLinks={canManagePlatformLinks}
           currentPlatformsCount={currentPlatformsCount}
           platformLimit={permissions.platformLimit}
@@ -226,15 +226,21 @@ const selectedBranchName =
         />
 
         <main className="min-w-0 flex-1 pb-8">
-          <ActiveScopeBar
-            branchName={selectedBranchName}
-            platformName={selectedPlatformName}
-            period={selectedPeriod}
+          <DashboardFilters
+            branches={branches ?? []}
+            platforms={platforms}
+            appliedScope={{ branchId: selectedBranch, platformId: selectedPlatform, period: selectedPeriod }}
+            hasError={dashboardErrors.length > 0}
           />
 
           <ReportProcessingStatus progress={reportProgress} branchId={selectedBranch} platformId={selectedPlatform} />
 
-          <InteractiveDashboard
+          {feedbackUnavailable ? (
+            <section role="alert" className="rounded-xl border border-[#DFAEA1]/50 bg-white p-4 text-sm leading-7 text-[#895159]">
+              تعذر تحميل بيانات الفترة أو بيانات المقارنة. أعد المحاولة من شريط الفلاتر؛ ستظهر المؤشرات بعد اكتمال تحميل البيانات.
+            </section>
+          ) : <InteractiveDashboard
+            key={`${selectedBranch ?? "all"}:${selectedPlatform ?? "all"}:${selectedPeriod}`}
             clientName={client.name}
             feedback={currentFeedback}
             comparisonFeedback={comparisonFeedback}
@@ -248,15 +254,15 @@ const selectedBranchName =
             tiktokMetrics={tiktokMetrics}
             priorityContent={
               <section className="mt-4 grid gap-4 xl:grid-cols-2">
-                <SmartAlerts alerts={alerts} />
+                <SmartAlerts alerts={alerts} hasError={Boolean(alertsResult.error)} />
                 <TopActions actions={topActions} />
               </section>
             }
-          />
+          />}
 
           <section className="mt-4">
             <PlatformsSection
-              platforms={platforms}
+              platforms={scopedPlatforms}
               branchNames={branchNames}
               canManagePlatformLinks={canManagePlatformLinks}
               plan={plan}
@@ -323,61 +329,18 @@ function DashboardHeader({
   );
 }
 
-function ActiveScopeBar({
-  branchName,
-  platformName,
-  period,
-}: {
-  branchName: string | null;
-  platformName: string | null;
-  period: DashboardPeriodKey;
-}) {
-  const periodLabels = {
-    this_week: "هذا الأسبوع",
-    last_week: "الأسبوع الماضي",
-    this_month: "هذا الشهر",
-    last_60_days: "آخر شهرين",
-    last_90_days: "آخر 3 أشهر",
-    last_180_days: "آخر 6 أشهر",
-  };
-  const hasFilters = Boolean(branchName || platformName || period !== "this_week");
-
-  return (
-    <div className="no-print mb-3 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-[#BABDE2]/35 bg-white px-3 py-2 text-sm font-bold text-[#374375] shadow-sm">
-      <div className="flex flex-wrap items-center gap-1.5">
-        <span className="rounded-full bg-[#F8F7F3] px-3 py-1.5">
-          {branchName || "كل الفروع"}
-        </span>
-        <span className="text-[#BABDE2]">•</span>
-        <span className="rounded-full bg-[#F8F7F3] px-3 py-1.5">
-          {platformName ? formatPlatform(platformName) : "كل المنصات"}
-        </span>
-        <span className="text-[#BABDE2]">•</span>
-        <span className="rounded-full bg-[#BABDE2]/20 px-3 py-1.5">
-          {periodLabels[period]}
-        </span>
-      </div>
-      {hasFilters ? (
-        <Link
-          href="/dashboard"
-          className="rounded-full px-3 py-1.5 text-[#895159] transition hover:bg-[#DFAEA1]/15"
-        >
-          مسح الفلاتر
-        </Link>
-      ) : null}
-    </div>
-  );
-}
-
-
 function SmartAlerts({
   alerts,
+  hasError = false,
 }: {
   alerts: DashboardAlert[];
+  hasError?: boolean;
 }) {
   return (
     <Panel eyebrow="متابعة فورية" title="تنبيهات تحتاج انتباهك" icon={<Lightbulb size={22} />}>
-      {alerts.length === 0 ? (
+      {hasError ? (
+        <p className="rounded-2xl bg-[#DFAEA1]/15 p-4 text-sm leading-6 text-[#895159]">تعذر تحميل التنبيهات لهذا الاختيار. أعد المحاولة من شريط الفلاتر.</p>
+      ) : alerts.length === 0 ? (
         <div className="rounded-2xl bg-[#F8F7F3] p-6 text-center text-sm font-bold text-gray-500">
           لا توجد تنبيهات مفتوحة تحتاج إلى متابعة.
         </div>
@@ -452,6 +415,7 @@ function PlatformsSection({
   return (
     <Panel eyebrow="صحة مصادر البيانات" title="حالة المنصات والمزامنة" icon={<BarChart3 size={22} />}>
       <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+        {platforms.length === 0 && <p className="text-sm text-gray-500 md:col-span-2 xl:col-span-4">لا توجد منصات مرتبطة بالنطاق المختار.</p>}
         {platforms.map((platform) => {
           const status = getPlatformConnectionState(platform);
           const accountUrl = safePlatformUrl(platform.platform_url);
@@ -851,7 +815,7 @@ function toSafeMetric(value: unknown) {
 
 async function loadDashboardReports(
   supabase: ReturnType<typeof createSupabaseServerClient>,
-  scope: DashboardQueryScope
+  scope: DashboardFeedbackScope
 ): Promise<{ data: any[]; error: QueryError }> {
   let query = supabase
     .from("reports")
@@ -860,6 +824,9 @@ async function loadDashboardReports(
     )
     .eq("client_id", scope.clientId)
     .eq("status", "completed")
+    // Do not present recommendations from a report extending outside this display period.
+    .gte("period_start", scope.start.toISOString().slice(0, 10))
+    .lte("period_end", scope.end.toISOString().slice(0, 10))
     .order("created_at", { ascending: false })
     .limit(30);
 
