@@ -145,7 +145,9 @@ test('uncertain Gmail failures are not retried or marked sent', () => {
 test('workflow dispatch is event-driven, inactive, and after saved weekly report', () => {
   assert.equal(parent.active, false); assert.equal(sender.active, false);
   assert.equal(sender.nodes.some(n => /schedule|webhook|manualTrigger/i.test(n.type)), false);
-  assert.equal(parent.connections['Upsert Report'].main[0][0].node, 'Is Completed Weekly Report?');
+  assert.equal(parent.connections['Upsert Report'].main[0][0].node, 'Read Final Report');
+  assert.equal(parent.connections['Read Final Report'].main[0][0].node, 'Report Coverage Outcome');
+  assert.equal(parent.connections['Report Coverage Outcome'].main[0][0].node, 'Is Completed Weekly Report?');
   const n = node(parent, 'Send Weekly Report Notification');
   assert.equal(n.type, 'n8n-nodes-base.executeWorkflow'); assert.equal(n.alwaysOutputData, true);
   assert.equal(n.onError, 'continueRegularOutput');
@@ -157,7 +159,7 @@ test('workflow dispatch is event-driven, inactive, and after saved weekly report
 });
 test('parent validates subscription expiry and uses each current loop context', () => {
   const eligible = { id: 7, subscription_status: 'active', current_period_end: '2026-11-01', next_report_at: '2026-10-08',
-    client_platforms: [{ is_active: true, last_success_at: '2026-10-15' }] };
+    client_platforms: [{ is_active: true, connection_status: 'connected', last_success_at: '2026-10-15' }] };
   const results = run(parent, 'Keep Clients Ready For Reports', [{ json: eligible },
     { json: { ...eligible, id: 8, current_period_end: '2026-10-01' } }]);
   assert.equal(results.length, 1); assert.equal(results[0].json.id, 7);
@@ -169,10 +171,10 @@ test('parent validates subscription expiry and uses each current loop context', 
 test('reputation cases come from actual report rows, not AI invented summaries', () => {
   const rows = [severe, { ...severe, severity: 'medium', source_record_id: 2 }, { ...severe, sentiment: 'positive', is_complaint: false, source_record_id: 3 }]
     .map((json, index) => ({ json: { ...json, source_record_id: json.source_record_id || index + 1 } }));
-  const result = run(parent, 'Build Platform Report Stats', rows, { 'Loop Platform Reports': { id: 4, client_id: 7, branch_id: 2 } });
+  const result = run(parent, 'Build Platform Report Stats', rows, { 'Restore Reserved Context': { id: 4, client_id: 7, branch_id: 2 } });
   assert.equal(result[0].json.stats.reputation_urgent_cases.length, 1);
   assert.throws(() => run(parent, 'Build Platform Report Stats', [{ json: { ...severe, source_record_id: 1, client_id: 8 } }],
-    { 'Loop Platform Reports': { id: 4, client_id: 7, branch_id: 2 } }), /REPORT_FEEDBACK_SCOPE_MISMATCH/);
+    { 'Restore Reserved Context': { id: 4, client_id: 7, branch_id: 2 } }), /REPORT_FEEDBACK_SCOPE_MISMATCH/);
 });
 test('all workflow code is valid JavaScript and graph references existing nodes', () => {
   for (const w of [parent, sender]) {

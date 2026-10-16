@@ -7,7 +7,7 @@
       "typeVersion": 1,
       "position": [
         0,
-        0
+        -100
       ],
       "id": "83a03a23-9c6f-46a4-ba7a-d7a1f15c6d76",
       "name": "When clicking ‘Execute workflow’"
@@ -15,51 +15,45 @@
     {
       "parameters": {
         "mode": "runOnceForEachItem",
-        "jsCode": "const context =\n  $('Build Platform Report Stats').item.json;\n\nlet text =\n  $json.text ||\n  $json.message?.content ||\n  $json.output?.[0]?.content?.[0]?.text ||\n  $json.content?.find(\n    item => item.type === 'output_text'\n  )?.text ||\n  '';\n\nif (typeof text !== 'string') {\n  text = JSON.stringify(text);\n}\n\ntext = text\n  .replace(/```json/gi, '')\n  .replace(/```/g, '')\n  .trim();\n\nif (!text) {\n  throw new Error(\n    'لم يتم العثور على محتوى التقرير'\n  );\n}\n\nlet report;\n\ntry {\n  report = JSON.parse(text);\n} catch (error) {\n  throw new Error(\n    'تقرير المنصة ليس JSON صالحًا'\n  );\n}\n\nif (\n  !report ||\n  typeof report !== 'object' ||\n  Array.isArray(report)\n) {\n  throw new Error(\n    'نتيجة التقرير يجب أن تكون JSON Object'\n  );\n}\n\nreturn {\n  json: {\n    client_id: context.client_id,\n    client_name: context.client_name || null,\n\n    branch_id: context.branch_id ?? null,\n    branch_name: context.branch_name || null,\n\n    platform_id: context.platform_id,\n    platform_name: context.platform_name,\n\n    report_scope: context.report_scope,\n    report_type: context.report_type,\n\n    period_start: context.period_start,\n    period_end: context.period_end,\n\n    total_feedback:\n      context.stats?.total_feedback || 0,\n\n    stats: context.stats || {},\n\n    report_title:\n      report.report_title || null,\n\n    executive_summary:\n      report.executive_summary || null,\n\n    sentiment_summary:\n      report.sentiment_summary || {},\n\n    top_strengths: Array.isArray(\n      report.top_strengths\n    )\n      ? report.top_strengths\n      : [],\n\n    top_issues: Array.isArray(\n      report.top_issues\n    )\n      ? report.top_issues\n      : [],\n\n    urgent_cases_summary:\n      report.urgent_cases_summary || {\n        count: 0,\n        summary: ''\n      },\n\n    customer_needs: Array.isArray(\n      report.customer_needs\n    )\n      ? report.customer_needs\n      : [],\n\n    sales_opportunities: Array.isArray(\n      report.sales_opportunities\n    )\n      ? report.sales_opportunities\n      : [],\n\n    recommendations: Array.isArray(\n      report.recommendations\n    )\n      ? report.recommendations\n      : [],\n\n    action_plan: Array.isArray(\n      report.action_plan\n    )\n      ? report.action_plan\n      : [],\n\n    conclusion:\n      report.conclusion || null,\n\n    report_data: report,\n\n    generated_at:\n      new Date().toISOString()\n  }\n};"
+        "jsCode": "const context =\n  $('Build Platform Report Stats').item.json;\n\nlet text =\n  $json.text ||\n  $json.message?.content ||\n  $json.output?.[0]?.content?.[0]?.text ||\n  $json.content?.find(\n    item => item.type === 'output_text'\n  )?.text ||\n  '';\n\nif (typeof text !== 'string') {\n  text = JSON.stringify(text);\n}\n\ntext = text\n  .replace(/```json/gi, '')\n  .replace(/```/g, '')\n  .trim();\n\nif (!text) {\n  throw new Error(\n    'لم يتم العثور على محتوى التقرير'\n  );\n}\n\nlet report;\n\ntry {\n  report = JSON.parse(text);\n} catch (error) {\n  throw new Error(\n    'تقرير المنصة ليس JSON صالحًا'\n  );\n}\n\nif (\n  !report ||\n  typeof report !== 'object' ||\n  Array.isArray(report)\n) {\n  throw new Error(\n    'نتيجة التقرير يجب أن تكون JSON Object'\n  );\n}\n\nreturn {\n  json: {\n    report_id: context.report_id,\n    report_generation: context.report_generation,\n    client_id: context.client_id,\n    client_name: context.client_name || null,\n\n    branch_id: context.branch_id ?? null,\n    branch_name: context.branch_name || null,\n\n    platform_id: context.platform_id,\n    platform_name: context.platform_name,\n\n    report_scope: context.report_scope,\n    report_type: context.report_type,\n\n    period_start: context.period_start,\n    period_end: context.period_end,\n\n    total_feedback:\n      context.stats?.total_feedback || 0,\n\n    stats: context.stats || {},\n\n    report_title:\n      report.report_title || null,\n\n    executive_summary:\n      report.executive_summary || null,\n\n    sentiment_summary:\n      report.sentiment_summary || {},\n\n    top_strengths: Array.isArray(\n      report.top_strengths\n    )\n      ? report.top_strengths\n      : [],\n\n    top_issues: Array.isArray(\n      report.top_issues\n    )\n      ? report.top_issues\n      : [],\n\n    urgent_cases_summary:\n      report.urgent_cases_summary || {\n        count: 0,\n        summary: ''\n      },\n\n    customer_needs: Array.isArray(\n      report.customer_needs\n    )\n      ? report.customer_needs\n      : [],\n\n    sales_opportunities: Array.isArray(\n      report.sales_opportunities\n    )\n      ? report.sales_opportunities\n      : [],\n\n    recommendations: Array.isArray(\n      report.recommendations\n    )\n      ? report.recommendations\n      : [],\n\n    action_plan: Array.isArray(\n      report.action_plan\n    )\n      ? report.action_plan\n      : [],\n\n    conclusion:\n      report.conclusion || null,\n\n    report_data: report,\n\n    generated_at:\n      new Date().toISOString()\n  }\n};"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        280,
-        0
+        1800,
+        1350
       ],
       "id": "a5f23dc3-c242-4660-afa0-f1bd73d231c7",
-      "name": "Parse Report Result"
+      "name": "Parse Report Result",
+      "onError": "continueErrorOutput"
     },
     {
       "parameters": {
-        "method": "POST",
-        "url": "https://dhryldlprpdmsixhlaqe.supabase.co/rest/v1/reports",
+        "method": "PATCH",
+        "url": "={{ 'https://dhryldlprpdmsixhlaqe.supabase.co/rest/v1/reports?id=eq.'+$json.report_id+'&client_id=eq.'+$json.client_id+'&platform_id=eq.'+$json.platform_id+'&status=eq.processing&stats->report_generation->>owner=eq.'+encodeURIComponent($json.report_generation.owner) }}",
         "authentication": "genericCredentialType",
         "genericAuthType": "httpCustomAuth",
-        "sendQuery": true,
-        "queryParameters": {
-          "parameters": [
-            {
-              "name": "on_conflict",
-              "value": "client_id,report_type,period_start,period_end,report_scope"
-            }
-          ]
-        },
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
             {
               "name": "Prefer",
-              "value": "resolution=merge-duplicates,return=representation"
+              "value": "return=representation"
             }
           ]
         },
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={{ {\n  client_id: $json.client_id,\n  branch_id: $json.branch_id ?? null,\n  platform_id: $json.platform_id,\n\n  report_type: $json.report_type,\n  report_scope: $json.report_scope,\n\n  period_start:\n    String($json.period_start).slice(0, 10),\n\n  period_end:\n    String($json.period_end).slice(0, 10),\n\n  total_feedback:\n    Number($json.total_feedback || 0),\n\n  total_sales_opportunities:\n    Number(\n      $json.stats?.sales_opportunities_count || 0\n    ),\n\n  total_complaints:\n    Number(\n      $json.stats?.complaints_count || 0\n    ),\n\n  total_needs_reply:\n    Number(\n      $json.stats?.needs_reply_count || 0\n    ),\n\n  positive_pct:\n    Number(\n      $json.stats?.sentiment?.positive_percentage || 0\n    ),\n\n  negative_pct:\n    Number(\n      $json.stats?.sentiment?.negative_percentage || 0\n    ),\n\n  neutral_pct:\n    Number(\n      $json.stats?.sentiment?.neutral_percentage || 0\n    ),\n\n  platforms: [\n    $json.platform_name\n  ],\n\n  stats:\n    $json.stats || {},\n\n  ai_summary: {\n    report_title:\n      $json.report_title || null,\n\n    executive_summary:\n      $json.executive_summary || null,\n\n    sentiment_summary:\n      $json.sentiment_summary || {},\n\n    top_strengths:\n      $json.top_strengths || [],\n\n    top_issues:\n      $json.top_issues || [],\n\n    urgent_cases_summary:\n      $json.urgent_cases_summary || {\n        count: 0,\n        summary: ''\n      },\n\n    customer_needs:\n      $json.customer_needs || [],\n\n    sales_opportunities:\n      $json.sales_opportunities || [],\n\n    recommendations:\n      $json.recommendations || [],\n\n    action_plan:\n      $json.action_plan || [],\n\n    conclusion:\n      $json.conclusion || null\n  },\n\n  status: 'completed',\n\n  updated_at:\n    $now.toUTC().toISO()\n} }}",
-        "options": {}
+        "options": {
+          "timeout": 30000
+        }
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
       "position": [
-        560,
-        0
+        2100,
+        1350
       ],
       "id": "4fbc9ddd-0eb7-4337-a8d9-fca080fc8db0",
       "name": "Upsert Report",
@@ -68,7 +62,9 @@
           "id": "zG0oLxK9PlldN0gl",
           "name": "Supabase Backend"
         }
-      }
+      },
+      "alwaysOutputData": true,
+      "onError": "continueErrorOutput"
     },
     {
       "parameters": {
@@ -83,8 +79,8 @@
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.3,
       "position": [
-        840,
-        0
+        300,
+        -100
       ],
       "id": "4291f346-56f7-4f23-ad6c-2c50cb2a16d0",
       "name": "Schedule Trigger"
@@ -101,6 +97,18 @@
             {
               "name": "id",
               "value": "={{ 'eq.' + $('Determine Report Period').last().json.id }}"
+            },
+            {
+              "name": "or",
+              "value": "={{ '(last_report_at.is.null,last_report_at.lte.'+$json.report_period_end+')' }}"
+            },
+            {
+              "name": "next_report_at",
+              "value": "={{ $('Determine Report Period').last().json.next_report_at ? 'eq.'+$('Determine Report Period').last().json.next_report_at : 'is.null' }}"
+            },
+            {
+              "name": "initial_report_generated_at",
+              "value": "={{ $('Determine Report Period').last().json.initial_report_generated_at ? 'eq.'+$('Determine Report Period').last().json.initial_report_generated_at : 'is.null' }}"
             }
           ]
         },
@@ -115,14 +123,16 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ (() => {\n  const report = $('Determine Report Period').last().json;\n\n  const periodEnd = new Date(report.period_end);\n\n  const nextReportAt = new Date(\n    periodEnd.getTime() + (7 * 24 * 60 * 60 * 1000)\n  ).toISOString();\n\n  const body = {\n    last_report_at: periodEnd.toISOString(),\n    next_report_at: nextReportAt\n  };\n\n  if (report.report_type === 'initial_historical') {\n    body.initial_report_generated_at =\n      $now.toUTC().toISO();\n  }\n\n  return body;\n})() }}",
-        "options": {}
+        "jsonBody": "={{ (()=>{const c=$json;const end=new Date(c.report_period_end);const body={last_report_at:end.toISOString(),next_report_at:new Date(end.getTime()+7*86400000).toISOString()};if(c.report_type==='initial_historical')body.initial_report_generated_at=$now.toUTC().toISO();return body})() }}",
+        "options": {
+          "timeout": 30000
+        }
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
       "position": [
-        1120,
-        0
+        900,
+        2250
       ],
       "id": "52cba8f2-796d-4300-8d8f-205301063b51",
       "name": "Update Client Report Schedule",
@@ -131,18 +141,19 @@
           "id": "zG0oLxK9PlldN0gl",
           "name": "Supabase Backend"
         }
-      }
+      },
+      "alwaysOutputData": true
     },
     {
       "parameters": {
         "mode": "runOnceForEachItem",
-        "jsCode": "const client = $json;\n\nif (!client.id) {\n  throw new Error('معرف العميل غير موجود');\n}\n\nconst dayMs = 24 * 60 * 60 * 1000;\n\nlet reportType;\nlet periodStart;\nlet periodEnd;\n\nif (!client.initial_report_generated_at) {\n  reportType = 'initial_historical';\n\n  periodEnd = new Date();\n\n  periodStart = new Date(\n    periodEnd.getTime() - 30 * dayMs\n  );\n} else {\n  reportType = 'weekly';\n\n  periodStart = new Date(\n    client.last_report_at ||\n    client.activated_at || client.created_at || new Date(Date.now() - 7 * dayMs)\n  );\n\n  periodEnd = new Date(\n    client.next_report_at ||\n    new Date()\n  );\n}\n\nreturn {\n  json: {\n    ...client,\n\n    report_type: reportType,\n\n    period_start:\n      periodStart.toISOString(),\n\n    period_end:\n      periodEnd.toISOString()\n  }\n};"
+        "jsCode": "const client = $json;\nif (!Number.isSafeInteger(Number(client.id)) || Number(client.id) <= 0) throw new Error('INVALID_REPORT_CLIENT');\nconst initial = !client.initial_report_generated_at;\n// Never derive an idempotency key from the current execution's clock.\n// Each initial platform window is finalized from its immutable link timestamp below.\nconst end = client.next_report_at || client.activated_at || client.created_at;\nconst start = initial ? new Date(Date.parse(end) - 30 * 86400000).toISOString()\n  : client.last_report_at || client.activated_at || client.created_at;\nif (!Number.isFinite(Date.parse(start)) || !Number.isFinite(Date.parse(end)) || Date.parse(start) > Date.parse(end)) throw new Error('INVALID_REPORT_PERIOD');\nreturn { json: { ...client, report_type: initial ? 'initial_historical' : 'weekly', period_start: new Date(start).toISOString(), period_end: new Date(end).toISOString() } };"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1400,
-        0
+        1200,
+        250
       ],
       "id": "7ca58e72-245a-4d83-8b90-4fea8ad67a32",
       "name": "Determine Report Period"
@@ -157,29 +168,35 @@
           "parameters": [
             {
               "name": "select",
-              "value": "id,name,created_at,subscription_status,activated_at,initial_report_generated_at,last_report_at,next_report_at,client_platforms(id,is_active,last_success_at),plan,trial_ends_at,current_period_end"
+              "value": "id,name,created_at,subscription_status,activated_at,initial_report_generated_at,last_report_at,next_report_at,client_platforms(id,is_active,last_success_at,connection_status),plan,trial_ends_at,current_period_end"
             },
             {
               "name": "subscription_status",
               "value": "in.(trial,active)"
             },
             {
-              "name": "next_report_at",
-              "value": "={{ 'lte.' + $now.toUTC().toISO() }}"
-            },
-            {
               "name": "order",
               "value": "next_report_at.asc"
+            },
+            {
+              "name": "id",
+              "value": "={{ $json.targeted ? 'eq.' + $json.client_id : 'not.is.null' }}"
+            },
+            {
+              "name": "or",
+              "value": "={{ '(initial_report_generated_at.is.null,next_report_at.lte.' + $now.toUTC().toISO() + ')' }}"
             }
           ]
         },
-        "options": {}
+        "options": {
+          "timeout": 30000
+        }
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
       "position": [
-        0,
-        260
+        300,
+        250
       ],
       "id": "1e34fbc0-5f09-4be1-9b34-533972f827f2",
       "name": "Get Due Clients",
@@ -197,8 +214,8 @@
       "type": "n8n-nodes-base.splitInBatches",
       "typeVersion": 3,
       "position": [
-        280,
-        260
+        900,
+        250
       ],
       "id": "9695ec8a-1aa5-46a2-bba9-9ce16e5ac19f",
       "name": "Loop Clients"
@@ -213,7 +230,7 @@
           "parameters": [
             {
               "name": "select",
-              "value": "id,client_id,branch_id,platform_name,platform_url,username,settings,is_active,branches(id,name)"
+              "value": "id,client_id,branch_id,platform_name,created_at,is_active,branches(id,client_id,name)"
             },
             {
               "name": "client_id",
@@ -229,13 +246,15 @@
             }
           ]
         },
-        "options": {}
+        "options": {
+          "timeout": 30000
+        }
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
       "position": [
-        560,
-        260
+        1500,
+        250
       ],
       "id": "daefea7e-bc95-4685-a748-daf94121b4b1",
       "name": "Get Active Client Platforms",
@@ -288,13 +307,15 @@
             }
           ]
         },
-        "options": {}
+        "options": {
+          "timeout": 30000
+        }
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
       "position": [
-        840,
-        260
+        300,
+        1350
       ],
       "id": "1340886c-d722-4613-9638-b8acb707c948",
       "name": "Get Platform Feedback",
@@ -304,7 +325,8 @@
           "id": "zG0oLxK9PlldN0gl",
           "name": "Supabase Backend"
         }
-      }
+      },
+      "onError": "continueErrorOutput"
     },
     {
       "parameters": {
@@ -334,36 +356,37 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        1120,
-        260
+        600,
+        1350
       ],
       "id": "d18a0aef-236c-404f-ad33-2a73f144691d",
       "name": "Has Platform Feedback?"
     },
     {
       "parameters": {
-        "jsCode": "const context =\n  $('Loop Platform Reports').last().json;\n\n// إزالة العنصر الفارغ إن وجد\nconst feedback = $input.all()\n  .map(item => item.json)\n  .filter(item => item.source_record_id);\n\nif (!feedback.length) {\n  return [];\n}\n\nif (feedback.some(row => Number(row.client_id) !== Number(context.client_id) || Number(row.platform_id) !== Number(context.id) || (row.branch_id ?? null) !== (context.branch_id ?? null))) throw new Error('REPORT_FEEDBACK_SCOPE_MISMATCH');\n\nconst total = feedback.length;\n\nconst percent = value =>\n  total > 0\n    ? Number(((value / total) * 100).toFixed(2))\n    : 0;\n\nconst sentimentCounts = {\n  positive: 0,\n  negative: 0,\n  neutral: 0\n};\n\nconst severityCounts = {\n  low: 0,\n  medium: 0,\n  high: 0\n};\n\nconst categoryCounts = {};\nconst negativeCategoryCounts = {};\nconst positiveCategoryCounts = {};\n\nlet needsReplyCount = 0;\nlet complaintsCount = 0;\nlet salesOpportunitiesCount = 0;\n\nconst ratings = [];\n\nconst normalizeCategories = value => {\n  if (Array.isArray(value)) {\n    return value;\n  }\n\n  if (!value) {\n    return ['أخرى'];\n  }\n\n  return [String(value)];\n};\n\nfor (const row of feedback) {\n  const sentiment = [\n    'positive',\n    'negative',\n    'neutral'\n  ].includes(row.sentiment)\n    ? row.sentiment\n    : 'neutral';\n\n  sentimentCounts[sentiment]++;\n\n  const severity = [\n    'low',\n    'medium',\n    'high'\n  ].includes(row.severity)\n    ? row.severity\n    : 'low';\n\n  severityCounts[severity]++;\n\n  if (row.needs_reply === true) {\n    needsReplyCount++;\n  }\n\n  if (row.is_complaint === true) {\n    complaintsCount++;\n  }\n\n  if (row.is_sales_opportunity === true) {\n    salesOpportunitiesCount++;\n  }\n\n  const rating = Number(row.rating);\n\n  if (\n    row.rating !== null &&\n    row.rating !== undefined &&\n    !Number.isNaN(rating)\n  ) {\n    ratings.push(rating);\n  }\n\n  const categories = normalizeCategories(\n    row.category\n  );\n\n  for (const category of categories) {\n    const name = String(category || 'أخرى');\n\n    categoryCounts[name] =\n      (categoryCounts[name] || 0) + 1;\n\n    if (sentiment === 'negative') {\n      negativeCategoryCounts[name] =\n        (negativeCategoryCounts[name] || 0) + 1;\n    }\n\n    if (sentiment === 'positive') {\n      positiveCategoryCounts[name] =\n        (positiveCategoryCounts[name] || 0) + 1;\n    }\n  }\n}\n\nconst sortCounts = counts =>\n  Object.entries(counts)\n    .sort((a, b) => b[1] - a[1])\n    .map(([name, count]) => ({\n      name,\n      count\n    }));\n\nconst averageRating = ratings.length\n  ? Number(\n      (\n        ratings.reduce(\n          (sum, value) => sum + value,\n          0\n        ) / ratings.length\n      ).toFixed(2)\n    )\n  : null;\n\nconst urgentCases = feedback\n  .filter(row =>\n    ['high', 'critical'].includes(row.severity) && (row.sentiment === 'negative' || row.is_complaint === true)\n  )\n  .map(row => ({\n    source_record_id: row.source_record_id,\n    source_table: row.source_table,\n    client_id: row.client_id,\n    platform_id: row.platform_id,\n    branch_id: row.branch_id ?? null,\n    severity: row.severity,\n    sentiment: row.sentiment,\n    is_complaint: row.is_complaint === true,\n    external_id: row.external_id || null,\n    feedback_text: row.feedback_text || '',\n    category: normalizeCategories(row.category),\n    reason: row.reason || null,\n    suggested_reply:\n      row.suggested_reply || null,\n    published_at: row.published_at || null\n  }));\n\nconst feedbackForAi = feedback.map(row => ({\n  source_record_id: row.source_record_id,\n  feedback_text: row.feedback_text || '',\n  rating: row.rating ?? null,\n  sentiment: row.sentiment || 'neutral',\n  category: normalizeCategories(row.category),\n  severity: row.severity || 'low',\n  needs_reply: row.needs_reply === true,\n  is_complaint: row.is_complaint === true,\n  is_sales_opportunity:\n    row.is_sales_opportunity === true,\n  reason: row.reason || null,\n  published_at: row.published_at || null\n}));\n\nreturn [\n  {\n    json: {\n      client_id: context.client_id,\n      client_name: context.client_name || null,\n\n      branch_id: context.branch_id ?? null,\n      branch_name: context.branch_name || null,\n\n      platform_id: context.id,\n      platform_name: context.platform_name,\n\n      report_scope: context.report_scope,\n      report_type: context.report_type,\n\n      period_start: context.period_start,\n      period_end: context.period_end,\n\n      stats: {\n        total_feedback: total,\n\n        sentiment: {\n          positive: sentimentCounts.positive,\n          negative: sentimentCounts.negative,\n          neutral: sentimentCounts.neutral,\n\n          positive_percentage:\n            percent(sentimentCounts.positive),\n\n          negative_percentage:\n            percent(sentimentCounts.negative),\n\n          neutral_percentage:\n            percent(sentimentCounts.neutral)\n        },\n\n        severity: severityCounts,\n\n        average_rating: averageRating,\n\n        needs_reply_count:\n          needsReplyCount,\n\n        complaints_count:\n          complaintsCount,\n\n        sales_opportunities_count:\n          salesOpportunitiesCount,\n\n        categories:\n          sortCounts(categoryCounts),\n\n        top_issues:\n          sortCounts(\n            negativeCategoryCounts\n          ).slice(0, 5),\n\n        top_strengths:\n          sortCounts(\n            positiveCategoryCounts\n          ).slice(0, 5),\n\n        reputation_urgent_cases: urgentCases,\n\n        urgent_cases_count:\n          urgentCases.length\n      },\n\n      urgent_cases: urgentCases,\n      feedback_for_ai: feedbackForAi\n    }\n  }\n];",
+        "jsCode": "const context =\n  $('Restore Reserved Context').last().json;\n\n// إزالة العنصر الفارغ إن وجد\nconst feedback = $input.all()\n  .map(item => item.json)\n  .filter(item => item.source_record_id);\n\n\nif (feedback.some(row => Number(row.client_id) !== Number(context.client_id) || Number(row.platform_id) !== Number(context.id) || (row.branch_id ?? null) !== (context.branch_id ?? null))) throw new Error('REPORT_FEEDBACK_SCOPE_MISMATCH');\n\nconst total = feedback.length;\n\nconst percent = value =>\n  total > 0\n    ? Number(((value / total) * 100).toFixed(2))\n    : 0;\n\nconst sentimentCounts = {\n  positive: 0,\n  negative: 0,\n  neutral: 0\n};\n\nconst severityCounts = {\n  low: 0,\n  medium: 0,\n  high: 0\n};\n\nconst categoryCounts = {};\nconst negativeCategoryCounts = {};\nconst positiveCategoryCounts = {};\n\nlet needsReplyCount = 0;\nlet complaintsCount = 0;\nlet salesOpportunitiesCount = 0;\n\nconst ratings = [];\n\nconst normalizeCategories = value => {\n  if (Array.isArray(value)) {\n    return value;\n  }\n\n  if (!value) {\n    return ['أخرى'];\n  }\n\n  return [String(value)];\n};\n\nfor (const row of feedback) {\n  const sentiment = [\n    'positive',\n    'negative',\n    'neutral'\n  ].includes(row.sentiment)\n    ? row.sentiment\n    : 'neutral';\n\n  sentimentCounts[sentiment]++;\n\n  const severity = [\n    'low',\n    'medium',\n    'high'\n  ].includes(row.severity)\n    ? row.severity\n    : 'low';\n\n  severityCounts[severity]++;\n\n  if (row.needs_reply === true) {\n    needsReplyCount++;\n  }\n\n  if (row.is_complaint === true) {\n    complaintsCount++;\n  }\n\n  if (row.is_sales_opportunity === true) {\n    salesOpportunitiesCount++;\n  }\n\n  const rating = Number(row.rating);\n\n  if (\n    row.rating !== null &&\n    row.rating !== undefined &&\n    !Number.isNaN(rating)\n  ) {\n    ratings.push(rating);\n  }\n\n  const categories = normalizeCategories(\n    row.category\n  );\n\n  for (const category of categories) {\n    const name = String(category || 'أخرى');\n\n    categoryCounts[name] =\n      (categoryCounts[name] || 0) + 1;\n\n    if (sentiment === 'negative') {\n      negativeCategoryCounts[name] =\n        (negativeCategoryCounts[name] || 0) + 1;\n    }\n\n    if (sentiment === 'positive') {\n      positiveCategoryCounts[name] =\n        (positiveCategoryCounts[name] || 0) + 1;\n    }\n  }\n}\n\nconst sortCounts = counts =>\n  Object.entries(counts)\n    .sort((a, b) => b[1] - a[1])\n    .map(([name, count]) => ({\n      name,\n      count\n    }));\n\nconst averageRating = ratings.length\n  ? Number(\n      (\n        ratings.reduce(\n          (sum, value) => sum + value,\n          0\n        ) / ratings.length\n      ).toFixed(2)\n    )\n  : null;\n\nconst urgentCases = feedback\n  .filter(row =>\n    ['high', 'critical'].includes(row.severity) && (row.sentiment === 'negative' || row.is_complaint === true)\n  )\n  .map(row => ({\n    source_record_id: row.source_record_id,\n    source_table: row.source_table,\n    client_id: row.client_id,\n    platform_id: row.platform_id,\n    branch_id: row.branch_id ?? null,\n    severity: row.severity,\n    sentiment: row.sentiment,\n    is_complaint: row.is_complaint === true,\n    external_id: row.external_id || null,\n    feedback_text: row.feedback_text || '',\n    category: normalizeCategories(row.category),\n    reason: row.reason || null,\n    suggested_reply:\n      row.suggested_reply || null,\n    published_at: row.published_at || null\n  }));\n\nconst feedbackForAi = feedback.map(row => ({\n  source_record_id: row.source_record_id,\n  feedback_text: row.feedback_text || '',\n  rating: row.rating ?? null,\n  sentiment: row.sentiment || 'neutral',\n  category: normalizeCategories(row.category),\n  severity: row.severity || 'low',\n  needs_reply: row.needs_reply === true,\n  is_complaint: row.is_complaint === true,\n  is_sales_opportunity:\n    row.is_sales_opportunity === true,\n  reason: row.reason || null,\n  published_at: row.published_at || null\n}));\n\nreturn [\n  {\n    json: {\n      report_id: context.report_id,\n      report_generation: context.report_generation,\n      client_id: context.client_id,\n      client_name: context.client_name || null,\n\n      branch_id: context.branch_id ?? null,\n      branch_name: context.branch_name || null,\n\n      platform_id: context.id,\n      platform_name: context.platform_name,\n\n      report_scope: context.report_scope,\n      report_type: context.report_type,\n\n      period_start: context.period_start,\n      period_end: context.period_end,\n\n      stats: {\n        report_generation: context.report_generation,\n        total_feedback: total,\n\n        sentiment: {\n          positive: sentimentCounts.positive,\n          negative: sentimentCounts.negative,\n          neutral: sentimentCounts.neutral,\n\n          positive_percentage:\n            percent(sentimentCounts.positive),\n\n          negative_percentage:\n            percent(sentimentCounts.negative),\n\n          neutral_percentage:\n            percent(sentimentCounts.neutral)\n        },\n\n        severity: severityCounts,\n\n        average_rating: averageRating,\n\n        needs_reply_count:\n          needsReplyCount,\n\n        complaints_count:\n          complaintsCount,\n\n        sales_opportunities_count:\n          salesOpportunitiesCount,\n\n        categories:\n          sortCounts(categoryCounts),\n\n        top_issues:\n          sortCounts(\n            negativeCategoryCounts\n          ).slice(0, 5),\n\n        top_strengths:\n          sortCounts(\n            positiveCategoryCounts\n          ).slice(0, 5),\n\n        reputation_urgent_cases: urgentCases,\n\n        urgent_cases_count:\n          urgentCases.length\n      },\n\n      urgent_cases: urgentCases,\n      feedback_for_ai: feedbackForAi\n    }\n  }\n];",
         "mode": "runOnceForAllItems"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1400,
-        260
+        900,
+        1350
       ],
       "id": "bc1cc396-b24c-4ab7-b227-b8ba8f729fce",
-      "name": "Build Platform Report Stats"
+      "name": "Build Platform Report Stats",
+      "onError": "continueErrorOutput"
     },
     {
       "parameters": {
-        "jsCode": "const client =\n  $('Determine Report Period').last().json;\n\nreturn $input.all().map(item => {\n  const platform = item.json;\n\n  const branch = Array.isArray(platform.branches)\n    ? platform.branches[0]\n    : platform.branches;\n\n  return {\n    json: {\n      ...platform,\n\n      client_name:\n        client.name || null,\n\n      report_type:\n        client.report_type,\n\n      period_start:\n        client.period_start,\n\n      period_end:\n        client.period_end,\n\n      branch_name:\n        branch?.name || null,\n\n      report_scope:\n        platform.branch_id\n          ? `${platform.platform_name}:branch:${platform.branch_id}`\n          : `${platform.platform_name}:client`\n    }\n  };\n});",
+        "jsCode": "const client = $('Determine Report Period').last().json;\nreturn $input.all().map(({ json: platform }) => {\n  const branch = Array.isArray(platform.branches) ? platform.branches[0] : platform.branches;\n  if (Number(platform.client_id) !== Number(client.id) || !Number.isSafeInteger(Number(platform.id)) || Number(platform.id) <= 0 ||\n      (platform.branch_id != null && (!branch || Number(branch.id) !== Number(platform.branch_id) || Number(branch.client_id) !== Number(client.id)))) throw new Error('REPORT_PLATFORM_SCOPE_MISMATCH');\n  let start = client.period_start, end = client.period_end;\n  {\n    // First report covers the 30 days before this link was added. Retries and\n    // repeated completion RPCs cannot move the window, even across midnight.\n    const linked = String(platform.created_at || '');\n    const timestamp = /(?:Z|[+-]\\d{2}(?::?\\d{2})?)$/i.test(linked) ? linked : linked + 'Z';\n    const anchor = Date.parse(timestamp);\n    if (!Number.isFinite(anchor) || anchor > Date.now()) throw new Error('INVALID_PLATFORM_REPORT_ANCHOR');\n    platform.link_report_end = new Date(anchor).toISOString();\n    platform.link_report_start = new Date(anchor - 30 * 86400000).toISOString();\n    if (client.report_type === 'initial_historical') { end=platform.link_report_end; start=platform.link_report_start; }\n  }\n  const legacyScope = platform.branch_id != null ? `${platform.platform_name}:branch:${platform.branch_id}` : `${platform.platform_name}:client`;\n  return { json: { ...platform, client_name: client.name || null, branch_name: branch?.name || null,\n    report_type: client.report_type, period_start: start, period_end: end,\n    base_report_scope: `${legacyScope}:platform:${platform.id}`, legacy_report_scope: legacyScope, report_scope: `${legacyScope}:platform:${platform.id}` } };\n});",
         "mode": "runOnceForAllItems"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        0,
-        520
+        1800,
+        250
       ],
       "id": "b96d035d-7aa7-4602-8226-d44434eb80b0",
       "name": "Attach Report Context"
@@ -375,8 +398,8 @@
       "type": "n8n-nodes-base.splitInBatches",
       "typeVersion": 3,
       "position": [
-        280,
-        520
+        2100,
+        250
       ],
       "id": "9450f67f-d35d-4141-ac64-7b1b4c1b774c",
       "name": "Loop Platform Reports"
@@ -405,8 +428,8 @@
       "type": "@n8n/n8n-nodes-langchain.openAi",
       "typeVersion": 2.3,
       "position": [
-        560,
-        520
+        1500,
+        1350
       ],
       "id": "d0f565f4-40f4-48e8-9eb8-7b21b4070e47",
       "name": "Generate Platform Report",
@@ -417,11 +440,12 @@
           "id": "YL3zdWbXhbX2hL1V",
           "name": "OpenAI key"
         }
-      }
+      },
+      "onError": "continueErrorOutput"
     },
     {
       "parameters": {
-        "jsCode": "return $input.all().filter(({ json: client }) => {\n  const now = Date.now();\n  const eligible = client.subscription_status === 'trial'\n    ? Boolean(client.trial_ends_at) && Date.parse(client.trial_ends_at) > now\n    : client.subscription_status === 'active' && (!client.current_period_end || Date.parse(client.current_period_end) > now);\n  if (!eligible) return false;\n  const dueAt = new Date(client.next_report_at || 0).getTime();\n  const platforms = Array.isArray(client.client_platforms)\n    ? client.client_platforms.filter(platform => platform.is_active === true)\n    : [];\n\n  return platforms.length > 0 && platforms.every(platform => {\n    const completedAt = new Date(platform.last_success_at || 0).getTime();\n    return Number.isFinite(completedAt) && completedAt >= dueAt;\n  });\n});",
+        "jsCode": "const trigger = $('Resolve Report Trigger').last().json || {};\nreturn $input.all().filter(({ json: client }) => {\n  const now = Date.now();\n  const eligible = client.subscription_status === 'trial'\n    ? Boolean(client.trial_ends_at) && Date.parse(client.trial_ends_at) > now\n    : client.subscription_status === 'active' && (!client.current_period_end || Date.parse(client.current_period_end) > now);\n  if (!eligible || (trigger.targeted && Number(client.id) !== Number(trigger.client_id))) return false;\n  const platforms = Array.isArray(client.client_platforms) ? client.client_platforms.filter(p => p.is_active === true) : [];\n  if (!platforms.length || (trigger.platform_id && !platforms.some(p => Number(p.id) === Number(trigger.platform_id)))) return false;\n  const initial = !client.initial_report_generated_at;\n  const dueAt = Date.parse(client.next_report_at || '');\n  if (!initial && (!Number.isFinite(dueAt) || dueAt > now)) return false;\n  return platforms.every(platform => {\n    const completedAt = Date.parse(platform.last_success_at || '');\n    return platform.connection_status === 'connected' && Number.isFinite(completedAt) && (initial || completedAt >= dueAt);\n  });\n});",
         "mode": "runOnceForAllItems"
       },
       "id": "421f3e99-a430-4448-9efc-809888b576fa",
@@ -429,8 +453,8 @@
       "name": "Keep Clients Ready For Reports",
       "type": "n8n-nodes-base.code",
       "position": [
-        840,
-        520
+        600,
+        250
       ]
     },
     {
@@ -443,8 +467,8 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2.1,
       "position": [
-        1120,
-        520
+        600,
+        -100
       ],
       "id": "e8be99a2-485d-43c1-84f1-25ac291ce935",
       "name": "Platform Sync Completed Webhook",
@@ -462,8 +486,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        1400,
-        520
+        3000,
+        1350
       ],
       "parameters": {
         "conditions": {
@@ -494,8 +518,8 @@
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.2,
       "position": [
-        0,
-        780
+        3300,
+        1350
       ],
       "parameters": {
         "source": "database",
@@ -511,6 +535,760 @@
       },
       "onError": "continueRegularOutput",
       "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "id": "de3fb099-aa61-5f57-88a8-bc7455767435",
+      "name": "Platform Sync Completed Input",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        900,
+        -100
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const raw = $input.all()[0]?.json || {};\nconst input = raw.body && typeof raw.body === 'object' ? raw.body : raw;\nif (input.client_id !== undefined || input.platform_id !== undefined || input.source === 'platform_sync_completed') {\n  const clientId = Number(input.client_id);\n  const platformId = input.platform_id == null ? null : Number(input.platform_id);\n  if (!Number.isSafeInteger(clientId) || clientId <= 0 ||\n      (platformId !== null && (!Number.isSafeInteger(platformId) || platformId <= 0)) ||\n      (input.source === 'platform_sync_completed' && platformId === null)) throw new Error('INVALID_REPORT_SCOPE');\n  return [{ json: { client_id: clientId, platform_id: platformId, targeted: true } }];\n}\nreturn [{ json: { targeted: false } }];"
+      },
+      "id": "10db904c-f484-5c65-9ab8-d4ed105cd1f3",
+      "name": "Resolve Report Trigger",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        0,
+        250
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ (()=>{const c=$json; const query=v=>v.map(([k,x])=>encodeURIComponent(k)+'='+encodeURIComponent(x)).join('&');const v=[['select','*'],['client_id','eq.'+c.client_id],['platform_id','eq.'+c.id],['limit','1']];if(c.existing_report_id)v.push(['id','eq.'+c.existing_report_id]);else v.push(['report_scope','eq.'+c.report_scope],['report_type','eq.'+c.report_type],['period_start','eq.'+c.period_start.slice(0,10)],['period_end','eq.'+c.period_end.slice(0,10)]);return 'https://dhryldlprpdmsixhlaqe.supabase.co/rest/v1/reports?'+query(v);})() }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpCustomAuth",
+        "options": {
+          "timeout": 30000
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Prefer",
+              "value": "return=representation"
+            }
+          ]
+        }
+      },
+      "id": "8aa28a47-d4e6-5905-9d13-59e8db46cf3d",
+      "name": "Find Existing Report",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1800,
+        750
+      ],
+      "alwaysOutputData": true,
+      "credentials": {
+        "httpCustomAuth": {
+          "id": "zG0oLxK9PlldN0gl",
+          "name": "Supabase Backend"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const instant = value => {\n  if (typeof value !== 'string' || !/T.*(?:Z|[+-]\\d{2}:?\\d{2})$/i.test(value) || !Number.isFinite(Date.parse(value))) throw new Error('REPORT_LEGACY_COVERAGE_REVIEW_REQUIRED');\n  return new Date(Date.parse(value)).toISOString();\n};\nconst bounds = row => {\n  const g=row.stats?.report_generation;\n  if (!g) throw new Error('REPORT_LEGACY_COVERAGE_REVIEW_REQUIRED');\n  const start=instant(g.period_start),end=instant(g.period_end);\n  if (start>=end || start.slice(0,10)!==row.period_start || end.slice(0,10)!==row.period_end) throw new Error('REPORT_PERIOD_METADATA_MISMATCH');\n  return {start,end};\n};\nconst sameScope = (row,c) => Number(row.client_id)===Number(c.client_id) && Number(row.platform_id)===Number(c.id) &&\n  String(row.branch_id??'')===String(c.branch_id??'') && (row.report_scope===c.legacy_report_scope || row.report_scope===c.base_report_scope || String(row.report_scope||'').startsWith(c.base_report_scope+':window:'));\nconst query = values => values.map(([key,value]) => encodeURIComponent(key)+'='+encodeURIComponent(value)).join('&');\n\nconst context = $('Prepare Report Window').last().json;\nif(context.coverage_complete)return [{json:{action:'skip'}}];\nconst saved = $input.all()[0]?.json || {};\nconst exists = Number.isSafeInteger(Number(saved.id)) && Number(saved.id) > 0;\nif (exists && (Number(saved.client_id) !== Number(context.client_id) || Number(saved.platform_id) !== Number(context.id) ||\n    String(saved.branch_id ?? '') !== String(context.branch_id ?? '') || ![context.report_scope, context.legacy_report_scope].includes(saved.report_scope) ||\n    saved.report_type !== context.report_type)) throw new Error('REPORT_RESERVATION_SCOPE_MISMATCH');\nif(exists){ const actual=bounds(saved); if(actual.start!==instant(context.period_start)||actual.end!==instant(context.period_end))throw new Error('REPORT_SAVED_COVERAGE_MISMATCH'); }\nif (exists && saved.status === 'completed') return [{ json: { action: 'completed', saved_report: saved } }];\n// No timeout-based takeover. A running or uncertain owner may still complete.\nif (exists && saved.status !== 'failed') return [{ json: { action: 'skip' } }];\nconst previous = saved.stats?.report_generation;\nconst period = exists ? previous\n  : { period_start: context.period_start, period_end: context.period_end };\nif (!Number.isFinite(Date.parse(period.period_start)) || !Number.isFinite(Date.parse(period.period_end)) ||\n    Date.parse(period.period_start) > Date.parse(period.period_end)) throw new Error('INVALID_RESERVED_REPORT_PERIOD');\nif (exists && (period.period_start.slice(0,10) !== saved.period_start || period.period_end.slice(0,10) !== saved.period_end)) throw new Error('REPORT_PERIOD_METADATA_MISMATCH');\nconst owner = String($execution.id || '');\nif (!owner) throw new Error('REPORT_EXECUTION_ID_MISSING');\nconst metadata = { version: 1, owner, period_start: period.period_start, period_end: period.period_end };\nconst scope = exists ? saved.report_scope : context.report_scope;\nconst identity = [['client_id','eq.'+context.client_id],['platform_id','eq.'+context.id],['report_type','eq.'+context.report_type],\n  ['report_scope','eq.'+scope],['period_start','eq.'+period.period_start.slice(0,10)],['period_end','eq.'+period.period_end.slice(0,10)]];\nconst values = exists ? [['id','eq.'+saved.id],['client_id','eq.'+context.client_id],['status','eq.failed'],\n  ['stats->report_generation->>owner', previous?.owner == null ? 'is.null' : 'eq.'+previous.owner]]\n  : [['on_conflict','client_id,report_type,period_start,period_end,report_scope']];\nconst body = { status: 'processing', stats: { ...(exists ? saved.stats : {}), report_generation: metadata }, updated_at: new Date().toISOString() };\nif (!exists) Object.assign(body, { client_id: context.client_id, branch_id: context.branch_id ?? null, platform_id: context.id,\n  report_scope: scope, report_type: context.report_type, period_start: period.period_start.slice(0,10), period_end: period.period_end.slice(0,10), platforms: [context.platform_name] });\nreturn [{ json: { action: 'claim', claim_method: exists ? 'PATCH' : 'POST', claim_url: \"https://dhryldlprpdmsixhlaqe.supabase.co/rest/v1/reports\"+'?'+query(values), claim_body: body,\n  result_url: \"https://dhryldlprpdmsixhlaqe.supabase.co/rest/v1/reports\"+'?'+query([['select','*'], ...identity]) } }];"
+      },
+      "id": "254efa6d-73f5-58b9-9f01-9af89e417c57",
+      "name": "Evaluate Report Reservation",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2100,
+        750
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "ba02ac9f-5eaa-50dc-9c0b-5f2e1dae2247",
+              "leftValue": "={{ $json.action === 'completed' }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "311582fb-f59c-573b-b5cd-80ac9fbe883e",
+      "name": "Existing Report Completed?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2400,
+        750
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "return [{ json: $json.saved_report }];"
+      },
+      "id": "20cd142f-62de-5987-937d-c6d950a7c97c",
+      "name": "Restore Completed Report",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2400,
+        1050
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "5e675515-9daf-579e-ac7d-e6cb91d716c1",
+              "leftValue": "={{ $json.action === 'claim' }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "1a28b368-9f4f-5230-bcf2-c0d01247531a",
+      "name": "Can Reserve Report?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2700,
+        750
+      ]
+    },
+    {
+      "parameters": {
+        "method": "={{ $json.claim_method }}",
+        "url": "={{ $json.claim_url }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpCustomAuth",
+        "options": {
+          "timeout": 30000
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Prefer",
+              "value": "resolution=ignore-duplicates,return=representation"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json.claim_body }}"
+      },
+      "id": "df6b42d3-eff6-5b42-b238-0361b6fa222e",
+      "name": "Reserve Report",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3000,
+        750
+      ],
+      "alwaysOutputData": true,
+      "credentials": {
+        "httpCustomAuth": {
+          "id": "zG0oLxK9PlldN0gl",
+          "name": "Supabase Backend"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "ddbf359e-2818-5c81-b613-d14e90ae26a1",
+              "leftValue": "={{ Boolean($json.id) && $json.status === 'processing' && $json.stats?.report_generation?.owner === String($execution.id) }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "32c41548-bd86-5c1d-8653-3db4b32e1363",
+      "name": "Report Reservation Acquired?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        3900,
+        750
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const instant = value => {\n  if (typeof value !== 'string' || !/T.*(?:Z|[+-]\\d{2}:?\\d{2})$/i.test(value) || !Number.isFinite(Date.parse(value))) throw new Error('REPORT_LEGACY_COVERAGE_REVIEW_REQUIRED');\n  return new Date(Date.parse(value)).toISOString();\n};\nconst bounds = row => {\n  const g=row.stats?.report_generation;\n  if (!g) throw new Error('REPORT_LEGACY_COVERAGE_REVIEW_REQUIRED');\n  const start=instant(g.period_start),end=instant(g.period_end);\n  if (start>=end || start.slice(0,10)!==row.period_start || end.slice(0,10)!==row.period_end) throw new Error('REPORT_PERIOD_METADATA_MISMATCH');\n  return {start,end};\n};\nconst sameScope = (row,c) => Number(row.client_id)===Number(c.client_id) && Number(row.platform_id)===Number(c.id) &&\n  String(row.branch_id??'')===String(c.branch_id??'') && (row.report_scope===c.legacy_report_scope || row.report_scope===c.base_report_scope || String(row.report_scope||'').startsWith(c.base_report_scope+':window:'));\nconst context = $('Prepare Report Window').last().json;\nconst report = $input.all()[0]?.json || {};\nconst generation = report.stats?.report_generation;\nif (Number(report.client_id) !== Number(context.client_id) || Number(report.platform_id) !== Number(context.id) ||\n    String(report.branch_id ?? '') !== String(context.branch_id ?? '') || generation?.owner !== String($execution.id) ||\n    ![context.report_scope,context.legacy_report_scope].includes(report.report_scope)) throw new Error('REPORT_OWNER_MISMATCH');\nconst b=bounds(report); if(b.start!==instant(context.period_start)||b.end!==instant(context.period_end))throw new Error('REPORT_SAVED_COVERAGE_MISMATCH');\nreturn [{ json: { ...context, report_scope: report.report_scope, period_start: generation.period_start, period_end: generation.period_end,\n  report_id: report.id, report_generation: generation } }];"
+      },
+      "id": "194d2aef-bfa1-57c2-af77-007382f4c56d",
+      "name": "Restore Reserved Context",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        0,
+        1350
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "389851c3-dacc-5047-99b0-f42137888a68",
+              "leftValue": "={{ Number($json.stats?.total_feedback) > 0 }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "1cde7e32-e645-5d86-9d0f-07d036f18987",
+      "name": "Report Has Feedback?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1200,
+        1350
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const context = $input.all()[0].json; return [{ json: { ...context, total_feedback: 0, report_title: 'تقرير أداء السمعة', executive_summary: 'اكتملت المزامنة، ولا توجد تعليقات محللة ضمن فترة هذا التقرير.', sentiment_summary: {}, top_strengths: [], top_issues: [], urgent_cases_summary: { count: 0, summary: '' }, customer_needs: [], sales_opportunities: [], recommendations: [], action_plan: [], conclusion: null } }];"
+      },
+      "id": "7e94974e-5fa1-5e1e-827c-d0fa1877fcb6",
+      "name": "Build Empty Report",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1500,
+        1650
+      ]
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "={{ (()=>{const c=$('Restore Reserved Context').last().json;return 'https://dhryldlprpdmsixhlaqe.supabase.co/rest/v1/reports?id=eq.'+c.report_id+'&client_id=eq.'+c.client_id+'&platform_id=eq.'+c.id+'&status=eq.processing&stats->report_generation->>owner=eq.'+encodeURIComponent(c.report_generation.owner)})() }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpCustomAuth",
+        "options": {
+          "timeout": 30000
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Prefer",
+              "value": "return=representation"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ (()=>{const c=$('Restore Reserved Context').last().json;return {status:'failed',stats:{report_generation:{...c.report_generation,error_code:'REPORT_GENERATION_FAILED'}},updated_at:$now.toUTC().toISO()}})() }}"
+      },
+      "id": "25310e41-3ed8-572e-9914-24ecb363ce44",
+      "name": "Record Report Failure",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2100,
+        1650
+      ],
+      "alwaysOutputData": true,
+      "credentials": {
+        "httpCustomAuth": {
+          "id": "zG0oLxK9PlldN0gl",
+          "name": "Supabase Backend"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ (()=>{const c=$('Restore Reserved Context').last().json;return 'https://dhryldlprpdmsixhlaqe.supabase.co/rest/v1/reports?select=*&id=eq.'+c.report_id+'&client_id=eq.'+c.client_id+'&platform_id=eq.'+c.id})() }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpCustomAuth",
+        "options": {
+          "timeout": 30000
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Prefer",
+              "value": "return=representation"
+            }
+          ]
+        }
+      },
+      "id": "adf6ffaa-4f56-572b-90c8-3639b22d3527",
+      "name": "Read Final Report",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2400,
+        1350
+      ],
+      "alwaysOutputData": true,
+      "credentials": {
+        "httpCustomAuth": {
+          "id": "zG0oLxK9PlldN0gl",
+          "name": "Supabase Backend"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ (()=>{const c=$('Determine Report Period').last().json,ps=$('Attach Report Context').all().map(i=>i.json); const query=v=>v.map(([k,x])=>encodeURIComponent(k)+'='+encodeURIComponent(x)).join('&');const earliest=ps.map(p=>p.period_start.slice(0,10)).sort()[0];return 'https://dhryldlprpdmsixhlaqe.supabase.co/rest/v1/reports?'+query([['select','*'],['client_id','eq.'+c.id],['platform_id','in.('+ps.map(p=>p.id).join(',')+')'],['report_type','in.(initial_historical,weekly)'],['period_end','gte.'+earliest],['limit','1000']]);})() }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpCustomAuth",
+        "options": {
+          "timeout": 30000
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Prefer",
+              "value": "return=representation"
+            }
+          ]
+        }
+      },
+      "id": "72bd1790-691c-5796-9720-e2aefe10ec6d",
+      "name": "Read Client Report States",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        0,
+        2250
+      ],
+      "alwaysOutputData": true,
+      "credentials": {
+        "httpCustomAuth": {
+          "id": "zG0oLxK9PlldN0gl",
+          "name": "Supabase Backend"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const instant = value => {\n  if (typeof value !== 'string' || !/T.*(?:Z|[+-]\\d{2}:?\\d{2})$/i.test(value) || !Number.isFinite(Date.parse(value))) throw new Error('REPORT_LEGACY_COVERAGE_REVIEW_REQUIRED');\n  return new Date(Date.parse(value)).toISOString();\n};\nconst bounds = row => {\n  const g=row.stats?.report_generation;\n  if (!g) throw new Error('REPORT_LEGACY_COVERAGE_REVIEW_REQUIRED');\n  const start=instant(g.period_start),end=instant(g.period_end);\n  if (start>=end || start.slice(0,10)!==row.period_start || end.slice(0,10)!==row.period_end) throw new Error('REPORT_PERIOD_METADATA_MISMATCH');\n  return {start,end};\n};\nconst sameScope = (row,c) => Number(row.client_id)===Number(c.client_id) && Number(row.platform_id)===Number(c.id) &&\n  String(row.branch_id??'')===String(c.branch_id??'') && (row.report_scope===c.legacy_report_scope || row.report_scope===c.base_report_scope || String(row.report_scope||'').startsWith(c.base_report_scope+':window:'));\n\nconst client=$('Determine Report Period').last().json;\nlet reviews=[];try{reviews=$('Loop Platform Reports').all(0);}catch{}\nif(reviews.some(i=>Number(i.json.client_id)===Number(client.id)&&i.json.report_generation_review_required))throw new Error('REPORT_COVERAGE_REVIEW_REQUIRED');\nconst expected=$('Attach Report Context').all().map(i=>i.json).filter(p=>Number(p.client_id)===Number(client.id));\nconst rows=$input.all().map(i=>i.json).filter(r=>r.id!=null);\nif(rows.length>=1000)throw new Error('REPORT_HISTORY_REVIEW_REQUIRED');\nlet failed=false;\nconst coverage=expected.map(p=>{\n  const scoped=rows.filter(r=>sameScope(r,p));\n  const known=scoped.map(row=>({row,...bounds(row)})).sort((a,b)=>a.start.localeCompare(b.start)||a.end.localeCompare(b.end));\n  const complete=known.filter(h=>h.row.status==='completed');\n  for(let i=1;i<complete.length;i++)if(complete[i].start<complete[i-1].end)throw new Error('REPORT_COVERAGE_OVERLAP_REVIEW_REQUIRED');\n  failed ||= known.some(h=>h.row.status==='failed');\n  const start=instant(p.period_start),end=instant(p.period_end);\n  if(client.report_type==='initial_historical'){\n    const found=complete.find(h=>h.row.report_type==='initial_historical'&&h.start===start&&h.end===end);\n    return {ready:Boolean(found),end:found?.end};\n  }\n  let cursor=start;\n  for(const h of complete){if(h.end<=cursor)continue;if(h.start>cursor)break;cursor=h.end;if(cursor>=end)break;}\n  return {ready:cursor>=end,end:cursor};\n});\nconst ready=coverage.length>0&&coverage.every(c=>c.ready);\n// The client's watermark may only advance through coverage proven for every\n// scope. In particular, a same-date report ending earlier is insufficient.\nconst end=ready ? (client.report_type==='initial_historical'\n  ? new Date(Math.min(...coverage.map(c=>Date.parse(c.end)))).toISOString() : instant(client.period_end)) : null;\nreturn [{json:{client_id:client.id,report_type:client.report_type,report_period_end:end,all_reports_ready:ready,report_generation_failed:!ready&&failed}}];"
+      },
+      "id": "706e9384-8762-5acf-9302-b361d2d12f44",
+      "name": "Check Client Report Completion",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        300,
+        2250
+      ],
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "cd135720-3268-5463-ab16-b65d0b2655fd",
+              "leftValue": "={{ $json.all_reports_ready === true }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "2b2df79d-d156-53bc-84be-026e6fd8012e",
+      "name": "All Client Reports Ready?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        600,
+        2250
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const all=$input.all();if(all.some(i=>i.json.report_generation_review_required))throw new Error('REPORT_COVERAGE_REVIEW_REQUIRED');if(all.some(i=>i.json.report_generation_failed===true))throw new Error('REPORT_GENERATION_FAILED_RETRY_AVAILABLE');return all;"
+      },
+      "id": "6c4f0768-c60b-5be7-9fd3-042ad09828f6",
+      "name": "Assert Report Batch",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1200,
+        2250
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $('Evaluate Report Reservation').last().json.result_url }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpCustomAuth",
+        "options": {
+          "timeout": 30000
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Prefer",
+              "value": "return=representation"
+            }
+          ]
+        }
+      },
+      "id": "d129ab50-29e1-5b17-bdc3-a72507e31ee4",
+      "name": "Read Reserved Report",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3300,
+        750
+      ],
+      "alwaysOutputData": true,
+      "credentials": {
+        "httpCustomAuth": {
+          "id": "zG0oLxK9PlldN0gl",
+          "name": "Supabase Backend"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const instant = value => {\n  if (typeof value !== 'string' || !/T.*(?:Z|[+-]\\d{2}:?\\d{2})$/i.test(value) || !Number.isFinite(Date.parse(value))) throw new Error('REPORT_LEGACY_COVERAGE_REVIEW_REQUIRED');\n  return new Date(Date.parse(value)).toISOString();\n};\nconst bounds = row => {\n  const g=row.stats?.report_generation;\n  if (!g) throw new Error('REPORT_LEGACY_COVERAGE_REVIEW_REQUIRED');\n  const start=instant(g.period_start),end=instant(g.period_end);\n  if (start>=end || start.slice(0,10)!==row.period_start || end.slice(0,10)!==row.period_end) throw new Error('REPORT_PERIOD_METADATA_MISMATCH');\n  return {start,end};\n};\nconst sameScope = (row,c) => Number(row.client_id)===Number(c.client_id) && Number(row.platform_id)===Number(c.id) &&\n  String(row.branch_id??'')===String(c.branch_id??'') && (row.report_scope===c.legacy_report_scope || row.report_scope===c.base_report_scope || String(row.report_scope||'').startsWith(c.base_report_scope+':window:'));\nconst context = $('Prepare Report Window').last().json;\nconst plan = $('Evaluate Report Reservation').last().json;\nconst rows = $input.all().map(item => item.json).filter(row => row.id != null);\nif (rows.length !== 1) throw new Error('REPORT_RESERVATION_NOT_CONFIRMED');\nconst report = rows[0];\nif (Number(report.client_id) !== Number(context.client_id) || Number(report.platform_id) !== Number(context.id) ||\n    String(report.branch_id ?? '') !== String(context.branch_id ?? '') || report.report_type !== context.report_type ||\n    report.report_scope !== plan.claim_body.report_scope && report.report_scope !== context.report_scope && report.report_scope !== context.legacy_report_scope)\n  throw new Error('REPORT_RESERVATION_SCOPE_MISMATCH');\nconst b=bounds(report); if(b.start!==instant(context.period_start)||b.end!==instant(context.period_end))throw new Error('REPORT_SAVED_COVERAGE_MISMATCH');\nreturn [{ json: report }];"
+      },
+      "id": "e6d39d50-90ef-54cd-9d9f-0455c1b16aa5",
+      "name": "Validate Report Reservation",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3600,
+        750
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ (()=>{const c=$json; const query=v=>v.map(([k,x])=>encodeURIComponent(k)+'='+encodeURIComponent(x)).join('&');const base=c.base_report_scope;return 'https://dhryldlprpdmsixhlaqe.supabase.co/rest/v1/reports?'+query([['select','*'],['client_id','eq.'+c.client_id],['branch_id',c.branch_id==null?'is.null':'eq.'+c.branch_id],['or','(platform_id.eq.'+c.id+',platform_id.is.null)'],['report_type','in.(initial_historical,weekly)'],['order','period_start.asc,id.asc'],['limit','1000']]);})() }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpCustomAuth",
+        "options": {
+          "timeout": 30000
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Prefer",
+              "value": "return=representation"
+            }
+          ]
+        }
+      },
+      "id": "70594ded-8a64-53fc-a7ac-e05ee542ea5c",
+      "name": "Read Previous Platform Report",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        0,
+        750
+      ],
+      "alwaysOutputData": true,
+      "credentials": {
+        "httpCustomAuth": {
+          "id": "zG0oLxK9PlldN0gl",
+          "name": "Supabase Backend"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const instant = value => {\n  if (typeof value !== 'string' || !/T.*(?:Z|[+-]\\d{2}:?\\d{2})$/i.test(value) || !Number.isFinite(Date.parse(value))) throw new Error('REPORT_LEGACY_COVERAGE_REVIEW_REQUIRED');\n  return new Date(Date.parse(value)).toISOString();\n};\nconst bounds = row => {\n  const g=row.stats?.report_generation;\n  if (!g) throw new Error('REPORT_LEGACY_COVERAGE_REVIEW_REQUIRED');\n  const start=instant(g.period_start),end=instant(g.period_end);\n  if (start>=end || start.slice(0,10)!==row.period_start || end.slice(0,10)!==row.period_end) throw new Error('REPORT_PERIOD_METADATA_MISMATCH');\n  return {start,end};\n};\nconst sameScope = (row,c) => Number(row.client_id)===Number(c.client_id) && Number(row.platform_id)===Number(c.id) &&\n  String(row.branch_id??'')===String(c.branch_id??'') && (row.report_scope===c.legacy_report_scope || row.report_scope===c.base_report_scope || String(row.report_scope||'').startsWith(c.base_report_scope+':window:'));\n\nconst c=$('Loop Platform Reports').last().json;\nconst rows=$input.all().map(i=>i.json).filter(r=>r.id!=null);\nif(rows.length>=1000)throw new Error('REPORT_HISTORY_REVIEW_REQUIRED');\nconst desiredStart=instant(c.period_start),desiredEnd=instant(c.period_end);\nif(desiredStart>desiredEnd || desiredEnd>new Date().toISOString())throw new Error('INVALID_REPORT_PERIOD');\nconst history=rows.map(row=>{\n  if(!sameScope(row,c) || !['initial_historical','weekly'].includes(row.report_type))throw new Error('REPORT_PREVIOUS_SCOPE_MISMATCH');\n  return {row,...bounds(row)};\n}).sort((a,b)=>a.start.localeCompare(b.start)||a.end.localeCompare(b.end));\nfor(let i=0;i<history.length;i++){\n  const h=history[i],prev=history[i-1];\n  if(prev && (prev.end!==h.start || prev.row.status!=='completed'))throw new Error('REPORT_COVERAGE_CHAIN_REVIEW_REQUIRED');\n  if(prev?.row.stats.report_generation.next_period_end && instant(prev.row.stats.report_generation.next_period_end)!==h.end)throw new Error('REPORT_WINDOW_RESERVATION_MISMATCH');\n  if(h.end>new Date().toISOString())throw new Error('INVALID_REPORT_PERIOD');\n}\nconst completed=history.filter(h=>h.row.status==='completed');\nconst pending=history.filter(h=>h.row.status!=='completed');\nif(pending.length>1)throw new Error('REPORT_COVERAGE_CHAIN_REVIEW_REQUIRED');\nlet chosen=null,anchor=null,start,end,type,coverageComplete=false;\nif(c.report_type==='initial_historical'){\n  chosen=history.find(h=>h.row.report_type==='initial_historical' && h.start===desiredStart && h.end===desiredEnd);\n  if(!chosen && history.length)throw new Error('REPORT_INITIAL_COVERAGE_REVIEW_REQUIRED');\n  start=desiredStart;end=desiredEnd;type='initial_historical';\n}else if(pending.length){\n  chosen=pending[0];anchor=completed.at(-1)?.row||null;\n  start=chosen.start;end=chosen.end;type=chosen.row.report_type;\n}else if(!history.length){\n  start=instant(c.link_report_start);end=instant(c.link_report_end);type='initial_historical';\n}else{\n  const tail=completed.at(-1);\n  if(tail.end>=desiredEnd){\n    if(history[0].start>desiredStart)throw new Error('REPORT_COVERAGE_CHAIN_REVIEW_REQUIRED');\n    chosen=completed.find(h=>h.start<=desiredStart && h.end>=desiredEnd)||tail;\n    coverageComplete=!(chosen.start<=desiredStart && chosen.end>=desiredEnd);\n    start=chosen.start;end=chosen.end;type=chosen.row.report_type;\n  }else{\n    anchor=tail.row;start=tail.end;\n    end=anchor.stats.report_generation.next_period_end ? instant(anchor.stats.report_generation.next_period_end) : desiredEnd;\n    type='weekly';\n  }\n}\nif(start>=end)throw new Error('INVALID_REPORT_PERIOD');\nreturn [{json:{...c,period_start:start,period_end:end,report_type:type,\n  requested_period_start:desiredStart,requested_period_end:desiredEnd,coverage_complete:coverageComplete,\n  existing_report_id:chosen?.row.id||null,existing_report_scope:chosen?.row.report_scope||null,\n  report_anchor:anchor,anchor_required:Boolean(anchor)&&!coverageComplete&&chosen?.row.status!=='completed'}}];"
+      },
+      "id": "3bfd15c8-fd42-5f99-9b39-ddb374ac1b61",
+      "name": "Resolve Platform Report Period",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        300,
+        750
+      ],
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "5e675515-9daf-579e-ac7d-e6cb91d716c1",
+              "leftValue": "={{ $json.anchor_required === true }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "02236146-975c-5af4-b7a7-2c8edc63d67f",
+      "name": "Needs Window Reservation?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        600,
+        750
+      ]
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "={{ (()=>{const c=$json,a=c.report_anchor; const query=v=>v.map(([k,x])=>encodeURIComponent(k)+'='+encodeURIComponent(x)).join('&');return 'https://dhryldlprpdmsixhlaqe.supabase.co/rest/v1/reports?'+query([['id','eq.'+a.id],['client_id','eq.'+c.client_id],['platform_id','eq.'+c.id],['status','eq.completed'],['stats->report_generation->>next_period_end','is.null'],['updated_at','eq.'+a.updated_at]]);})() }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpCustomAuth",
+        "options": {
+          "timeout": 30000
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Prefer",
+              "value": "return=representation"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ {stats:{...$json.report_anchor.stats,report_generation:{...$json.report_anchor.stats.report_generation,next_period_end:$json.period_end}},updated_at:$now.toUTC().toISO()} }}"
+      },
+      "id": "90a8d13e-89f6-5124-9ca8-e3d12e31f98e",
+      "name": "Reserve Next Report Window",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        900,
+        750
+      ],
+      "alwaysOutputData": true,
+      "credentials": {
+        "httpCustomAuth": {
+          "id": "zG0oLxK9PlldN0gl",
+          "name": "Supabase Backend"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ (()=>{const c=$('Resolve Platform Report Period').last().json;return 'https://dhryldlprpdmsixhlaqe.supabase.co/rest/v1/reports?select=*&id=eq.'+c.report_anchor.id+'&client_id=eq.'+c.client_id+'&platform_id=eq.'+c.id;})() }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpCustomAuth",
+        "options": {
+          "timeout": 30000
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Prefer",
+              "value": "return=representation"
+            }
+          ]
+        }
+      },
+      "id": "60a4b00b-bc18-5ad6-b542-d74e02c73280",
+      "name": "Read Next Report Window",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1200,
+        750
+      ],
+      "alwaysOutputData": true,
+      "credentials": {
+        "httpCustomAuth": {
+          "id": "zG0oLxK9PlldN0gl",
+          "name": "Supabase Backend"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const instant = value => {\n  if (typeof value !== 'string' || !/T.*(?:Z|[+-]\\d{2}:?\\d{2})$/i.test(value) || !Number.isFinite(Date.parse(value))) throw new Error('REPORT_LEGACY_COVERAGE_REVIEW_REQUIRED');\n  return new Date(Date.parse(value)).toISOString();\n};\nconst bounds = row => {\n  const g=row.stats?.report_generation;\n  if (!g) throw new Error('REPORT_LEGACY_COVERAGE_REVIEW_REQUIRED');\n  const start=instant(g.period_start),end=instant(g.period_end);\n  if (start>=end || start.slice(0,10)!==row.period_start || end.slice(0,10)!==row.period_end) throw new Error('REPORT_PERIOD_METADATA_MISMATCH');\n  return {start,end};\n};\nconst sameScope = (row,c) => Number(row.client_id)===Number(c.client_id) && Number(row.platform_id)===Number(c.id) &&\n  String(row.branch_id??'')===String(c.branch_id??'') && (row.report_scope===c.legacy_report_scope || row.report_scope===c.base_report_scope || String(row.report_scope||'').startsWith(c.base_report_scope+':window:'));\n\nconst c=$('Resolve Platform Report Period').last().json;\nlet start=c.period_start,end=c.period_end;\nif(c.anchor_required){\n  const a=$input.all()[0]?.json||{};\n  if(Number(a.id)!==Number(c.report_anchor.id)||!sameScope(a,c)||a.status!=='completed')throw new Error('REPORT_WINDOW_RESERVATION_NOT_CONFIRMED');\n  const b=bounds(a);if(!a.stats.report_generation.next_period_end)throw new Error('REPORT_WINDOW_RESERVATION_NOT_CONFIRMED');start=b.end;end=instant(a.stats.report_generation.next_period_end);\n  if(c.existing_report_id && end!==c.period_end)throw new Error('REPORT_WINDOW_RESERVATION_MISMATCH');\n}\nif(start>=end || end>new Date().toISOString())throw new Error('INVALID_REPORT_PERIOD');\nconst scope=c.existing_report_scope || c.base_report_scope+':window:'+end.replace(/[-:.]/g,'');\nreturn [{json:{...c,period_start:start,period_end:end,report_scope:scope}}];"
+      },
+      "id": "a8771956-7a8e-56a1-b4e3-62daa36acfac",
+      "name": "Prepare Report Window",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1500,
+        750
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const instant = value => {\n  if (typeof value !== 'string' || !/T.*(?:Z|[+-]\\d{2}:?\\d{2})$/i.test(value) || !Number.isFinite(Date.parse(value))) throw new Error('REPORT_LEGACY_COVERAGE_REVIEW_REQUIRED');\n  return new Date(Date.parse(value)).toISOString();\n};\nconst bounds = row => {\n  const g=row.stats?.report_generation;\n  if (!g) throw new Error('REPORT_LEGACY_COVERAGE_REVIEW_REQUIRED');\n  const start=instant(g.period_start),end=instant(g.period_end);\n  if (start>=end || start.slice(0,10)!==row.period_start || end.slice(0,10)!==row.period_end) throw new Error('REPORT_PERIOD_METADATA_MISMATCH');\n  return {start,end};\n};\nconst sameScope = (row,c) => Number(row.client_id)===Number(c.client_id) && Number(row.platform_id)===Number(c.id) &&\n  String(row.branch_id??'')===String(c.branch_id??'') && (row.report_scope===c.legacy_report_scope || row.report_scope===c.base_report_scope || String(row.report_scope||'').startsWith(c.base_report_scope+':window:'));\n\nconst row=$input.all()[0]?.json||{};\nconst c=$('Prepare Report Window').last().json;\nif(!sameScope(row,c))throw new Error('REPORT_FINAL_SCOPE_MISMATCH');\nconst b=bounds(row);\nif(b.start!==instant(c.period_start)||b.end!==instant(c.period_end))throw new Error('REPORT_SAVED_COVERAGE_MISMATCH');\nreturn [{json:row}];"
+      },
+      "id": "a1d9c071-28d3-56f1-9470-594bfc04284b",
+      "name": "Report Coverage Outcome",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2700,
+        1350
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "389851c3-dacc-5047-99b0-f42137888a68",
+              "leftValue": "={{ $('Report Coverage Outcome').last().json.status === 'completed' && Date.parse($('Report Coverage Outcome').last().json.stats.report_generation.period_end) < Date.parse($('Loop Platform Reports').last().json.period_end) }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "4046bcb4-c8b6-5768-babc-60ef89522833",
+      "name": "Continue Platform Coverage?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        3600,
+        1350
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const c=$('Loop Platform Reports').last().json;return [{json:{client_id:c.client_id,platform_id:c.id,report_generation_review_required:true,error_code:'REPORT_COVERAGE_REVIEW_REQUIRED'}}];"
+      },
+      "id": "1565ab06-6ad0-5f2e-9521-070853b698dc",
+      "name": "Review Platform Coverage",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        300,
+        1050
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const c=$('Determine Report Period').last().json;return [{json:{client_id:c.id,report_generation_review_required:true,report_generation_failed:true,error_code:'REPORT_COVERAGE_REVIEW_REQUIRED'}}];"
+      },
+      "id": "05cae63d-9181-5169-a28a-feba4b30b940",
+      "name": "Review Client Coverage",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        300,
+        2550
+      ]
     }
   ],
   "connections": {
@@ -518,7 +1296,7 @@
       "main": [
         [
           {
-            "node": "Get Due Clients",
+            "node": "Resolve Report Trigger",
             "type": "main",
             "index": 0
           }
@@ -533,6 +1311,13 @@
             "type": "main",
             "index": 0
           }
+        ],
+        [
+          {
+            "node": "Record Report Failure",
+            "type": "main",
+            "index": 0
+          }
         ]
       ]
     },
@@ -540,7 +1325,7 @@
       "main": [
         [
           {
-            "node": "Get Due Clients",
+            "node": "Resolve Report Trigger",
             "type": "main",
             "index": 0
           }
@@ -551,7 +1336,14 @@
       "main": [
         [
           {
-            "node": "Is Completed Weekly Report?",
+            "node": "Read Final Report",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Record Report Failure",
             "type": "main",
             "index": 0
           }
@@ -593,7 +1385,13 @@
     },
     "Loop Clients": {
       "main": [
-        [],
+        [
+          {
+            "node": "Assert Report Batch",
+            "type": "main",
+            "index": 0
+          }
+        ],
         [
           {
             "node": "Determine Report Period",
@@ -622,6 +1420,13 @@
             "type": "main",
             "index": 0
           }
+        ],
+        [
+          {
+            "node": "Record Report Failure",
+            "type": "main",
+            "index": 0
+          }
         ]
       ]
     },
@@ -636,7 +1441,7 @@
         ],
         [
           {
-            "node": "Loop Platform Reports",
+            "node": "Build Platform Report Stats",
             "type": "main",
             "index": 0
           }
@@ -647,7 +1452,14 @@
       "main": [
         [
           {
-            "node": "Generate Platform Report",
+            "node": "Report Has Feedback?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Record Report Failure",
             "type": "main",
             "index": 0
           }
@@ -669,14 +1481,14 @@
       "main": [
         [
           {
-            "node": "Update Client Report Schedule",
+            "node": "Read Client Report States",
             "type": "main",
             "index": 0
           }
         ],
         [
           {
-            "node": "Get Platform Feedback",
+            "node": "Read Previous Platform Report",
             "type": "main",
             "index": 0
           }
@@ -688,6 +1500,13 @@
         [
           {
             "node": "Parse Report Result",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Record Report Failure",
             "type": "main",
             "index": 0
           }
@@ -709,7 +1528,7 @@
       "main": [
         [
           {
-            "node": "Get Due Clients",
+            "node": "Resolve Report Trigger",
             "type": "main",
             "index": 0
           }
@@ -727,7 +1546,7 @@
         ],
         [
           {
-            "node": "Loop Platform Reports",
+            "node": "Continue Platform Coverage?",
             "type": "main",
             "index": 0
           }
@@ -738,7 +1557,389 @@
       "main": [
         [
           {
+            "node": "Continue Platform Coverage?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Platform Sync Completed Input": {
+      "main": [
+        [
+          {
+            "node": "Resolve Report Trigger",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resolve Report Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get Due Clients",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find Existing Report": {
+      "main": [
+        [
+          {
+            "node": "Evaluate Report Reservation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Evaluate Report Reservation": {
+      "main": [
+        [
+          {
+            "node": "Existing Report Completed?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Existing Report Completed?": {
+      "main": [
+        [
+          {
+            "node": "Restore Completed Report",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Can Reserve Report?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Restore Completed Report": {
+      "main": [
+        [
+          {
+            "node": "Report Coverage Outcome",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Can Reserve Report?": {
+      "main": [
+        [
+          {
+            "node": "Reserve Report",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
             "node": "Loop Platform Reports",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Reserve Report": {
+      "main": [
+        [
+          {
+            "node": "Read Reserved Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Report Reservation Acquired?": {
+      "main": [
+        [
+          {
+            "node": "Restore Reserved Context",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Report Coverage Outcome",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Restore Reserved Context": {
+      "main": [
+        [
+          {
+            "node": "Get Platform Feedback",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Report Has Feedback?": {
+      "main": [
+        [
+          {
+            "node": "Generate Platform Report",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Build Empty Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Empty Report": {
+      "main": [
+        [
+          {
+            "node": "Upsert Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Record Report Failure": {
+      "main": [
+        [
+          {
+            "node": "Read Final Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Final Report": {
+      "main": [
+        [
+          {
+            "node": "Report Coverage Outcome",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Client Report States": {
+      "main": [
+        [
+          {
+            "node": "Check Client Report Completion",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Client Report Completion": {
+      "main": [
+        [
+          {
+            "node": "All Client Reports Ready?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Review Client Coverage",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "All Client Reports Ready?": {
+      "main": [
+        [
+          {
+            "node": "Update Client Report Schedule",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Loop Clients",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Previous Platform Report": {
+      "main": [
+        [
+          {
+            "node": "Resolve Platform Report Period",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resolve Platform Report Period": {
+      "main": [
+        [
+          {
+            "node": "Needs Window Reservation?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Review Platform Coverage",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Reserved Report": {
+      "main": [
+        [
+          {
+            "node": "Validate Report Reservation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Report Reservation": {
+      "main": [
+        [
+          {
+            "node": "Report Reservation Acquired?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Needs Window Reservation?": {
+      "main": [
+        [
+          {
+            "node": "Reserve Next Report Window",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Prepare Report Window",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Reserve Next Report Window": {
+      "main": [
+        [
+          {
+            "node": "Read Next Report Window",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Next Report Window": {
+      "main": [
+        [
+          {
+            "node": "Prepare Report Window",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Report Window": {
+      "main": [
+        [
+          {
+            "node": "Find Existing Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Report Coverage Outcome": {
+      "main": [
+        [
+          {
+            "node": "Is Completed Weekly Report?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Continue Platform Coverage?": {
+      "main": [
+        [
+          {
+            "node": "Read Previous Platform Report",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Loop Platform Reports",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Review Platform Coverage": {
+      "main": [
+        [
+          {
+            "node": "Loop Platform Reports",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Review Client Coverage": {
+      "main": [
+        [
+          {
+            "node": "Loop Clients",
             "type": "main",
             "index": 0
           }

@@ -561,15 +561,17 @@
       "maxTries": 3,
       "waitBetweenTries": 3000,
       "position": [
-        2176,
-        3888
+        2560,
+        4200
       ],
       "credentials": {
         "httpCustomAuth": {
           "id": "zG0oLxK9PlldN0gl",
           "name": "Supabase Backend"
         }
-      }
+      },
+      "executeOnce": true,
+      "alwaysOutputData": true
     },
     {
       "parameters": {
@@ -915,30 +917,148 @@
       ],
       "id": "1a4fc439-8f35-4a2f-b09b-5f83a989ba87",
       "name": "Assert TikTok Sync Batch"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const platform = $('Continue TikTok Platform').last().json;\nconst clientId = Number(platform.client_id);\nconst platformId = Number(platform.platform_id);\nif (!Number.isSafeInteger(clientId) || clientId <= 0 || !Number.isSafeInteger(platformId) || platformId <= 0) throw new Error('INVALID_REPORT_DISPATCH_SCOPE');\nreturn [{ json: { source: 'platform_sync_completed', client_id: clientId, platform_id: platformId } }];"
+      },
+      "id": "ee49bd5a-e078-552a-8062-abd0a1ee5853",
+      "name": "Prepare Report Dispatch",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2860,
+        4200
+      ]
+    },
+    {
+      "parameters": {
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "value": "SELECT_PLATFORM_REPORTS_WORKFLOW_ID",
+          "mode": "id"
+        },
+        "mode": "each",
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "id": "dd5e690f-681f-5c3f-866e-4bc655f5bc50",
+      "name": "Refresh Client Reports",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        3160,
+        4200
+      ],
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "https://dhryldlprpdmsixhlaqe.supabase.co/rest/v1/tiktok_comments",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpCustomAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "select",
+              "value": "id"
+            },
+            {
+              "name": "client_id",
+              "value": "={{ 'eq.'+$('Continue TikTok Platform').last().json.client_id }}"
+            },
+            {
+              "name": "platform_id",
+              "value": "={{ 'eq.'+$('Continue TikTok Platform').last().json.platform_id }}"
+            },
+            {
+              "name": "analysis_status",
+              "value": "eq.pending"
+            },
+            {
+              "name": "limit",
+              "value": "1"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "500f2911-c024-5b4e-8adb-4a5e919cc2f9",
+      "typeVersion": 4.2,
+      "name": "Verify Platform Analysis Complete",
+      "type": "n8n-nodes-base.httpRequest",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000,
+      "position": [
+        1960,
+        4200
+      ],
+      "credentials": {
+        "httpCustomAuth": {
+          "id": "zG0oLxK9PlldN0gl",
+          "name": "Supabase Backend"
+        }
+      },
+      "executeOnce": true,
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "8aa0b05f-5fd3-56c2-8af8-214ffb2606a6",
+              "leftValue": "={{ Boolean($json.id) }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "2a564c5e-c938-5b4b-82da-079a06f066b1",
+      "name": "Platform Analysis Still Pending?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2260,
+        4200
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const p=$('Continue TikTok Platform').last().json;return [{json:{client_id:p.client_id,platform_id:p.platform_id,sync_error:'ANALYSIS_INCOMPLETE',message:'لم يكتمل تحليل جميع التعليقات'}}];"
+      },
+      "id": "13968bee-e9cf-5f33-898a-a55d7c5d3fd2",
+      "name": "Incomplete Analysis Context",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2560,
+        4500
+      ]
     }
   ],
-  "pinData": {
-    "Schedule Trigger": [
-      {
-        "json": {
-          "timestamp": "2026-10-02T03:00:08.000+03:00",
-          "Readable date": "October 2nd 2026, 3:00:08 am",
-          "Readable time": "3:00:08 am",
-          "Day of week": "Friday",
-          "Year": "2026",
-          "Month": "October",
-          "Day of month": "02",
-          "Hour": "03",
-          "Minute": "00",
-          "Second": "08",
-          "Timezone": "Asia/Riyadh (UTC+03:00)"
-        },
-        "pairedItem": {
-          "item": 0
-        }
-      }
-    ]
-  },
+  "pinData": {},
   "connections": {
     "Schedule Trigger": {
       "main": [
@@ -1064,7 +1184,7 @@
         ],
         [
           {
-            "node": "Complete TikTok Sync",
+            "node": "Verify Platform Analysis Complete",
             "type": "main",
             "index": 0
           }
@@ -1075,7 +1195,7 @@
       "main": [
         [
           {
-            "node": "Complete TikTok Sync",
+            "node": "Verify Platform Analysis Complete",
             "type": "main",
             "index": 0
           }
@@ -1177,7 +1297,7 @@
       "main": [
         [
           {
-            "node": "Loop Over Items",
+            "node": "Prepare Report Dispatch",
             "type": "main",
             "index": 0
           }
@@ -1336,9 +1456,71 @@
           }
         ]
       ]
+    },
+    "Prepare Report Dispatch": {
+      "main": [
+        [
+          {
+            "node": "Refresh Client Reports",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Refresh Client Reports": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verify Platform Analysis Complete": {
+      "main": [
+        [
+          {
+            "node": "Platform Analysis Still Pending?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Platform Analysis Still Pending?": {
+      "main": [
+        [
+          {
+            "node": "Incomplete Analysis Context",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Complete TikTok Sync",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Incomplete Analysis Context": {
+      "main": [
+        [
+          {
+            "node": "Fail TikTok Sync",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
-  "active": true,
+  "active": false,
   "settings": {
     "executionOrder": "v1",
     "binaryMode": "separate"
