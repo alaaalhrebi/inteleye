@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import {
-  Mail, MapPin, Linkedin, Music2, Instagram, LockKeyhole,
+  Mail, MapPin, Linkedin, Music2, Instagram,
 } from "lucide-react";
 
 export default function Footer() {
@@ -86,13 +86,15 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="mt-12 flex flex-wrap items-center justify-center gap-4 border-t border-white/10 pt-8">
-          <div aria-label="دفع آمن عبر ميسر" className="inline-flex items-center gap-3 rounded-xl border border-white/20 bg-white/10 px-5 py-3">
-            <LockKeyhole size={24} aria-hidden="true" className="shrink-0 text-white/90" />
-            <div>
-              <p className="text-sm font-bold text-white">دفع آمن</p>
-              <p className="mt-0.5 text-xs text-white/70">عبر ميسر <span lang="en">Moyasar</span></p>
-            </div>
+        <div className="mt-12 flex justify-center border-t border-white/10 pt-8">
+          <div className="w-full max-w-xs rounded-xl bg-white px-4 py-3">
+            <Image
+              src="/saudi-business-center.png"
+              alt="المركز السعودي للأعمال — Saudi Business Center"
+              width={830}
+              height={240}
+              className="h-auto w-full object-contain"
+            />
           </div>
         </div>
 
