@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Activity, CheckCircle2, Clock3, AlertTriangle } from "lucide-react";
+import { Clock3, AlertTriangle } from "lucide-react";
 import type { ReportProgress } from "@/lib/reports/progress";
 
 const steps = ["جمع التعليقات", "تحليل الآراء", "إعداد التقرير", "التقرير جاهز"];
@@ -50,37 +50,30 @@ export default function ReportProcessingStatus({ progress: initialProgress, bran
   const nextDate = progress.nextReportAt ? new Intl.DateTimeFormat("ar-SA-u-ca-gregory", {
     day: "numeric", month: "long", year: "numeric", hour: "numeric", minute: "2-digit", timeZone: "Asia/Riyadh",
   }).format(new Date(progress.nextReportAt)) : null;
-  const Icon = progress.stage === "ready" ? CheckCircle2 : progress.stage === "error" ? AlertTriangle : Activity;
   return (
-    <section aria-label="حالة تجهيز التقرير" aria-live="polite" className="mt-4 rounded-[1.35rem] border border-[#BABDE2]/40 bg-white p-4 shadow-sm sm:p-5">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div className="flex min-w-0 gap-3">
-          <Icon aria-hidden="true" size={23} className={`mt-1 shrink-0 ${progress.stage === "error" ? "text-[#895159]" : "text-[#374375]"}`} />
-          <div>
-            <h2 className="text-lg font-extrabold text-[#374375]">{progress.title}</h2>
-            <p className="mt-1 max-w-3xl text-sm leading-7 text-gray-500">{progress.description}</p>
-          </div>
-        </div>
-        <Link href="/dashboard/reports" className="shrink-0 self-start rounded-full border border-[#BABDE2]/60 px-4 py-2 text-sm font-bold text-[#374375] hover:bg-[#F8F7F3]">
-          عرض التقارير
-        </Link>
-      </div>
-      <ol className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4" aria-label="مراحل تجهيز التقرير">
+    <section aria-label="حالة تجهيز التقرير" aria-live="polite" className="my-3 min-w-0">
+      <h2 className="sr-only">{progress.title}</h2>
+      <ol className="grid grid-cols-4 gap-1 rounded-xl border border-[#BABDE2]/35 bg-white/80 p-1 sm:gap-2" aria-label="مراحل تجهيز التقرير">
         {steps.map((step, index) => (
           <li key={step} aria-current={progress.step === index ? "step" : undefined}
-            className={`rounded-xl px-3 py-2 text-center text-xs font-bold leading-6 ${progress.step === index ? "bg-[#374375] text-white" : "bg-[#F8F7F3] text-gray-500"}`}>
-            {index + 1}. {step}
+            className={`flex min-h-9 min-w-0 items-center justify-center gap-1 rounded-lg px-1 py-1.5 text-center text-[11px] font-bold leading-4 sm:gap-2 sm:px-2 sm:text-xs ${progress.step === index ? "bg-[#374375] text-white" : "text-gray-500"}`}>
+            <span aria-hidden="true" className={`hidden h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] sm:inline-flex ${progress.step === index ? "bg-white/20" : "bg-[#F8F7F3]"}`}>{index + 1}</span>
+            <span>{step}</span>
           </li>
         ))}
       </ol>
-      <div className="mt-3 flex items-start gap-2 text-xs leading-6 text-gray-500">
-        <Clock3 size={15} aria-hidden="true" className="mt-1 shrink-0" />
-        <p>{nextDate
-          ? `${progress.nextReportDue ? "موعد التقرير المسجل" : "موعد التقرير التالي المسجل"}: ${nextDate} بتوقيت الرياض.${progress.nextReportDue ? " ما زلنا ننتظر تأكيد اكتمال متطلباته." : " يعتمد توفره على اكتمال المزامنة والتحليل."}`
-          : "لم يُحدّد موعد التقرير التالي بعد."}</p>
+      <div className="mt-1.5 flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-[11px] leading-5 text-gray-500">
+        <p className="flex min-w-0 items-start gap-1.5">
+          <Clock3 size={13} aria-hidden="true" className="mt-0.5 shrink-0" />
+          <span>{nextDate ? `التقرير القادم: ${nextDate} بتوقيت الرياض` : "التقرير القادم: لم يُحدّد بعد"}
+            {nextDate && progress.nextReportDue && <span className="mr-1 text-[#895159]">— بانتظار الاكتمال</span>}
+          </span>
+        </p>
+        <Link href="/dashboard/reports" className="shrink-0 font-bold text-[#374375] underline-offset-4 hover:underline">عرض التقارير</Link>
       </div>
-      {progress.shouldRefresh && <p className="mt-2 text-xs leading-6 text-gray-400">تُحدّث الحالة مؤقتًا أثناء فتح الصفحة. إذا توقف التحديث، أعد تحميل الصفحة لمتابعة النتيجة.</p>}
-      {refreshError && <p role="status" className="mt-2 text-xs leading-6 text-[#895159]">تعذر تحديث الحالة الآن. آخر حالة معروضة قد تكون تغيرت؛ أعد تحميل الصفحة لاحقًا.</p>}
+      {progress.stage !== "ready" && <p className="mt-1 text-[11px] leading-5 text-gray-500">تعليقاتك محفوظة، وسيظهر التقرير تلقائيًا بعد اكتمال المعالجة.</p>}
+      {progress.step === null && <p className="mt-1 flex items-center gap-1.5 text-[11px] leading-5 text-[#895159]"><AlertTriangle size={13} aria-hidden="true" className="shrink-0" />{progress.title}</p>}
+      {refreshError && <p role="status" className="mt-1 text-[11px] leading-5 text-[#895159]">تعذر تحديث الحالة؛ المعروض هو آخر حالة معروفة.</p>}
     </section>
   );
 }
