@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import {
-  Mail, MapPin, Linkedin, Music2, Instagram,
+  Mail, MapPin, Linkedin, Music2, Instagram, LockKeyhole,
 } from "lucide-react";
 
 export default function Footer() {
@@ -86,7 +86,17 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="mt-16 border-t border-white/10 pt-8 flex flex-col md:flex-row items-center justify-between text-white/60 gap-4">
+        <div className="mt-12 flex flex-wrap items-center justify-center gap-4 border-t border-white/10 pt-8">
+          <div aria-label="دفع آمن عبر ميسر" className="inline-flex items-center gap-3 rounded-xl border border-white/20 bg-white/10 px-5 py-3">
+            <LockKeyhole size={24} aria-hidden="true" className="shrink-0 text-white/90" />
+            <div>
+              <p className="text-sm font-bold text-white">دفع آمن</p>
+              <p className="mt-0.5 text-xs text-white/70">عبر ميسر <span lang="en">Moyasar</span></p>
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-8 border-t border-white/10 pt-8 flex flex-col md:flex-row items-center justify-between text-white/60 gap-4">
           <p>© 2026 <strong>INTELEYE</strong>. جميع الحقوق محفوظة.</p>
           <div className="flex gap-8">
             <Link href="/privacy" className="transition hover:text-white">سياسة الخصوصية</Link>

@@ -4,7 +4,6 @@ import Stats from "@/components/Stats";
 import Features from "@/components/Features";
 import AISection from "@/components/AISection";
 import Pricing from "@/components/Pricing/Pricing";
-import Testimonials from "@/components/Testimonials";
 import CTA from "@/components/CTA";
 import Footer from "@/components/Footer";
 import AnimatedText from "@/components/AnimatedText";
@@ -18,7 +17,7 @@ export default function Home() {
       <Features />
       <AISection />
       <Pricing />
-      <Testimonials />
+      {/* Testimonials are hidden until verified customer reviews are available. */}
 
       <CTA />
 
